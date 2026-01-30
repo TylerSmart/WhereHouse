@@ -1,1 +1,7 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WhereHouse.Api/WhereHouse.Api.csproj" />
+    <Project Path="src/WhereHouse.Domain/WhereHouse.Domain.csproj" />
+    <Project Path="src/WhereHouse.Infrastructure/WhereHouse.Infrastructure.csproj" />
+  </Folder>
+</Solution>
