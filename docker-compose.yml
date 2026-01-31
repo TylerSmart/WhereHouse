@@ -37,19 +37,18 @@ services:
       - wherehouse-network
     restart: unless-stopped
 
-  # Uncomment when Angular ui is ready
-  # ui:
-  #   build:
-  #     context: ./src/WhereHouse.UI
-  #     dockerfile: Dockerfile
-  #   container_name: wherehouse-ui
-  #   ports:
-  #     - "4200:80"
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - wherehouse-network
-  #   restart: unless-stopped
+  ui:
+    build:
+      context: ./src/WhereHouse.UI
+      dockerfile: Dockerfile
+    container_name: wherehouse-ui
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+    networks:
+      - wherehouse-network
+    restart: unless-stopped
 
 volumes:
   sqlserver-data:

@@ -69,6 +69,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<WhereHouseDbContext>();
     await dbContext.Database.MigrateAsync();
+    WhereHouseDbInitializer.Initialize(dbContext);
 }
 
 app.Run();

@@ -12,8 +12,8 @@ using WhereHouse.Infrastructure.Data;
 namespace WhereHouse.Infrastructure.Migrations
 {
     [DbContext(typeof(WhereHouseDbContext))]
-    [Migration("20260131000433_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260131043026_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -290,11 +290,6 @@ namespace WhereHouse.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("bit");

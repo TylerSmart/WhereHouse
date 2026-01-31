@@ -54,7 +54,6 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Username = request.Username,
-            Email = request.Email,
             PasswordHash = _passwordService.HashPassword(request.Password),
             IsAdmin = false,
             CreatedAt = DateTime.UtcNow
@@ -80,6 +79,6 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
+        return Ok(new UserDto(user.Id, user.Username, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
     }
 }

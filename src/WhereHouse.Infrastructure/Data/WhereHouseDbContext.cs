@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WhereHouse.Domain.Entities;
+using WhereHouse.Infrastructure.Services;
 
 namespace WhereHouse.Infrastructure.Data;
 
@@ -25,7 +26,6 @@ public class WhereHouseDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Username).IsUnique();
             entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
         });

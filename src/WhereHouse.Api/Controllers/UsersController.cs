@@ -26,7 +26,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<List<UserDto>>> GetUsers()
     {
         var users = await _context.Users
-            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin, u.CreatedAt, u.LastLoginAt))
+            .Select(u => new UserDto(u.Id, u.Username, u.IsAdmin, u.CreatedAt, u.LastLoginAt))
             .ToListAsync();
 
         return Ok(users);
@@ -42,7 +42,7 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
+        return Ok(new UserDto(user.Id, user.Username, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
     }
 
     [HttpPost]
@@ -56,7 +56,6 @@ public class UsersController : ControllerBase
         var user = new User
         {
             Username = request.Username,
-            Email = request.Email,
             PasswordHash = _passwordService.HashPassword(request.Password),
             IsAdmin = request.IsAdmin,
             CreatedAt = DateTime.UtcNow
@@ -66,7 +65,7 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetUser), new { id = user.Id },
-            new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
+            new UserDto(user.Id, user.Username, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
     }
 
     [HttpPut("{id}")]
@@ -79,13 +78,12 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        if (request.Email != null) user.Email = request.Email;
         if (request.Password != null) user.PasswordHash = _passwordService.HashPassword(request.Password);
         if (request.IsAdmin.HasValue) user.IsAdmin = request.IsAdmin.Value;
 
         await _context.SaveChangesAsync();
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
+        return Ok(new UserDto(user.Id, user.Username, user.IsAdmin, user.CreatedAt, user.LastLoginAt));
     }
 
     [HttpDelete("{id}")]
