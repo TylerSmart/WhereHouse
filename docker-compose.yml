@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: wherehouse-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD}  <-- Uses variable
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - wherehouse-network
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/WhereHouse.Api/Dockerfile
+    container_name: wherehouse-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      # We construct the connection string using the variable
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=WhereHouse;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=WhereHouseApi
+      - Jwt__Audience=WhereHouseClient
+    ports:
+      - "5000:80"
+    depends_on:
+      - sqlserver
+    networks:
+      - wherehouse-network
+    restart: unless-stopped
+
+  # Uncomment when Angular ui is ready
+  # ui:
+  #   build:
+  #     context: ./src/WhereHouse.UI
+  #     dockerfile: Dockerfile
+  #   container_name: wherehouse-ui
+  #   ports:
+  #     - "4200:80"
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - wherehouse-network
+  #   restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+    driver: local
+
+networks:
+  wherehouse-network:
+    driver: bridge
