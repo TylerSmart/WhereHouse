@@ -34,3 +34,10 @@
 - [Backend (.NET 10 & EF Core) Rules](rules/backend-dotnet.md): Controller routing, `IAuditable`, DTOs, DI registration, and error handling.
 - [Frontend (Angular 22) Rules](rules/frontend-angular.md): Angular v22 `@Service()`, signals, Material conventions, and API calls.
 - [Commands, Testing & Formatting Rules](rules/commands-and-testing.md): Exact CLI syntax for `.NET 10` `Microsoft.Testing.Platform`, EF migrations, CSharpier, and ESLint.
+
+---
+
+## 4. Two-Phase Development Skills (`.agents/skills/`)
+
+- **`/plan-phase`** ([`.agents/skills/plan-phase/SKILL.md`](skills/plan-phase/SKILL.md)): Run with a **high-thinking model** to design the next vertical slice/phase from `docs/PRD.md` and output a zero-ambiguity blueprint in `docs/plans/phase-<NN>-<slug>.md`.
+- **`/execute-phase`** ([`.agents/skills/execute-phase/SKILL.md`](skills/execute-phase/SKILL.md)): Run with a **regular/fast implementation model** to execute the latest blueprint in `docs/plans/` step-by-step (including automatic EF Core migrations and the mandatory test-and-fix loop).
