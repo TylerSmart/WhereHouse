@@ -1,5 +1,6 @@
 # Phase <NN>: <Phase Title>
 
+> **Branch:** `feature/phase-<NN>-<slug>`
 > **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/PRD.md` — Sections <X.Y>
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.

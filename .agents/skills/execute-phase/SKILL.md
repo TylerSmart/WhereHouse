@@ -8,16 +8,18 @@ description: >-
 
 # Execute Planned Phase (`execute-phase`)
 
-This skill is designed to be run by an **implementation model** after `plan-phase` has generated a phase blueprint in `docs/plans/`.
+This skill is designed to be run by an **implementation model** after `plan-phase` has created a `feature/phase-<NN>-<slug>` branch and committed a phase blueprint in `docs/plans/`.
 
 ---
 
 ## Step-by-Step Workflow
 
-### 1. Locate the Active Plan
-1. Check `docs/plans/` and open the target `phase-<NN>-<slug>.md` file (the first plan whose status is `Planned` or `In Progress`, or the specific file requested by the user).
-2. Update the plan status header to `[~] In Progress`.
-3. **Do not scan the entire codebase**—the plan file already contains the exact file paths, C# signatures, EF configurations, API routes, and Angular interfaces needed. Only read existing files that you are directly modifying.
+### 1. Verify Active Phase Branch & Locate the Plan
+1. Run `git branch --show-current` and check `docs/plans/`.
+2. Ensure you are on the target phase branch (`feature/phase-<NN>-<slug>`), **never** on `main`. (If the repository is on `main`, check out the existing `feature/phase-<NN>-<slug>` branch before making any changes.)
+3. Open the target `docs/plans/phase-<NN>-<slug>.md` file (the plan whose status is `Planned` or `In Progress`).
+4. Update the plan status header to `[~] In Progress`.
+5. **Do not scan the entire codebase**—the plan file already contains the exact file paths, C# signatures, EF configurations, API routes, and Angular interfaces needed. Only read existing files that you are directly modifying.
 
 ### 2. Execute Tasks Sequentially (`Task 1` $\rightarrow$ `Task 4`)
 Work through each unchecked `- [ ]` task in Section 5 of the plan in order:
@@ -44,3 +46,4 @@ Work through each unchecked `- [ ]` task in Section 5 of the plan in order:
    - Add/update Playwright E2E tests in `Tests/WhereHouse.Client.E2ETests/` if applicable.
    - Format all code (`dotnet csharpier format .` at repo root; `npm run format` and `npm run lint:fix` in `WhereHouse.Client`).
    - Check off `- [x] Task 4` and set the plan status header to `[x] Completed`.
+   - Stage and commit all phase changes onto the `feature/phase-<NN>-<slug>` branch (`git add -A && git commit -m "feat(phase-<NN>): implement <slug>"`).
