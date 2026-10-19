@@ -2,7 +2,7 @@
 
 > **Branch:** `feature/phase-02-categories-and-items`
 > **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
-> **PRD Reference:** `docs/PRD.md` — Sections 4.2 (`Item Typology, Granularity & Custom Attributes`), 4.3.1 (`Identifiers & QR Encoding`), 4.4.2 (`Quick-Clone / Duplicate Item`), 4.5.1 (`Permanent Home Location vs. Current Status`), 4.6.2 (`Purchase, Return Window & Warranty Lifecycle`), and 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`)
+> **PRD Reference:** `docs/prd.md` — Sections 4.2 (`Item Typology, Granularity & Custom Attributes`), 4.3.1 (`Identifiers & QR Encoding`), 4.4.2 (`Quick-Clone / Duplicate Item`), 4.5.1 (`Permanent Home Location vs. Current Status`), 4.6.2 (`Purchase, Return Window & Warranty Lifecycle`), and 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
 ---

@@ -25,7 +25,7 @@ When implementing a new feature across the stack, follow the existing vertical-s
 
 ---
 
-## 2. Core WhereHouse Domain Invariants (`docs/PRD.md`)
+## 2. Core WhereHouse Domain Invariants (`docs/prd.md`)
 
 - **Nested Location Tree (`LocationNode`):**
   - Self-referencing hierarchy (`ParentId`).

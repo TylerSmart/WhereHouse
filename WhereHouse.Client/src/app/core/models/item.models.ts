@@ -94,6 +94,8 @@ export interface ItemDto {
   lastTouchedAt: string;
   createdAt: string;
   modifiedAt: string;
+  attachmentCount?: number;
+  primaryPhotoAttachmentId?: string | null;
 }
 
 export interface UpsertItemAttributeValueRequest {
