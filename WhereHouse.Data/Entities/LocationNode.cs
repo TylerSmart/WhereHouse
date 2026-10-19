@@ -14,6 +14,8 @@ public sealed class LocationNode : IAuditable
 
     public ICollection<InventoryItem> Items { get; set; } = new List<InventoryItem>();
 
+    public ICollection<QrCode> BoundQrCodes { get; set; } = new List<QrCode>();
+
     public string Name { get; set; } = string.Empty;
 
     public string? Description { get; set; }

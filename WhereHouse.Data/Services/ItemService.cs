@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WhereHouse.Core.Exceptions;
 using WhereHouse.Core.Items;
+using WhereHouse.Core.QrCodes;
 using WhereHouse.Core.Storage;
 using WhereHouse.Data.Entities;
 
@@ -628,6 +629,17 @@ public sealed class ItemService(
         foreach (var att in attachments)
         {
             await fileStorageService.DeleteFileAsync(att.StorageRelativePath, cancellationToken);
+        }
+
+        var boundQrCodes = await dbContext
+            .QrCodes.Where(q => q.ItemId == id)
+            .ToListAsync(cancellationToken);
+        foreach (var qr in boundQrCodes)
+        {
+            qr.TargetType = QrTargetType.Unassigned;
+            qr.ItemId = null;
+            qr.BoundAt = null;
+            qr.BoundByUserId = null;
         }
 
         dbContext.InventoryItems.Remove(item);

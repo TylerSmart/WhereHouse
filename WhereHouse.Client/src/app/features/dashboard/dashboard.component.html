@@ -67,6 +67,30 @@
         </button>
       </mat-menu>
 
+      <!-- QR Scanner -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="scan-qr-btn"
+        (click)="openScannerDialog()"
+        matTooltip="Scan QR Code or Barcode"
+      >
+        <mat-icon>qr_code_scanner</mat-icon>
+        <span class="desktop-only">Scan QR</span>
+      </button>
+
+      <!-- Print Labels -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="print-labels-btn"
+        (click)="openLabelGeneratorDialog()"
+        matTooltip="Print QR Labels (Avery Sheets & Thermal Rolls)"
+      >
+        <mat-icon>print</mat-icon>
+        <span class="desktop-only">Print Labels</span>
+      </button>
+
       <!-- Manage Categories -->
       <button
         mat-stroked-button
@@ -256,6 +280,14 @@
                 <button mat-button (click)="openEditDialog(active)" matTooltip="Edit details">
                   <mat-icon>edit</mat-icon>
                   <span>Edit</span>
+                </button>
+                <button
+                  mat-button
+                  (click)="printLocationLabel(active)"
+                  matTooltip="Print QR Label for this location"
+                >
+                  <mat-icon>print</mat-icon>
+                  <span>Label</span>
                 </button>
                 <button
                   mat-icon-button
@@ -645,6 +677,10 @@
                             <button mat-menu-item (click)="openDuplicateItemDialog(item)">
                               <mat-icon>content_copy</mat-icon>
                               <span>Duplicate / Clone</span>
+                            </button>
+                            <button mat-menu-item (click)="printItemLabel(item)">
+                              <mat-icon>print</mat-icon>
+                              <span>Print QR Label</span>
                             </button>
                             <mat-divider></mat-divider>
                             <button mat-menu-item (click)="deleteItem(item)">

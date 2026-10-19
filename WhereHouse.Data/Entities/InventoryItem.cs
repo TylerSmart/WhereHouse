@@ -73,6 +73,8 @@ public sealed class InventoryItem : IAuditable
 
     public ICollection<ItemAttachment> Attachments { get; set; } = new List<ItemAttachment>();
 
+    public ICollection<QrCode> BoundQrCodes { get; set; } = new List<QrCode>();
+
     public DateTimeOffset LastTouchedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

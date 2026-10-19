@@ -32,4 +32,8 @@ public sealed class User : IAuditable
 
     public ICollection<ItemAttachment> UploadedAttachments { get; set; } =
         new List<ItemAttachment>();
+
+    public ICollection<QrCode> CreatedQrCodes { get; set; } = new List<QrCode>();
+
+    public ICollection<QrCode> BoundQrCodes { get; set; } = new List<QrCode>();
 }

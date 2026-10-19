@@ -6,6 +6,7 @@ using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Categories;
 using WhereHouse.Core.Items;
 using WhereHouse.Core.Locations;
+using WhereHouse.Core.QrCodes;
 using WhereHouse.Core.Search;
 using WhereHouse.Data.Auditing;
 using WhereHouse.Data.Services;
@@ -29,6 +30,8 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<IItemService, ItemService>();
         services.AddScoped<IAttachmentService, AttachmentService>();
         services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<IQrCodeService, QrCodeService>();
+        services.AddScoped<IScanService, ScanService>();
 
         if (
             string.Equals(

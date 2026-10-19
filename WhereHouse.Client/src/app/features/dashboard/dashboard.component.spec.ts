@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { CategoryDto } from '../../core/models/category.models';
 import { ItemConditions, ItemDto, ItemStatuses, ItemTypes } from '../../core/models/item.models';
@@ -16,6 +17,8 @@ import { LocationService } from '../../core/services/location/location.service';
 import { ThemeService } from '../../core/services/theme/theme.service';
 import { CategoryManagerDialogComponent } from './category-manager-dialog/category-manager-dialog.component';
 import { DashboardComponent } from './dashboard.component';
+import { LabelGeneratorDialogComponent } from './label-generator-dialog/label-generator-dialog.component';
+import { ScannerDialogComponent } from './scanner-dialog/scanner-dialog.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -314,6 +317,16 @@ describe('DashboardComponent', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: MatDialog, useValue: mockDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: {
+                get: vi.fn().mockReturnValue(null),
+              },
+            },
+          },
+        },
         ThemeService,
       ],
     }).compileComponents();
@@ -473,5 +486,71 @@ describe('DashboardComponent', () => {
     component.openItemAttachmentsDialog(mockItems[0]);
 
     expect(mockDialog.open).toHaveBeenCalled();
+  });
+
+  it('should open scanner dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openScannerDialog('BIN-001');
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      ScannerDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({ initialCode: 'BIN-001' }),
+      }),
+    );
+  });
+
+  it('should open label generator dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openLabelGeneratorDialog();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      LabelGeneratorDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          availableLocations: expect.any(Array),
+        }),
+      }),
+    );
+  });
+
+  it('should print location label via label generator dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.printLocationLabel(mockNodes[0]);
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      LabelGeneratorDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          preselectedLabels: [expect.objectContaining({ code: 'LOC-001' })],
+        }),
+      }),
+    );
+  });
+
+  it('should print item label via label generator dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.printItemLabel(mockItems[0]);
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      LabelGeneratorDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          preselectedLabels: [expect.objectContaining({ code: 'ITM-001' })],
+        }),
+      }),
+    );
   });
 });

@@ -451,6 +451,79 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("LocationNodes", (string)null);
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("BoundAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("BoundByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LabelNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("LastScannedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("LocationNodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("PrintedCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoundByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("LocationNodeId");
+
+                    b.HasIndex("TargetType");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("QrCodes", (string)null);
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -619,6 +692,38 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.User", "BoundByUser")
+                        .WithMany("BoundQrCodes")
+                        .HasForeignKey("BoundByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WhereHouse.Data.Entities.User", "CreatedByUser")
+                        .WithMany("CreatedQrCodes")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
+                        .WithMany("BoundQrCodes")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WhereHouse.Data.Entities.LocationNode", "LocationNode")
+                        .WithMany("BoundQrCodes")
+                        .HasForeignKey("LocationNodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BoundByUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Item");
+
+                    b.Navigation("LocationNode");
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.Category", b =>
                 {
                     b.Navigation("AttributeTemplates");
@@ -634,11 +739,15 @@ namespace WhereHouse.Data.Migrations
 
                     b.Navigation("AttributeValues");
 
+                    b.Navigation("BoundQrCodes");
+
                     b.Navigation("ChildItems");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
                 {
+                    b.Navigation("BoundQrCodes");
+
                     b.Navigation("Children");
 
                     b.Navigation("Items");
@@ -646,6 +755,10 @@ namespace WhereHouse.Data.Migrations
 
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>
                 {
+                    b.Navigation("BoundQrCodes");
+
+                    b.Navigation("CreatedQrCodes");
+
                     b.Navigation("OwnedItems");
 
                     b.Navigation("OwnedLocations");
