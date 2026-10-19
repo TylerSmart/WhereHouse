@@ -199,6 +199,21 @@ public sealed record AdjustItemQuantityRequest(
     decimal? AbsoluteQuantity = null
 );
 
+public sealed record BulkUpdateItemsRequest(
+    [Required, MinLength(1)] IReadOnlyList<Guid> ItemIds,
+    bool UpdateHomeLocation = false,
+    Guid? TargetHomeLocationId = null,
+    bool UpdateCategory = false,
+    Guid? TargetCategoryId = null,
+    IReadOnlyList<string>? AddTags = null,
+    IReadOnlyList<string>? RemoveTags = null
+);
+
+public sealed record BulkUpdateItemsResultDto(
+    int UpdatedCount,
+    IReadOnlyList<ItemDto> UpdatedItems
+);
+
 public static partial class ItemShortCodeGenerator
 {
     public const string Prefix = "ITM";

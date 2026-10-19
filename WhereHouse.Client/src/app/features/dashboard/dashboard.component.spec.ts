@@ -256,6 +256,7 @@ describe('DashboardComponent', () => {
     getItem: ReturnType<typeof vi.fn>;
     createItem: ReturnType<typeof vi.fn>;
     updateItem: ReturnType<typeof vi.fn>;
+    bulkUpdateItems: ReturnType<typeof vi.fn>;
     adjustQuantity: ReturnType<typeof vi.fn>;
     duplicateItem: ReturnType<typeof vi.fn>;
     deleteItem: ReturnType<typeof vi.fn>;
@@ -297,7 +298,7 @@ describe('DashboardComponent', () => {
       getLocations: vi.fn().mockReturnValue(of(mockNodes)),
       createLocation: vi.fn(),
       updateLocation: vi.fn(),
-      moveLocation: vi.fn(),
+      moveLocation: vi.fn().mockReturnValue(of(mockNodes[1])),
       deleteLocation: vi.fn().mockReturnValue(of(undefined)),
     };
 
@@ -313,6 +314,7 @@ describe('DashboardComponent', () => {
       getItem: vi.fn(),
       createItem: vi.fn(),
       updateItem: vi.fn(),
+      bulkUpdateItems: vi.fn().mockReturnValue(of({ updatedCount: 2, updatedItems: [] })),
       adjustQuantity: vi.fn(),
       duplicateItem: vi.fn(),
       deleteItem: vi.fn().mockReturnValue(of(undefined)),
@@ -747,5 +749,95 @@ describe('DashboardComponent', () => {
       }),
     );
     expect(mockActionCenterService.getOverview).toHaveBeenCalled();
+  });
+
+  describe('Phase 10: Responsive UX, Bulk Actions & Tree Drag-and-Drop', () => {
+    it('should switch itemViewMode between grid and table', () => {
+      expect(component.itemViewMode()).toBe('grid');
+      component.setItemViewMode('table');
+      expect(component.itemViewMode()).toBe('table');
+      component.setItemViewMode('grid');
+      expect(component.itemViewMode()).toBe('grid');
+    });
+
+    it('should toggle item selection and update computed counts', () => {
+      expect(component.selectedItemsCount()).toBe(0);
+      expect(component.isItemSelected('itm-1')).toBe(false);
+
+      component.toggleItemSelection('itm-1', true);
+      expect(component.selectedItemsCount()).toBe(1);
+      expect(component.isItemSelected('itm-1')).toBe(true);
+
+      component.toggleItemSelection('itm-1', false);
+      expect(component.selectedItemsCount()).toBe(0);
+      expect(component.isItemSelected('itm-1')).toBe(false);
+    });
+
+    it('should select all and clear all displayed items', () => {
+      component.selectNode('loc-1');
+      expect(component.allDisplayedItemsSelected()).toBe(false);
+
+      component.toggleSelectAllDisplayed();
+      expect(component.allDisplayedItemsSelected()).toBe(true);
+      expect(component.selectedItemsCount()).toBe(1);
+
+      component.clearItemSelection();
+      expect(component.selectedItemsCount()).toBe(0);
+      expect(component.allDisplayedItemsSelected()).toBe(false);
+    });
+
+    it('should execute bulk move and refresh', () => {
+      component.toggleItemSelection('itm-1', true);
+      component.bulkTargetLocationId.set('loc-2');
+
+      component.executeBulkMove();
+
+      expect(mockItemService.bulkUpdateItems).toHaveBeenCalledWith({
+        itemIds: ['itm-1'],
+        updateHomeLocation: true,
+        targetHomeLocationId: 'loc-2',
+      });
+      expect(mockSnackBar.open).toHaveBeenCalledWith(
+        expect.stringContaining('Moved 2 item(s)'),
+        'Close',
+        expect.any(Object),
+      );
+      expect(component.showBulkMoveBar()).toBe(false);
+      expect(component.selectedItemsCount()).toBe(0);
+    });
+
+    it('should execute bulk tag and refresh', () => {
+      component.toggleItemSelection('itm-1', true);
+      component.bulkTagInput.set('Fragile');
+
+      component.executeBulkTag('add');
+
+      expect(mockItemService.bulkUpdateItems).toHaveBeenCalledWith({
+        itemIds: ['itm-1'],
+        addTags: ['Fragile'],
+        removeTags: undefined,
+      });
+      expect(mockSnackBar.open).toHaveBeenCalledWith(
+        expect.stringContaining('Added tag to 2 item(s)'),
+        'Close',
+        expect.any(Object),
+      );
+      expect(component.bulkTagInput()).toBe('');
+      expect(component.showBulkTagBar()).toBe(false);
+    });
+
+    it('should execute drag and drop reparenting via dropNodeOnTarget', () => {
+      component.dropNodeOnTarget('loc-2', 'loc-1');
+
+      expect(mockLocationService.moveLocation).toHaveBeenCalledWith('loc-2', {
+        newParentId: 'loc-1',
+      });
+      expect(mockSnackBar.open).toHaveBeenCalledWith(
+        expect.stringContaining('Moved "Winter Camping Bin" into "Garage"'),
+        'Close',
+        expect.any(Object),
+      );
+      expect(mockLocationService.getTree).toHaveBeenCalled();
+    });
   });
 });

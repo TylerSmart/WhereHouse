@@ -50,6 +50,11 @@ public interface IActionCenterService
         CancellationToken cancellationToken = default
     );
 
+    Task<NotificationDispatchResultDto> ProcessScheduledNotificationsAsync(
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken = default
+    );
+
     Task<IReadOnlyList<NotificationDeliveryLogDto>> GetRecentDeliveriesAsync(
         Guid userId,
         int limit = 30,

@@ -46,5 +46,11 @@ public interface IItemService
         CancellationToken cancellationToken = default
     );
 
+    Task<BulkUpdateItemsResultDto> BulkUpdateItemsAsync(
+        Guid userId,
+        BulkUpdateItemsRequest request,
+        CancellationToken cancellationToken = default
+    );
+
     Task<bool> DeleteItemAsync(Guid userId, Guid id, CancellationToken cancellationToken = default);
 }

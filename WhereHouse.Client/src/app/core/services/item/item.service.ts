@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { apiUrl } from '../../api/api-url';
 import {
   AdjustItemQuantityRequest,
+  BulkUpdateItemsRequest,
+  BulkUpdateItemsResultDto,
   CreateItemRequest,
   ItemDto,
   ItemStatus,
@@ -69,6 +71,10 @@ export class ItemService {
 
   duplicateItem(id: string): Observable<ItemDto> {
     return this.http.post<ItemDto>(apiUrl(`/items/${id}/duplicate`), {});
+  }
+
+  bulkUpdateItems(request: BulkUpdateItemsRequest): Observable<BulkUpdateItemsResultDto> {
+    return this.http.post<BulkUpdateItemsResultDto>(apiUrl('/items/bulk-update'), request);
   }
 
   deleteItem(id: string): Observable<void> {

@@ -665,6 +665,158 @@ public sealed class ItemService(
         return true;
     }
 
+    public async Task<BulkUpdateItemsResultDto> BulkUpdateItemsAsync(
+        Guid userId,
+        BulkUpdateItemsRequest request,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.ItemIds is not { Count: > 0 })
+        {
+            throw new ArgumentException("At least one item ID must be provided.", nameof(request));
+        }
+
+        var distinctIds = request.ItemIds.Distinct().ToList();
+
+        var allLocations = await dbContext
+            .LocationNodes.AsNoTracking()
+            .ToDictionaryAsync(l => l.Id, cancellationToken);
+
+        if (request.UpdateHomeLocation && request.TargetHomeLocationId.HasValue)
+        {
+            if (!allLocations.TryGetValue(request.TargetHomeLocationId.Value, out var homeLoc))
+            {
+                throw new NotFoundException("Target home location not found.");
+            }
+
+            if (!IsLocationAccessible(homeLoc, userId, allLocations))
+            {
+                throw new ForbiddenException();
+            }
+        }
+
+        if (request.UpdateCategory && request.TargetCategoryId.HasValue)
+        {
+            var catExists = await dbContext.Categories.AnyAsync(
+                c => c.Id == request.TargetCategoryId.Value,
+                cancellationToken
+            );
+            if (!catExists)
+            {
+                throw new NotFoundException("Target category not found.");
+            }
+        }
+
+        var items = await dbContext
+            .InventoryItems.Include(i => i.Category)
+            .Include(i => i.HomeLocation)
+            .Include(i => i.ParentItem)
+            .Include(i => i.AttributeValues)
+            .Include(i => i.ChildItems)
+            .Include(i => i.Attachments)
+            .Where(i => distinctIds.Contains(i.Id))
+            .ToListAsync(cancellationToken);
+
+        if (items.Count != distinctIds.Count)
+        {
+            throw new NotFoundException("One or more selected items were not found.");
+        }
+
+        foreach (var item in items)
+        {
+            if (!IsItemAccessible(item, userId, allLocations))
+            {
+                throw new ForbiddenException();
+            }
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var addTags = request
+            .AddTags?.Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var removeTags = request
+            .RemoveTags?.Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var item in items)
+        {
+            if (request.UpdateHomeLocation)
+            {
+                item.HomeLocationId = request.TargetHomeLocationId;
+            }
+
+            if (request.UpdateCategory)
+            {
+                item.CategoryId = request.TargetCategoryId;
+            }
+
+            if (addTags is { Count: > 0 } || removeTags is { Count: > 0 })
+            {
+                var existingTags = string.IsNullOrWhiteSpace(item.Tags)
+                    ? new List<string>()
+                    : item
+                        .Tags.Split(
+                            ',',
+                            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                        )
+                        .ToList();
+
+                if (addTags is { Count: > 0 })
+                {
+                    foreach (var tag in addTags)
+                    {
+                        if (
+                            !existingTags.Any(e =>
+                                string.Equals(e, tag, StringComparison.OrdinalIgnoreCase)
+                            )
+                        )
+                        {
+                            existingTags.Add(tag);
+                        }
+                    }
+                }
+
+                if (removeTags is { Count: > 0 })
+                {
+                    existingTags = existingTags
+                        .Where(e =>
+                            !removeTags.Any(r =>
+                                string.Equals(r, e, StringComparison.OrdinalIgnoreCase)
+                            )
+                        )
+                        .ToList();
+                }
+
+                item.Tags = existingTags.Count > 0 ? string.Join(", ", existingTags) : null;
+            }
+
+            item.LastTouchedAt = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var reloadedItems = await dbContext
+            .InventoryItems.AsNoTracking()
+            .Include(i => i.Category)
+            .Include(i => i.HomeLocation)
+            .Include(i => i.ParentItem)
+            .Include(i => i.AttributeValues)
+            .Include(i => i.ChildItems)
+            .Include(i => i.Attachments)
+            .Where(i => distinctIds.Contains(i.Id))
+            .ToListAsync(cancellationToken);
+
+        var updatedDtos = reloadedItems.Select(i => MapToDto(i, allLocations, userId)).ToList();
+        return new BulkUpdateItemsResultDto(updatedDtos.Count, updatedDtos);
+    }
+
     private static bool IsItemAccessible(
         InventoryItem item,
         Guid userId,

@@ -144,4 +144,23 @@ describe('ItemService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });
+
+  it('should bulk update items', () => {
+    const bulkReq = {
+      itemIds: ['itm-1', 'itm-2'],
+      updateHomeLocation: true,
+      targetHomeLocationId: 'loc-2',
+      addTags: ['workshop'],
+    };
+
+    service.bulkUpdateItems(bulkReq).subscribe((res) => {
+      expect(res.updatedCount).toBe(2);
+      expect(res.updatedItems.length).toBe(2);
+    });
+
+    const req = httpTesting.expectOne(apiUrl('/items/bulk-update'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(bulkReq);
+    req.flush({ updatedCount: 2, updatedItems: [mockItem, { ...mockItem, id: 'itm-2' }] });
+  });
 });

@@ -1,7 +1,9 @@
 import { CurrencyPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -10,12 +12,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryDto } from '../../core/models/category.models';
 import {
   ItemConditions,
   ItemDto,
+  ItemStatus,
   ItemStatuses,
   ItemType,
   ItemTypes,
@@ -108,13 +112,16 @@ const THEME_LABELS: Record<ThemeMode, string> = {
     DatePipe,
     CurrencyPipe,
     NgTemplateOutlet,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatDividerModule,
     MatProgressSpinnerModule,
     MatChipsModule,
@@ -158,6 +165,23 @@ export class DashboardComponent implements OnInit {
   protected readonly sidebarOpen = signal<boolean>(true);
   protected readonly isLoading = signal<boolean>(false);
   protected readonly errorMessage = signal<string | null>(null);
+
+  readonly itemViewMode = signal<'grid' | 'table'>('grid');
+  readonly selectedItemIds = signal<Set<string>>(new Set());
+  readonly selectedItemsCount = computed(() => this.selectedItemIds().size);
+  readonly allDisplayedItemsSelected = computed(() => {
+    const displayed = this.displayedItems();
+    const selected = this.selectedItemIds();
+    return displayed.length > 0 && displayed.every((i) => selected.has(i.id));
+  });
+
+  readonly showBulkMoveBar = signal<boolean>(false);
+  readonly showBulkTagBar = signal<boolean>(false);
+  readonly bulkTargetLocationId = signal<string | null>(null);
+  readonly bulkTagInput = signal<string>('');
+
+  readonly draggedNodeId = signal<string | null>(null);
+  readonly dragOverNodeId = signal<string | null>(null);
 
   protected readonly selectedNode = computed(() => {
     const id = this.selectedNodeId();
@@ -745,6 +769,23 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  getItemStatusName(status: ItemStatus): string {
+    switch (status) {
+      case ItemStatuses.InUse:
+        return 'In Use';
+      case ItemStatuses.LoanedOut:
+        return 'Loaned Out';
+      case ItemStatuses.StagedToSell:
+        return 'Staged (Sell)';
+      case ItemStatuses.StagedToDonate:
+        return 'Staged (Donate)';
+      case ItemStatuses.Archived:
+        return 'Archived';
+      default:
+        return 'In Place';
+    }
+  }
+
   openCheckoutReturnDialog(item: ItemDto, event?: MouseEvent): void {
     event?.stopPropagation();
     const ref = this.dialog.open(CheckoutReturnDialogComponent, {
@@ -1037,6 +1078,234 @@ export class DashboardComponent implements OnInit {
 
     ref.afterClosed().subscribe(() => {
       this.refreshAll();
+    });
+  }
+
+  setItemViewMode(mode: 'grid' | 'table'): void {
+    this.itemViewMode.set(mode);
+  }
+
+  toggleItemSelection(id: string, eventOrChecked?: Event | boolean): void {
+    if (
+      eventOrChecked &&
+      typeof eventOrChecked === 'object' &&
+      'stopPropagation' in eventOrChecked
+    ) {
+      eventOrChecked.stopPropagation();
+    }
+    const current = new Set(this.selectedItemIds());
+    if (typeof eventOrChecked === 'boolean') {
+      if (eventOrChecked) {
+        current.add(id);
+      } else {
+        current.delete(id);
+      }
+    } else {
+      if (current.has(id)) {
+        current.delete(id);
+      } else {
+        current.add(id);
+      }
+    }
+    this.selectedItemIds.set(current);
+  }
+
+  toggleSelectAllDisplayed(): void {
+    const displayed = this.displayedItems();
+    if (displayed.length === 0) {
+      return;
+    }
+    const current = new Set(this.selectedItemIds());
+    const allSelected = displayed.every((i) => current.has(i.id));
+    if (allSelected) {
+      for (const i of displayed) {
+        current.delete(i.id);
+      }
+    } else {
+      for (const i of displayed) {
+        current.add(i.id);
+      }
+    }
+    this.selectedItemIds.set(current);
+  }
+
+  clearItemSelection(): void {
+    this.selectedItemIds.set(new Set());
+    this.showBulkMoveBar.set(false);
+    this.showBulkTagBar.set(false);
+  }
+
+  isItemSelected(id: string): boolean {
+    return this.selectedItemIds().has(id);
+  }
+
+  toggleBulkMoveBar(): void {
+    this.showBulkMoveBar.update((v) => !v);
+    this.showBulkTagBar.set(false);
+  }
+
+  toggleBulkTagBar(): void {
+    this.showBulkTagBar.update((v) => !v);
+    this.showBulkMoveBar.set(false);
+  }
+
+  executeBulkMove(): void {
+    const targetLocId = this.bulkTargetLocationId();
+    const itemIds = Array.from(this.selectedItemIds());
+    if (itemIds.length === 0) {
+      return;
+    }
+    this.itemService
+      .bulkUpdateItems({
+        itemIds,
+        updateHomeLocation: true,
+        targetHomeLocationId: targetLocId || null,
+      })
+      .subscribe({
+        next: (res) => {
+          this.snackBar.open(`Moved ${res.updatedCount} item(s) successfully.`, 'Close', {
+            duration: 3000,
+          });
+          this.showBulkMoveBar.set(false);
+          this.clearItemSelection();
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to bulk move items.', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+  }
+
+  executeBulkTag(mode: 'add' | 'remove'): void {
+    const tag = this.bulkTagInput().trim();
+    if (!tag) {
+      return;
+    }
+    const itemIds = Array.from(this.selectedItemIds());
+    if (itemIds.length === 0) {
+      return;
+    }
+    this.itemService
+      .bulkUpdateItems({
+        itemIds,
+        addTags: mode === 'add' ? [tag] : undefined,
+        removeTags: mode === 'remove' ? [tag] : undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.snackBar.open(
+            `${mode === 'add' ? 'Added tag to' : 'Removed tag from'} ${res.updatedCount} item(s).`,
+            'Close',
+            { duration: 3000 },
+          );
+          this.bulkTagInput.set('');
+          this.showBulkTagBar.set(false);
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to update tags.', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+  }
+
+  bulkPrintSelectedItemLabels(): void {
+    const selected = this.items().filter((i) => this.selectedItemIds().has(i.id));
+    if (selected.length === 0) {
+      return;
+    }
+    const labels: PrintableLabelItem[] = selected.map((item) => ({
+      code: item.shortCode,
+      title: item.name,
+      subtitle: item.homeLocationFullPath || item.brand || null,
+      badgeText: item.unit ? `${item.currentQuantity} ${item.unit}` : 'ITEM',
+      primaryColor: null,
+      accentColor: null,
+    }));
+    this.openLabelGeneratorDialog(labels);
+  }
+
+  bulkAddSelectedToCart(): void {
+    const selected = this.items().filter((i) => this.selectedItemIds().has(i.id));
+    let addedCount = 0;
+    for (const item of selected) {
+      if (!this.checkoutLoadoutService.isInCart(item.id)) {
+        this.checkoutLoadoutService.addToCart(item);
+        addedCount++;
+      }
+    }
+    this.snackBar.open(`Added ${addedCount} item(s) to Project Cart.`, 'Close', {
+      duration: 3000,
+    });
+  }
+
+  onTreeNodeDragStart(event: DragEvent, node: LocationTreeNodeDto): void {
+    this.draggedNodeId.set(node.id);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', node.id);
+    }
+  }
+
+  onTreeNodeDragOver(event: DragEvent, node: LocationTreeNodeDto | null): void {
+    const dragged = this.draggedNodeId();
+    if (!dragged) {
+      return;
+    }
+    if (node && node.id === dragged) {
+      return;
+    }
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.dragOverNodeId.set(node ? node.id : 'root');
+  }
+
+  onTreeNodeDragLeave(_event: DragEvent, node: LocationTreeNodeDto | null): void {
+    const targetId = node ? node.id : 'root';
+    if (this.dragOverNodeId() === targetId) {
+      this.dragOverNodeId.set(null);
+    }
+  }
+
+  onTreeNodeDrop(event: DragEvent, targetParentId: string | null): void {
+    event.preventDefault();
+    const dragged = this.draggedNodeId();
+    this.dragOverNodeId.set(null);
+    this.draggedNodeId.set(null);
+
+    if (!dragged || dragged === targetParentId) {
+      return;
+    }
+
+    this.dropNodeOnTarget(dragged, targetParentId);
+  }
+
+  onTreeNodeDragEnd(): void {
+    this.draggedNodeId.set(null);
+    this.dragOverNodeId.set(null);
+  }
+
+  dropNodeOnTarget(draggedId: string, targetParentId: string | null): void {
+    this.locationService.moveLocation(draggedId, { newParentId: targetParentId }).subscribe({
+      next: (moved) => {
+        const targetName = targetParentId
+          ? (this.allNodes().find((n) => n.id === targetParentId)?.name ?? 'target')
+          : 'Root';
+        this.snackBar.open(`Moved "${moved.name}" into "${targetName}".`, 'Close', {
+          duration: 3000,
+        });
+        this.refreshAll();
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.detail || 'Failed to move location.', 'Close', {
+          duration: 4000,
+        });
+      },
     });
   }
 

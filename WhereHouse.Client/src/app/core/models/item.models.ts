@@ -206,3 +206,18 @@ export interface AdjustItemQuantityRequest {
   delta?: number | null;
   absoluteQuantity?: number | null;
 }
+
+export interface BulkUpdateItemsRequest {
+  itemIds: string[];
+  updateHomeLocation?: boolean;
+  targetHomeLocationId?: string | null;
+  updateCategory?: boolean;
+  targetCategoryId?: string | null;
+  addTags?: string[] | null;
+  removeTags?: string[] | null;
+}
+
+export interface BulkUpdateItemsResultDto {
+  updatedCount: number;
+  updatedItems: ItemDto[];
+}

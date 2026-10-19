@@ -1,7 +1,7 @@
 # Phase 10: Responsive UX, Split-Pane Data Table, Bulk Actions, Tree Drag-and-Drop & Scheduled Digest Automation
 
 > **Branch:** `feature/phase-10-responsive-ux-bulk-actions-and-scheduled-digests`
-> **Status:** [ ] Not Started
+> **Status:** [x] Completed
 > **PRD Reference:** `docs/prd.md` — Sections 4.1.2 (`Container Relocation Inheritance`), 4.3.3 (`Built-In Label Sheet Generator`), 4.8.2 (`"Secret / Gift Mode" Privacy`), 4.8.3 (`Scheduled Weekly Household Digest & Real-Time Triggers`), and Section 5 (`UX & Responsive Design Principles`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -214,7 +214,7 @@ This phase closes out all remaining UX, bulk workflow, and background automation
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core, Data Services & Background Worker (`WhereHouse.Core`, `WhereHouse.Data`, `WhereHouse.API`)**
+- [x] **Task 1: Backend Core, Data Services & Background Worker (`WhereHouse.Core`, `WhereHouse.Data`, `WhereHouse.API`)**
   - Update `WhereHouse.Core/Items/ItemModels.cs` and `WhereHouse.Core/Items/IItemService.cs` with `BulkUpdateItemsRequest`, `BulkUpdateItemsResultDto`, and `BulkUpdateItemsAsync`.
   - Implement `BulkUpdateItemsAsync` in `WhereHouse.Data/Services/ItemService.cs` with `IsPrivate` ownership enforcement and `LastTouchedAt` updates.
   - Update `WhereHouse.Core/ActionCenter/IActionCenterService.cs` and `WhereHouse.Data/Services/ActionCenterService.cs` with `ProcessScheduledNotificationsAsync(DateTimeOffset utcNow, CancellationToken cancellationToken = default)`.
@@ -225,7 +225,7 @@ This phase closes out all remaining UX, bulk workflow, and background automation
     dotnet test --project Tests/WhereHouse.Infrastructure.UnitTests/WhereHouse.Infrastructure.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Endpoints & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Endpoints & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Add `POST /api/items/bulk-update` to `WhereHouse.API/Controllers/ItemsController.cs`.
   - Add `POST /api/action-center/digest/process-scheduled` to `WhereHouse.API/Controllers/ActionCenterController.cs`.
   - Create `Tests/WhereHouse.API.IntegrationTests/Phase10BulkActionsAndScheduledDigestsIntegrationTests.cs` covering:
@@ -237,7 +237,7 @@ This phase closes out all remaining UX, bulk workflow, and background automation
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Update `src/app/core/models/item.models.ts` and `src/app/core/services/item/item.service.ts` (& `.spec.ts`) with `bulkUpdateItems`.
   - Update `DashboardComponent` (`dashboard.component.ts`, `.html`, `.scss`, `.spec.ts`) with:
     - Grid vs. Table view mode switcher (`itemViewMode`) and sortable/selectable Data Table.
@@ -251,7 +251,7 @@ This phase closes out all remaining UX, bulk workflow, and background automation
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

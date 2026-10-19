@@ -243,4 +243,51 @@ public sealed class ItemsController(IItemService itemService) : ControllerBase
             );
         }
     }
+
+    [HttpPost("bulk-update")]
+    [ProducesResponseType(typeof(BulkUpdateItemsResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> BulkUpdateItems(
+        [FromBody] BulkUpdateItemsRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var result = await itemService.BulkUpdateItemsAsync(
+                CurrentUserId,
+                request,
+                cancellationToken
+            );
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Bad Request",
+                    Detail = ex.Message,
+                }
+            );
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Not Found",
+                    Detail = ex.Message,
+                }
+            );
+        }
+    }
 }
