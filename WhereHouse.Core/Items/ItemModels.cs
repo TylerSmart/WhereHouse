@@ -94,7 +94,9 @@ public sealed record ItemDto(
     IReadOnlyList<ItemChildSummaryDto> ChildItems,
     DateTimeOffset LastTouchedAt,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt
+    DateTimeOffset ModifiedAt,
+    int AttachmentCount = 0,
+    Guid? PrimaryPhotoAttachmentId = null
 );
 
 public sealed record UpsertItemAttributeValueRequest(

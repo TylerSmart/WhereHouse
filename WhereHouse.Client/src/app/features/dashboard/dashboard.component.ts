@@ -33,6 +33,7 @@ import { LocationService } from '../../core/services/location/location.service';
 import { ThemeMode, ThemeService } from '../../core/services/theme/theme.service';
 import { CategoryManagerDialogComponent } from './category-manager-dialog/category-manager-dialog.component';
 import { ConfirmDialogComponent } from './confirm-delete-dialog/confirm-delete-dialog.component';
+import { ItemAttachmentsDialogComponent } from './item-attachments-dialog/item-attachments-dialog.component';
 import {
   ItemDialogComponent,
   ItemDialogData,
@@ -47,6 +48,10 @@ import {
   MoveLocationDialogComponent,
   MoveLocationDialogData,
 } from './move-location-dialog/move-location-dialog.component';
+import {
+  SmartSearchDialogComponent,
+  SmartSearchResultAction,
+} from './smart-search-dialog/smart-search-dialog.component';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -61,6 +66,9 @@ const THEME_LABELS: Record<ThemeMode, string> = {
 };
 
 @Component({
+  host: {
+    '(window:keydown)': 'onGlobalKeydown($event)',
+  },
   imports: [
     NgTemplateOutlet,
     MatCardModule,
@@ -604,6 +612,74 @@ export class DashboardComponent implements OnInit {
       default:
         return 'Unique';
     }
+  }
+
+  onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.openSmartSearchDialog(this.searchQuery());
+    }
+  }
+
+  openSmartSearchDialog(initialQuery?: string): void {
+    const dialogRef = this.dialog.open<
+      SmartSearchDialogComponent,
+      {
+        availableLocations: LocationNodeDto[];
+        availableCategories: CategoryDto[];
+        initialQuery?: string;
+      },
+      SmartSearchResultAction
+    >(SmartSearchDialogComponent, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: {
+        availableLocations: this.allNodes(),
+        availableCategories: this.categories(),
+        initialQuery,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) {
+        return;
+      }
+
+      if (result.action === 'selectLocation' && result.locationId) {
+        this.selectLocationAndExpand(result.locationId);
+      } else if (result.action === 'editItem' && result.item) {
+        this.openEditItemDialog(result.item);
+      } else if (result.action === 'openAttachments' && result.item) {
+        this.openItemAttachmentsDialog(result.item);
+      }
+    });
+  }
+
+  selectLocationAndExpand(locationId: string): void {
+    const node = this.allNodes().find((n) => n.id === locationId);
+    if (node) {
+      this.expandedIds.update((set) => {
+        const next = new Set(set);
+        for (const b of node.breadcrumbs) {
+          next.add(b.id);
+        }
+        next.add(locationId);
+        return next;
+      });
+    }
+    this.selectedNodeId.set(locationId);
+  }
+
+  openItemAttachmentsDialog(item: ItemDto): void {
+    const dialogRef = this.dialog.open(ItemAttachmentsDialogComponent, {
+      width: '680px',
+      maxWidth: '95vw',
+      data: { item },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
   }
 
   onLogout(): void {

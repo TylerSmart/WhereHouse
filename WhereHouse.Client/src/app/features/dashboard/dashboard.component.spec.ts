@@ -446,4 +446,32 @@ describe('DashboardComponent', () => {
     expect(mockItemService.deleteItem).toHaveBeenCalledWith('itm-1');
     expect(mockSnackBar.open).toHaveBeenCalled();
   });
+
+  it('should open smart search dialog on Ctrl+K keydown', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      ctrlKey: true,
+      cancelable: true,
+    });
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+    component.onGlobalKeydown(event);
+
+    expect(preventDefaultSpy).toHaveBeenCalled();
+    expect(mockDialog.open).toHaveBeenCalled();
+  });
+
+  it('should open item attachments dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openItemAttachmentsDialog(mockItems[0]);
+
+    expect(mockDialog.open).toHaveBeenCalled();
+  });
 });

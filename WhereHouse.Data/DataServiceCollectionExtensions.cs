@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WhereHouse.Core.Attachments;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Categories;
 using WhereHouse.Core.Items;
 using WhereHouse.Core.Locations;
+using WhereHouse.Core.Search;
 using WhereHouse.Data.Auditing;
 using WhereHouse.Data.Services;
 
@@ -25,6 +27,8 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<ILocationService, LocationService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IItemService, ItemService>();
+        services.AddScoped<IAttachmentService, AttachmentService>();
+        services.AddScoped<ISearchService, SearchService>();
 
         if (
             string.Equals(

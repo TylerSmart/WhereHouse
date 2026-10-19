@@ -19,6 +19,8 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 
     public DbSet<ItemAttributeValue> ItemAttributeValues => Set<ItemAttributeValue>();
 
+    public DbSet<ItemAttachment> ItemAttachments => Set<ItemAttachment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(WhereHouseDbContext).Assembly);

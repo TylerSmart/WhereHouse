@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WhereHouse.Core.Authentication;
+using WhereHouse.Core.Storage;
 using WhereHouse.Infrastructure.Authentication;
+using WhereHouse.Infrastructure.Storage;
 
 namespace WhereHouse.Infrastructure;
 
@@ -20,6 +22,11 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.Configure<OidcOptions>(configuration.GetSection(OidcOptions.SectionName));
         services.AddHttpClient<IOidcService, OidcService>();
+
+        services.Configure<FileStorageOptions>(
+            configuration.GetSection(FileStorageOptions.SectionName)
+        );
+        services.AddSingleton<IFileStorageService, LocalDiskFileStorageService>();
 
         return services;
     }

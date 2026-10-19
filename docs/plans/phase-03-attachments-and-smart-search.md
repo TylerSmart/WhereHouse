@@ -1,7 +1,7 @@
 # Phase 03: Document & Photo Attachment Vault + Global Smart Search (`Cmd/Ctrl + K`)
 
 > **Branch:** `feature/phase-03-attachments-and-smart-search`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/prd.md` — Sections 4.6.1 (`Multi-File Attachment Vault`), 4.7.1 (`Graveyard Search Behavior`), 4.8.1 (`Smart Search & Deep Filtering`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -577,7 +577,7 @@ public sealed class ItemAttachment : IAuditable
 
 ## 6. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core, Infrastructure File Storage & Data Layer**
+- [x] **Task 1: Backend Core, Infrastructure File Storage & Data Layer**
   - Create `WhereHouse.Core/Storage/FileStorageModels.cs` and `WhereHouse.Core/Storage/IFileStorageService.cs`.
   - Create `WhereHouse.Core/Attachments/AttachmentModels.cs` and `WhereHouse.Core/Attachments/IAttachmentService.cs`.
   - Create `WhereHouse.Core/Search/SearchModels.cs` and `WhereHouse.Core/Search/ISearchService.cs`.
@@ -598,7 +598,7 @@ public sealed class ItemAttachment : IAuditable
     dotnet test --project Tests/WhereHouse.Infrastructure.UnitTests/WhereHouse.Infrastructure.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests**
+- [x] **Task 2: API Controllers & Integration Tests**
   - Create `WhereHouse.API/Controllers/AttachmentsController.cs` and `WhereHouse.API/Controllers/SearchController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/WhereHouseWebApplicationFactory.cs` to configure an isolated temporary directory for `FileStorage:RootPath`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/search"` and `"/attachments"`.
@@ -613,7 +613,7 @@ public sealed class ItemAttachment : IAuditable
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests**
+- [x] **Task 3: Angular Client & Unit Tests**
   - Create `src/app/core/models/attachment.models.ts` and `src/app/core/models/search.models.ts`, and update `src/app/core/models/item.models.ts`.
   - Create `AttachmentService` (`attachment.service.ts` & `.spec.ts`) and `SearchService` (`search.service.ts` & `.spec.ts`).
   - Create `ItemAttachmentsDialogComponent` (`.ts` & `.spec.ts`) and `SmartSearchDialogComponent` (`.ts` & `.spec.ts`).
@@ -625,7 +625,7 @@ public sealed class ItemAttachment : IAuditable
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

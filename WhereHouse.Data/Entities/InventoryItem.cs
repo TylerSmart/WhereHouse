@@ -71,6 +71,8 @@ public sealed class InventoryItem : IAuditable
     public ICollection<ItemAttributeValue> AttributeValues { get; set; } =
         new List<ItemAttributeValue>();
 
+    public ICollection<ItemAttachment> Attachments { get; set; } = new List<ItemAttachment>();
+
     public DateTimeOffset LastTouchedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

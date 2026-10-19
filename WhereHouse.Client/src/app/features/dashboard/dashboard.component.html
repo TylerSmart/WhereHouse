@@ -31,6 +31,18 @@
           </button>
         }
       </mat-form-field>
+      <button
+        type="button"
+        mat-stroked-button
+        class="smart-search-shortcut-btn"
+        (click)="openSmartSearchDialog(searchQuery())"
+        matTooltip="Open Command Palette &amp; Deep Filter (Ctrl+K)"
+        aria-label="Smart Search (Ctrl+K)"
+      >
+        <mat-icon>tune</mat-icon>
+        <span class="desktop-only">Smart Search</span>
+        <kbd class="kbd-pill">Ctrl+K</kbd>
+      </button>
     </div>
 
     <div class="top-actions">
@@ -595,6 +607,24 @@
                           }
                           <button
                             mat-icon-button
+                            class="attachment-trigger-btn"
+                            (click)="openItemAttachmentsDialog(item); $event.stopPropagation()"
+                            [matTooltip]="
+                              'Attachments & Manuals (' + (item.attachmentCount ?? 0) + ')'
+                            "
+                            [attr.aria-label]="'Attachments for ' + item.name"
+                          >
+                            <mat-icon [class.has-attachments]="(item.attachmentCount ?? 0) > 0"
+                              >attach_file</mat-icon
+                            >
+                            @if ((item.attachmentCount ?? 0) > 0) {
+                              <span class="attachment-count-bubble">{{
+                                item.attachmentCount
+                              }}</span>
+                            }
+                          </button>
+                          <button
+                            mat-icon-button
                             [matMenuTriggerFor]="itemMenu"
                             (click)="$event.stopPropagation()"
                             [attr.aria-label]="'Actions for ' + item.name"
@@ -605,6 +635,12 @@
                             <button mat-menu-item (click)="openEditItemDialog(item)">
                               <mat-icon>edit</mat-icon>
                               <span>Edit</span>
+                            </button>
+                            <button mat-menu-item (click)="openItemAttachmentsDialog(item)">
+                              <mat-icon>attach_file</mat-icon>
+                              <span
+                                >Attachments &amp; Manuals ({{ item.attachmentCount ?? 0 }})</span
+                              >
                             </button>
                             <button mat-menu-item (click)="openDuplicateItemDialog(item)">
                               <mat-icon>content_copy</mat-icon>

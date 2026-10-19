@@ -268,6 +268,71 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("InventoryItems", (string)null);
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.ItemAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AttachmentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsPrimaryPhoto")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("StorageRelativePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("ItemAttachments", (string)null);
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.ItemAttributeValue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -506,6 +571,25 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("ParentItem");
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.ItemAttachment", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
+                        .WithMany("Attachments")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WhereHouse.Data.Entities.User", "UploadedByUser")
+                        .WithMany("UploadedAttachments")
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("UploadedByUser");
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.ItemAttributeValue", b =>
                 {
                     b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
@@ -546,6 +630,8 @@ namespace WhereHouse.Data.Migrations
 
             modelBuilder.Entity("WhereHouse.Data.Entities.InventoryItem", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("AttributeValues");
 
                     b.Navigation("ChildItems");
@@ -563,6 +649,8 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("OwnedItems");
 
                     b.Navigation("OwnedLocations");
+
+                    b.Navigation("UploadedAttachments");
                 });
 #pragma warning restore 612, 618
         }

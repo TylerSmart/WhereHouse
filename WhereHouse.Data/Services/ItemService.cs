@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using WhereHouse.Core.Exceptions;
 using WhereHouse.Core.Items;
+using WhereHouse.Core.Storage;
 using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data.Services;
 
-public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
+public sealed class ItemService(
+    WhereHouseDbContext dbContext,
+    IFileStorageService fileStorageService
+) : IItemService
 {
     public async Task<IReadOnlyList<ItemDto>> GetItemsAsync(
         Guid userId,
@@ -31,6 +35,7 @@ public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
             .Include(i => i.ParentItem)
             .Include(i => i.AttributeValues)
             .Include(i => i.ChildItems)
+            .Include(i => i.Attachments)
             .AsQueryable();
 
         if (categoryId.HasValue)
@@ -127,6 +132,7 @@ public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
             .Include(i => i.ParentItem)
             .Include(i => i.AttributeValues)
             .Include(i => i.ChildItems)
+            .Include(i => i.Attachments)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
         if (item is null)
@@ -615,6 +621,15 @@ public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
             );
         }
 
+        var attachments = await dbContext
+            .ItemAttachments.Where(a => a.ItemId == id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var att in attachments)
+        {
+            await fileStorageService.DeleteFileAsync(att.StorageRelativePath, cancellationToken);
+        }
+
         dbContext.InventoryItems.Remove(item);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -832,6 +847,12 @@ public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
             ))
             .ToList();
 
+        var primaryPhoto =
+            item.Attachments.FirstOrDefault(a => a.IsPrimaryPhoto)?.Id
+            ?? item.Attachments.FirstOrDefault(a =>
+                a.AttachmentType == Core.Attachments.AttachmentType.Photo
+            )?.Id;
+
         return new ItemDto(
             item.Id,
             item.ShortCode,
@@ -872,7 +893,9 @@ public sealed class ItemService(WhereHouseDbContext dbContext) : IItemService
             childSummaries,
             item.LastTouchedAt,
             item.CreatedAt,
-            item.ModifiedAt
+            item.ModifiedAt,
+            item.Attachments.Count,
+            primaryPhoto
         );
     }
 }
