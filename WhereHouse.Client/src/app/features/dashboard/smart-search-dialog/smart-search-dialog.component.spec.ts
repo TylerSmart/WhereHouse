@@ -2,9 +2,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { ItemConditions, ItemDto, ItemStatuses, ItemTypes } from '../../../core/models/item.models';
 import { SmartSearchResponseDto } from '../../../core/models/search.models';
+import { LifecycleService } from '../../../core/services/lifecycle/lifecycle.service';
 import { SearchService } from '../../../core/services/search/search.service';
 import { SmartSearchDialogComponent, SmartSearchDialogData } from './smart-search-dialog.component';
 
@@ -14,8 +16,14 @@ describe('SmartSearchDialogComponent', () => {
   let mockSearchService: {
     search: ReturnType<typeof vi.fn>;
   };
+  let mockLifecycleService: {
+    restoreArchivedItem: ReturnType<typeof vi.fn>;
+  };
   let mockDialogRef: {
     close: ReturnType<typeof vi.fn>;
+  };
+  let mockSnackBar: {
+    open: ReturnType<typeof vi.fn>;
   };
 
   const mockItem: ItemDto = {
@@ -97,8 +105,14 @@ describe('SmartSearchDialogComponent', () => {
     mockSearchService = {
       search: vi.fn().mockReturnValue(of(mockResponse)),
     };
+    mockLifecycleService = {
+      restoreArchivedItem: vi.fn().mockReturnValue(of(mockItem)),
+    };
     mockDialogRef = {
       close: vi.fn(),
+    };
+    mockSnackBar = {
+      open: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -107,6 +121,8 @@ describe('SmartSearchDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: dialogData },
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: SearchService, useValue: mockSearchService },
+        { provide: LifecycleService, useValue: mockLifecycleService },
+        { provide: MatSnackBar, useValue: mockSnackBar },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -145,5 +161,18 @@ describe('SmartSearchDialogComponent', () => {
       action: 'openAttachments',
       item: mockItem,
     });
+  });
+
+  it('should restore archived item and re-execute search', () => {
+    component.restoreItem(mockItem);
+    expect(mockLifecycleService.restoreArchivedItem).toHaveBeenCalledWith('itm-1');
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Restored Cordless Drill to Home Bin!',
+      'Close',
+      {
+        duration: 3000,
+      },
+    );
+    expect(mockSearchService.search).toHaveBeenCalledTimes(2);
   });
 });

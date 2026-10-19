@@ -58,6 +58,12 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.Property(i => i.EstimatedReplacementValue).HasPrecision(18, 2);
 
+        builder.Property(i => i.StagingTargetPrice).HasPrecision(18, 2);
+        builder.Property(i => i.StagingListingNotes).HasMaxLength(1000);
+        builder.Property(i => i.DispositionNote).HasMaxLength(1000);
+        builder.Property(i => i.SalePrice).HasPrecision(18, 2);
+        builder.Property(i => i.ArchivedByUsername).HasMaxLength(150);
+
         builder.HasIndex(i => i.ShortCode).IsUnique();
 
         builder.HasIndex(i => i.HomeLocationId);
@@ -74,6 +80,8 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.HasIndex(i => i.ItemType);
         builder.HasIndex(i => i.BarcodeNumber);
+        builder.HasIndex(i => i.DispositionReason);
+        builder.HasIndex(i => i.LastTouchedAt);
 
         builder
             .HasOne(i => i.HomeLocation)

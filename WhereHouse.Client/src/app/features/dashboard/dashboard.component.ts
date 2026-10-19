@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -30,6 +30,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { CategoryService } from '../../core/services/category/category.service';
 import { ItemService } from '../../core/services/item/item.service';
 import { LocationService } from '../../core/services/location/location.service';
+import { LifecycleService } from '../../core/services/lifecycle/lifecycle.service';
 import { ThemeMode, ThemeService } from '../../core/services/theme/theme.service';
 import { CategoryManagerDialogComponent } from './category-manager-dialog/category-manager-dialog.component';
 import { ConfirmDialogComponent } from './confirm-delete-dialog/confirm-delete-dialog.component';
@@ -64,6 +65,14 @@ import { ImportExportDialogComponent } from './import-export-dialog/import-expor
 import { CheckoutLoadoutService } from '../../core/services/checkout-loadout/checkout-loadout.service';
 import { CheckoutReturnDialogComponent } from './checkout-return-dialog/checkout-return-dialog.component';
 import { LoadoutsDialogComponent } from './loadouts-dialog/loadouts-dialog.component';
+import {
+  DeclutterGraveyardDialogComponent,
+  DeclutterGraveyardDialogData,
+} from './declutter-graveyard-dialog/declutter-graveyard-dialog.component';
+import {
+  StageArchiveDialogComponent,
+  StageArchiveDialogData,
+} from './stage-archive-dialog/stage-archive-dialog.component';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -83,6 +92,7 @@ const THEME_LABELS: Record<ThemeMode, string> = {
   },
   imports: [
     DatePipe,
+    CurrencyPipe,
     NgTemplateOutlet,
     MatCardModule,
     MatButtonModule,
@@ -105,6 +115,7 @@ export class DashboardComponent implements OnInit {
   private readonly locationService = inject(LocationService);
   private readonly categoryService = inject(CategoryService);
   private readonly itemService = inject(ItemService);
+  private readonly lifecycleService = inject(LifecycleService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
@@ -900,6 +911,47 @@ export class DashboardComponent implements OnInit {
       accentColor: null,
     };
     this.openLabelGeneratorDialog([label]);
+  }
+
+  openDeclutterGraveyardDialog(initialTab?: 'staged' | 'dust' | 'graveyard'): void {
+    const dialogRef = this.dialog.open(DeclutterGraveyardDialogComponent, {
+      width: '900px',
+      maxWidth: '96vw',
+      maxHeight: '90vh',
+      data: { initialTab } as DeclutterGraveyardDialogData,
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
+  }
+
+  openStageArchiveDialog(item: ItemDto, initialMode: 'stage' | 'archive'): void {
+    const dialogRef = this.dialog.open(StageArchiveDialogComponent, {
+      width: '560px',
+      maxWidth: '96vw',
+      data: { item, initialMode } as StageArchiveDialogData,
+    });
+
+    dialogRef.afterClosed().subscribe((changed) => {
+      if (changed) {
+        this.refreshAll();
+      }
+    });
+  }
+
+  unstageItem(item: ItemDto): void {
+    this.lifecycleService.unstageItem(item.id).subscribe({
+      next: (updated) => {
+        this.snackBar.open(`Unstaged "${updated.name}"`, 'Close', { duration: 3000 });
+        this.refreshAll();
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.detail || 'Failed to unstage item', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
   }
 
   onLogout(): void {

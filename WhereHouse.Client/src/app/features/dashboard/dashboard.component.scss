@@ -1012,6 +1012,58 @@
   }
 }
 
+.staged-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--mat-sys-secondary-container, #e8def8);
+  color: var(--mat-sys-on-secondary-container, #1d192b);
+  border-left: 3px solid var(--mat-sys-secondary, #625b71);
+  font-size: 0.82rem;
+
+  .staged-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--mat-sys-secondary, #625b71);
+  }
+
+  .staged-banner-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    line-height: 1.25;
+
+    .staged-title {
+      font-weight: 600;
+    }
+
+    .staged-sub {
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+  }
+
+  &.donate {
+    background: #e0f2f1;
+    color: #004d40;
+    border-left-color: #00796b;
+
+    .staged-icon {
+      color: #00796b;
+    }
+  }
+}
+
+.declutter-btn {
+  mat-icon {
+    color: var(--mat-sys-tertiary, #7d5260);
+  }
+}
+
 .footer-actions-group {
   display: flex;
   align-items: center;

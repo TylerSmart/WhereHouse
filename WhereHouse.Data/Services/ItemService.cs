@@ -53,6 +53,10 @@ public sealed class ItemService(
         {
             query = query.Where(i => i.Status == status.Value);
         }
+        else
+        {
+            query = query.Where(i => i.Status != ItemStatus.Archived);
+        }
 
         var itemsList = await query.ToListAsync(cancellationToken);
 
@@ -936,7 +940,16 @@ public sealed class ItemService(
             item.CheckoutDueAt,
             isOverdueLoan,
             item.ActiveLoadoutId,
-            item.ActiveLoadoutName
+            item.ActiveLoadoutName,
+            item.StagingTargetPrice,
+            item.StagingListingNotes,
+            item.StagedAt,
+            item.DispositionReason,
+            item.DispositionNote,
+            item.SalePrice,
+            item.ArchivedAt,
+            item.ArchivedByUserId,
+            item.ArchivedByUsername
         );
     }
 }

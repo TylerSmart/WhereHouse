@@ -7,6 +7,7 @@ using WhereHouse.Core.Categories;
 using WhereHouse.Core.Checkouts;
 using WhereHouse.Core.Intake;
 using WhereHouse.Core.Items;
+using WhereHouse.Core.Lifecycle;
 using WhereHouse.Core.Loadouts;
 using WhereHouse.Core.Locations;
 using WhereHouse.Core.Portability;
@@ -41,6 +42,7 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<IDataPortabilityService, DataPortabilityService>();
         services.AddScoped<ICheckoutService, CheckoutService>();
         services.AddScoped<ILoadoutService, LoadoutService>();
+        services.AddScoped<ILifecycleService, LifecycleService>();
 
         if (
             string.Equals(

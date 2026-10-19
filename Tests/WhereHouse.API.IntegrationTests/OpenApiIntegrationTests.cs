@@ -44,6 +44,7 @@ public sealed class OpenApiIntegrationTests
         StringAssert.Contains(content, "/portability");
         StringAssert.Contains(content, "/checkouts");
         StringAssert.Contains(content, "/loadouts");
+        StringAssert.Contains(content, "/lifecycle");
         StringAssert.Contains(content, "/auth");
         StringAssert.Contains(content, "securitySchemes");
         StringAssert.Contains(content, "Bearer");
