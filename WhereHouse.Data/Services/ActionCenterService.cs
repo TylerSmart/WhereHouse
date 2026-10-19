@@ -719,6 +719,165 @@ public sealed class ActionCenterService(
         );
     }
 
+    public async Task<NotificationDispatchResultDto> ProcessScheduledNotificationsAsync(
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var allEnabledChannels = await dbContext
+            .NotificationChannels.Where(c => c.IsEnabled)
+            .ToListAsync(cancellationToken);
+
+        var cooldownCutoff = utcNow.AddHours(-20);
+        var eligibleChannels = allEnabledChannels
+            .Where(c => !c.LastTriggeredAt.HasValue || c.LastTriggeredAt.Value <= cooldownCutoff)
+            .ToList();
+
+        var deliveries = new List<NotificationDeliveryLogDto>();
+        var successCount = 0;
+        var failureCount = 0;
+        var dispatchedCount = 0;
+        var previewSubject = string.Empty;
+        var previewBody = string.Empty;
+
+        foreach (var channel in eligibleChannels)
+        {
+            var isWeeklyScheduleMatch =
+                channel.EnableWeeklyDigest
+                && channel.DigestDayOfWeek == utcNow.DayOfWeek
+                && channel.DigestHourUtc == utcNow.Hour;
+
+            var overview = await GetOverviewInternalAsync(
+                channel.IsSharedHouseholdChannel ? null : channel.OwnerId,
+                30,
+                cancellationToken
+            );
+
+            NotificationEventType eventType;
+            string subject;
+
+            if (isWeeklyScheduleMatch && overview.TotalAlertsCount > 0)
+            {
+                eventType = NotificationEventType.WeeklyDigest;
+                subject = $"WhereHouse — Household Digest ({utcNow:MMM d, yyyy})";
+            }
+            else if (!isWeeklyScheduleMatch)
+            {
+                if (channel.NotifyOnOverdueLoans && overview.OverdueLoansCount > 0)
+                {
+                    eventType = NotificationEventType.OverdueLoanAlert;
+                    subject = $"WhereHouse Alert — Overdue Loans ({overview.OverdueLoansCount})";
+                }
+                else if (channel.NotifyOnMaintenanceDue && overview.MaintenanceDueCount > 0)
+                {
+                    eventType = NotificationEventType.MaintenanceDueAlert;
+                    subject =
+                        $"WhereHouse Alert — Maintenance Due ({overview.MaintenanceDueCount})";
+                }
+                else if (channel.NotifyOnExpiringWarranties && overview.ExpiringCoverageCount > 0)
+                {
+                    eventType = NotificationEventType.WarrantyReturnExpiryAlert;
+                    subject =
+                        $"WhereHouse Alert — Expiring Warranties/Returns ({overview.ExpiringCoverageCount})";
+                }
+                else if (channel.NotifyOnLowStock && overview.LowStockCount > 0)
+                {
+                    eventType = NotificationEventType.LowStockAlert;
+                    subject = $"WhereHouse Alert — Low Stock Items ({overview.LowStockCount})";
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                continue;
+            }
+
+            var body = FormatDigestBody(channel, overview, utcNow);
+            if (string.IsNullOrEmpty(previewSubject))
+            {
+                previewSubject = subject;
+                previewBody = body;
+            }
+
+            var command = new NotificationDispatchCommand(
+                channel.ChannelType,
+                channel.Name,
+                channel.EndpointUrl,
+                channel.AccessTokenOrKey,
+                channel.RecipientOrUserKey,
+                channel.SmtpHost,
+                channel.SmtpPort,
+                channel.SmtpUsername,
+                channel.SmtpFromAddress,
+                channel.SmtpUseSsl,
+                subject,
+                body
+            );
+
+            var outcome = await notificationDispatcher.DispatchAsync(command, cancellationToken);
+            dispatchedCount++;
+
+            if (outcome.Success)
+            {
+                successCount++;
+            }
+            else
+            {
+                failureCount++;
+            }
+
+            var log = new NotificationDeliveryLog
+            {
+                ChannelId = channel.Id,
+                OwnerId = channel.OwnerId,
+                ChannelName = channel.Name,
+                ChannelType = channel.ChannelType,
+                EventType = eventType,
+                Subject = subject,
+                MessageBody = body,
+                Success = outcome.Success,
+                ResponseSummary = outcome.ResponseSummary,
+                DeliveredAt = utcNow,
+            };
+
+            channel.LastTriggeredAt = utcNow;
+            channel.LastDeliveryStatus = outcome.ResponseSummary;
+
+            dbContext.NotificationDeliveryLogs.Add(log);
+            deliveries.Add(
+                new NotificationDeliveryLogDto(
+                    log.Id,
+                    log.ChannelId,
+                    log.ChannelName,
+                    log.ChannelType,
+                    log.EventType,
+                    log.Subject,
+                    log.MessageBody,
+                    log.Success,
+                    log.ResponseSummary,
+                    log.DeliveredAt
+                )
+            );
+        }
+
+        if (dispatchedCount > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return new NotificationDispatchResultDto(
+            dispatchedCount,
+            successCount,
+            failureCount,
+            previewSubject,
+            previewBody,
+            deliveries
+        );
+    }
+
     public async Task<IReadOnlyList<NotificationDeliveryLogDto>> GetRecentDeliveriesAsync(
         Guid userId,
         int limit = 30,

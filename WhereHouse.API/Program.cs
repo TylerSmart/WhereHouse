@@ -153,6 +153,8 @@ builder.Services.AddDataServices(builder.Configuration);
 
 builder.Services.AddWhereHouseAuthentication(builder.Configuration);
 
+builder.Services.AddHostedService<WeeklyDigestBackgroundService>();
+
 // Every other Angular asset is content-hashed and safe to cache forever, but index.html keeps its
 // name across deploys. Without this it can be served from cache and reference a previous deploy's
 // bundle. Applies to UseStaticFiles and MapFallbackToFile, which both read these options.

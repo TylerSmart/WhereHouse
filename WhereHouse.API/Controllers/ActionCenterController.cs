@@ -303,4 +303,19 @@ public sealed class ActionCenterController(IActionCenterService actionCenterServ
 
         return Ok(deliveries);
     }
+
+    [HttpPost("digest/process-scheduled")]
+    [ProducesResponseType(typeof(NotificationDispatchResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ProcessScheduledNotifications(
+        [FromQuery] DateTimeOffset? asOfUtc = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var targetTime = asOfUtc ?? DateTimeOffset.UtcNow;
+        var result = await actionCenterService.ProcessScheduledNotificationsAsync(
+            targetTime,
+            cancellationToken
+        );
+        return Ok(result);
+    }
 }

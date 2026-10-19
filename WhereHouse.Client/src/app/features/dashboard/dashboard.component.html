@@ -269,6 +269,14 @@
   <div class="dashboard-body">
     <!-- Left Location Tree Sidebar -->
     @if (sidebarOpen()) {
+      <div
+        class="mobile-sidebar-backdrop"
+        (click)="toggleSidebar()"
+        (keyup.enter)="toggleSidebar()"
+        tabindex="0"
+        role="button"
+        aria-label="Close location sidebar"
+      ></div>
       <aside class="location-tree-sidebar">
         <div class="sidebar-header">
           <div class="sidebar-title">
@@ -290,7 +298,11 @@
             type="button"
             class="tree-node-item root-item"
             [class.selected-node]="selectedNodeId() === null"
+            [class.drag-over-target]="dragOverNodeId() === 'root'"
             (click)="selectNode(null)"
+            (dragover)="onTreeNodeDragOver($event, null)"
+            (dragleave)="onTreeNodeDragLeave($event, null)"
+            (drop)="onTreeNodeDrop($event, null)"
           >
             <mat-icon class="node-icon">home</mat-icon>
             <span class="node-name">All Locations (Root)</span>
@@ -606,6 +618,29 @@
             </button>
           </div>
 
+          <div class="view-mode-toggle" role="group" aria-label="Item view mode">
+            <button
+              type="button"
+              class="view-toggle-btn"
+              [class.active]="itemViewMode() === 'grid'"
+              (click)="setItemViewMode('grid')"
+              matTooltip="Card Grid View"
+              aria-label="Card Grid View"
+            >
+              <mat-icon>grid_view</mat-icon>
+            </button>
+            <button
+              type="button"
+              class="view-toggle-btn"
+              [class.active]="itemViewMode() === 'table'"
+              (click)="setItemViewMode('table')"
+              matTooltip="Data Table View"
+              aria-label="Data Table View"
+            >
+              <mat-icon>table_rows</mat-icon>
+            </button>
+          </div>
+
           <button
             mat-flat-button
             color="primary"
@@ -831,388 +866,750 @@
           <!-- Items Section -->
           @if (displayedItems().length > 0) {
             <div class="section-group">
-              <h4 class="group-title">
-                <mat-icon>inventory_2</mat-icon>
-                <span>Items ({{ displayedItems().length }})</span>
-              </h4>
-              <div class="items-grid">
-                @for (item of displayedItems(); track item.id) {
-                  <mat-card
-                    class="item-card"
-                    [class.kit-item-card]="item.itemType === ItemTypes.Kit"
-                    [class.kit-warning-card]="item.isIncompleteKit"
-                    [class.item-dimmed-checked-out]="
-                      item.status === ItemStatuses.InUse || item.status === ItemStatuses.LoanedOut
-                    "
-                  >
-                    <mat-card-content>
-                      <!-- Card Header -->
-                      <div class="card-header-row">
-                        <div class="card-title-group">
-                          <span class="archetype-pill archetype-{{ item.itemType }}">
-                            <mat-icon>{{ getItemTypeIcon(item.itemType) }}</mat-icon>
-                            <span>{{ getItemTypeName(item.itemType) }}</span>
-                          </span>
-                          <span class="item-shortcode-tag">{{ item.shortCode }}</span>
-                        </div>
+              <div class="section-header-row">
+                <h4 class="group-title">
+                  <mat-icon>inventory_2</mat-icon>
+                  <span>Items ({{ displayedItems().length }})</span>
+                </h4>
+                <div class="selection-actions">
+                  <button mat-button class="select-all-btn" (click)="toggleSelectAllDisplayed()">
+                    <mat-icon>{{
+                      allDisplayedItemsSelected()
+                        ? 'check_box'
+                        : selectedItemsCount() > 0
+                          ? 'indeterminate_check_box'
+                          : 'check_box_outline_blank'
+                    }}</mat-icon>
+                    <span>{{
+                      allDisplayedItemsSelected()
+                        ? 'Deselect All'
+                        : 'Select All (' + displayedItems().length + ')'
+                    }}</span>
+                  </button>
+                  @if (selectedItemsCount() > 0) {
+                    <button
+                      mat-button
+                      color="warn"
+                      class="clear-selection-btn"
+                      (click)="clearItemSelection()"
+                    >
+                      Clear ({{ selectedItemsCount() }})
+                    </button>
+                  }
+                </div>
+              </div>
 
-                        <div class="card-badges">
-                          @if (item.isPrivate) {
-                            <mat-icon class="lock-icon" matTooltip="Private / Secret"
-                              >lock</mat-icon
-                            >
-                          }
-                          <button
-                            mat-icon-button
-                            class="attachment-trigger-btn"
-                            (click)="openItemAttachmentsDialog(item); $event.stopPropagation()"
-                            [matTooltip]="
-                              'Attachments & Manuals (' + (item.attachmentCount ?? 0) + ')'
-                            "
-                            [attr.aria-label]="'Attachments for ' + item.name"
-                          >
-                            <mat-icon [class.has-attachments]="(item.attachmentCount ?? 0) > 0"
-                              >attach_file</mat-icon
-                            >
-                            @if ((item.attachmentCount ?? 0) > 0) {
-                              <span class="attachment-count-bubble">{{
-                                item.attachmentCount
-                              }}</span>
-                            }
-                          </button>
-                          <button
-                            mat-icon-button
-                            [matMenuTriggerFor]="itemMenu"
-                            (click)="$event.stopPropagation()"
-                            [attr.aria-label]="'Actions for ' + item.name"
-                          >
-                            <mat-icon>more_vert</mat-icon>
-                          </button>
-                          <mat-menu #itemMenu="matMenu">
-                            @if (item.status === ItemStatuses.InPlace) {
-                              <button
-                                mat-menu-item
-                                (click)="openCheckoutReturnDialog(item, $event)"
-                              >
-                                <mat-icon>outbox</mat-icon>
-                                <span>Check Out / Loan...</span>
-                              </button>
-                            } @else {
-                              <button mat-menu-item (click)="quickReturnItem(item, $event)">
-                                <mat-icon>move_to_inbox</mat-icon>
-                                <span>Return to Home Bin</span>
-                              </button>
-                              <button
-                                mat-menu-item
-                                (click)="openCheckoutReturnDialog(item, $event)"
-                              >
-                                <mat-icon>outbox</mat-icon>
-                                <span>Loan / Return Details...</span>
-                              </button>
-                            }
-                            <button mat-menu-item (click)="addToCart(item, $event)">
-                              <mat-icon>{{
-                                checkoutLoadoutService.isInCart(item.id)
-                                  ? 'remove_shopping_cart'
-                                  : 'add_shopping_cart'
-                              }}</mat-icon>
-                              <span>{{
-                                checkoutLoadoutService.isInCart(item.id)
-                                  ? 'In Project Cart'
-                                  : 'Add to Project Cart'
-                              }}</span>
-                            </button>
-                            <mat-divider></mat-divider>
-                            <button mat-menu-item (click)="openEditItemDialog(item)">
-                              <mat-icon>edit</mat-icon>
-                              <span>Edit</span>
-                            </button>
-                            <button mat-menu-item (click)="openItemAttachmentsDialog(item)">
-                              <mat-icon>attach_file</mat-icon>
-                              <span
-                                >Attachments &amp; Manuals ({{ item.attachmentCount ?? 0 }})</span
-                              >
-                            </button>
-                            <button mat-menu-item (click)="openMaintenanceDialog(item)">
-                              <mat-icon>build_circle</mat-icon>
-                              <span>Maintenance Schedules...</span>
-                            </button>
-                            <button mat-menu-item (click)="openCloneItemDialog(item)">
-                              <mat-icon>edit_note</mat-icon>
-                              <span>Clone &amp; Edit...</span>
-                            </button>
-                            <button mat-menu-item (click)="openDuplicateItemDialog(item)">
-                              <mat-icon>content_copy</mat-icon>
-                              <span>Quick Duplicate</span>
-                            </button>
-                            <button mat-menu-item (click)="printItemLabel(item)">
-                              <mat-icon>print</mat-icon>
-                              <span>Print QR Label</span>
-                            </button>
-                            <mat-divider></mat-divider>
-                            <button mat-menu-item (click)="openStageArchiveDialog(item, 'stage')">
-                              <mat-icon>sell</mat-icon>
-                              <span>Stage to Sell / Donate...</span>
-                            </button>
-                            @if (
-                              item.status === ItemStatuses.StagedToSell ||
-                              item.status === ItemStatuses.StagedToDonate
-                            ) {
-                              <button mat-menu-item (click)="unstageItem(item)">
-                                <mat-icon>undo</mat-icon>
-                                <span>Unstage (Keep)</span>
-                              </button>
-                            }
-                            <button mat-menu-item (click)="openStageArchiveDialog(item, 'archive')">
-                              <mat-icon>inventory_2</mat-icon>
-                              <span>Archive to Graveyard...</span>
-                            </button>
-                            <mat-divider></mat-divider>
-                            <button mat-menu-item (click)="deleteItem(item)">
-                              <mat-icon color="warn">delete</mat-icon>
-                              <span>Delete</span>
-                            </button>
-                          </mat-menu>
-                        </div>
-                      </div>
+              <!-- Contextual Bulk Actions Bar -->
+              @if (selectedItemsCount() > 0) {
+                <div class="bulk-actions-bar" role="region" aria-label="Bulk actions bar">
+                  <div class="bulk-summary">
+                    <span class="selected-badge">{{ selectedItemsCount() }}</span>
+                    <span class="selected-text"
+                      >item{{ selectedItemsCount() === 1 ? '' : 's' }} selected</span
+                    >
+                  </div>
 
-                      <!-- Checkout / Loan Status Banner -->
-                      @if (
+                  <div class="bulk-buttons">
+                    <button mat-stroked-button (click)="toggleBulkMoveBar()">
+                      <mat-icon>drive_file_move</mat-icon>
+                      <span>Bulk Move</span>
+                    </button>
+                    <button mat-stroked-button (click)="toggleBulkTagBar()">
+                      <mat-icon>label</mat-icon>
+                      <span>Bulk Tag</span>
+                    </button>
+                    <button mat-stroked-button (click)="bulkAddSelectedToCart()">
+                      <mat-icon>add_shopping_cart</mat-icon>
+                      <span>Add to Cart</span>
+                    </button>
+                    <button mat-stroked-button (click)="bulkPrintSelectedItemLabels()">
+                      <mat-icon>print</mat-icon>
+                      <span>Print Labels</span>
+                    </button>
+                  </div>
+                </div>
+
+                @if (showBulkMoveBar()) {
+                  <div class="bulk-sub-bar bulk-move-sub-bar">
+                    <mat-form-field
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                      class="bulk-dest-field"
+                    >
+                      <mat-label>Target Destination Location</mat-label>
+                      <mat-select
+                        [ngModel]="bulkTargetLocationId()"
+                        (ngModelChange)="bulkTargetLocationId.set($event)"
+                      >
+                        <mat-option [value]="null">-- Clear Location / Unassigned --</mat-option>
+                        @for (loc of allNodes(); track loc.id) {
+                          <mat-option [value]="loc.id">{{ loc.fullPath }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <button mat-flat-button color="primary" (click)="executeBulkMove()">
+                      Apply Move
+                    </button>
+                    <button mat-button (click)="showBulkMoveBar.set(false)">Cancel</button>
+                  </div>
+                }
+
+                @if (showBulkTagBar()) {
+                  <div class="bulk-sub-bar bulk-tag-sub-bar">
+                    <mat-form-field
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                      class="bulk-tag-field"
+                    >
+                      <mat-label>Add / Remove Tag</mat-label>
+                      <input
+                        matInput
+                        [ngModel]="bulkTagInput()"
+                        (ngModelChange)="bulkTagInput.set($event)"
+                        placeholder="e.g. Tools, Fragile, Hardware..."
+                      />
+                    </mat-form-field>
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      [disabled]="!bulkTagInput().trim()"
+                      (click)="executeBulkTag('add')"
+                    >
+                      Add Tag
+                    </button>
+                    <button
+                      mat-stroked-button
+                      color="warn"
+                      [disabled]="!bulkTagInput().trim()"
+                      (click)="executeBulkTag('remove')"
+                    >
+                      Remove Tag
+                    </button>
+                    <button mat-button (click)="showBulkTagBar.set(false)">Cancel</button>
+                  </div>
+                }
+              }
+
+              @if (itemViewMode() === 'grid') {
+                <div class="items-grid">
+                  @for (item of displayedItems(); track item.id) {
+                    <mat-card
+                      class="item-card"
+                      [class.selected-item-card]="isItemSelected(item.id)"
+                      [class.kit-item-card]="item.itemType === ItemTypes.Kit"
+                      [class.kit-warning-card]="item.isIncompleteKit"
+                      [class.item-dimmed-checked-out]="
                         item.status === ItemStatuses.InUse || item.status === ItemStatuses.LoanedOut
-                      ) {
-                        <div class="checkout-status-banner" [class.overdue]="item.isOverdueLoan">
-                          <mat-icon class="checkout-icon">{{
-                            item.status === ItemStatuses.LoanedOut
-                              ? 'person_search'
-                              : 'construction'
-                          }}</mat-icon>
-                          <div class="checkout-banner-text">
-                            <span class="checkout-title">
-                              {{
-                                item.status === ItemStatuses.LoanedOut
-                                  ? 'Loaned to ' + (item.checkedOutToBorrower || 'Borrower')
-                                  : 'In Use by ' + (item.checkedOutByUsername || 'User')
-                              }}
-                            </span>
-                            @if (item.checkoutNote || item.activeLoadoutName) {
-                              <span class="checkout-sub">
+                      "
+                    >
+                      <mat-card-content>
+                        <!-- Card Header -->
+                        <div class="card-header-row">
+                          <div class="card-header-left">
+                            <mat-checkbox
+                              [checked]="isItemSelected(item.id)"
+                              (change)="toggleItemSelection(item.id, $event.checked)"
+                              (click)="$event.stopPropagation()"
+                              aria-label="Select item"
+                            ></mat-checkbox>
+                            <div class="card-title-group">
+                              <span class="archetype-pill archetype-{{ item.itemType }}">
+                                <mat-icon>{{ getItemTypeIcon(item.itemType) }}</mat-icon>
+                                <span>{{ getItemTypeName(item.itemType) }}</span>
+                              </span>
+                              <span class="item-shortcode-tag">{{ item.shortCode }}</span>
+                            </div>
+                          </div>
+
+                          <div class="card-badges">
+                            @if (item.isPrivate) {
+                              <mat-icon class="lock-icon" matTooltip="Private / Secret"
+                                >lock</mat-icon
+                              >
+                            }
+                            <button
+                              mat-icon-button
+                              class="attachment-trigger-btn"
+                              (click)="openItemAttachmentsDialog(item); $event.stopPropagation()"
+                              [matTooltip]="
+                                'Attachments & Manuals (' + (item.attachmentCount ?? 0) + ')'
+                              "
+                              [attr.aria-label]="'Attachments for ' + item.name"
+                            >
+                              <mat-icon [class.has-attachments]="(item.attachmentCount ?? 0) > 0"
+                                >attach_file</mat-icon
+                              >
+                              @if ((item.attachmentCount ?? 0) > 0) {
+                                <span class="attachment-count-bubble">{{
+                                  item.attachmentCount
+                                }}</span>
+                              }
+                            </button>
+                            <button
+                              mat-icon-button
+                              [matMenuTriggerFor]="itemMenu"
+                              (click)="$event.stopPropagation()"
+                              [attr.aria-label]="'Actions for ' + item.name"
+                            >
+                              <mat-icon>more_vert</mat-icon>
+                            </button>
+                            <mat-menu #itemMenu="matMenu">
+                              @if (item.status === ItemStatuses.InPlace) {
+                                <button
+                                  mat-menu-item
+                                  (click)="openCheckoutReturnDialog(item, $event)"
+                                >
+                                  <mat-icon>outbox</mat-icon>
+                                  <span>Check Out / Loan...</span>
+                                </button>
+                              } @else {
+                                <button mat-menu-item (click)="quickReturnItem(item, $event)">
+                                  <mat-icon>move_to_inbox</mat-icon>
+                                  <span>Return to Home Bin</span>
+                                </button>
+                                <button
+                                  mat-menu-item
+                                  (click)="openCheckoutReturnDialog(item, $event)"
+                                >
+                                  <mat-icon>outbox</mat-icon>
+                                  <span>Loan / Return Details...</span>
+                                </button>
+                              }
+                              <button mat-menu-item (click)="addToCart(item, $event)">
+                                <mat-icon>{{
+                                  checkoutLoadoutService.isInCart(item.id)
+                                    ? 'remove_shopping_cart'
+                                    : 'add_shopping_cart'
+                                }}</mat-icon>
+                                <span>{{
+                                  checkoutLoadoutService.isInCart(item.id)
+                                    ? 'In Project Cart'
+                                    : 'Add to Project Cart'
+                                }}</span>
+                              </button>
+                              <mat-divider></mat-divider>
+                              <button mat-menu-item (click)="openEditItemDialog(item)">
+                                <mat-icon>edit</mat-icon>
+                                <span>Edit</span>
+                              </button>
+                              <button mat-menu-item (click)="openItemAttachmentsDialog(item)">
+                                <mat-icon>attach_file</mat-icon>
+                                <span
+                                  >Attachments &amp; Manuals ({{ item.attachmentCount ?? 0 }})</span
+                                >
+                              </button>
+                              <button mat-menu-item (click)="openMaintenanceDialog(item)">
+                                <mat-icon>build_circle</mat-icon>
+                                <span>Maintenance Schedules...</span>
+                              </button>
+                              <button mat-menu-item (click)="openCloneItemDialog(item)">
+                                <mat-icon>edit_note</mat-icon>
+                                <span>Clone &amp; Edit...</span>
+                              </button>
+                              <button mat-menu-item (click)="openDuplicateItemDialog(item)">
+                                <mat-icon>content_copy</mat-icon>
+                                <span>Quick Duplicate</span>
+                              </button>
+                              <button mat-menu-item (click)="printItemLabel(item)">
+                                <mat-icon>print</mat-icon>
+                                <span>Print QR Label</span>
+                              </button>
+                              <mat-divider></mat-divider>
+                              <button mat-menu-item (click)="openStageArchiveDialog(item, 'stage')">
+                                <mat-icon>sell</mat-icon>
+                                <span>Stage to Sell / Donate...</span>
+                              </button>
+                              @if (
+                                item.status === ItemStatuses.StagedToSell ||
+                                item.status === ItemStatuses.StagedToDonate
+                              ) {
+                                <button mat-menu-item (click)="unstageItem(item)">
+                                  <mat-icon>undo</mat-icon>
+                                  <span>Unstage (Keep)</span>
+                                </button>
+                              }
+                              <button
+                                mat-menu-item
+                                (click)="openStageArchiveDialog(item, 'archive')"
+                              >
+                                <mat-icon>inventory_2</mat-icon>
+                                <span>Archive to Graveyard...</span>
+                              </button>
+                              <mat-divider></mat-divider>
+                              <button mat-menu-item (click)="deleteItem(item)">
+                                <mat-icon color="warn">delete</mat-icon>
+                                <span>Delete</span>
+                              </button>
+                            </mat-menu>
+                          </div>
+                        </div>
+
+                        <!-- Checkout / Loan Status Banner -->
+                        @if (
+                          item.status === ItemStatuses.InUse ||
+                          item.status === ItemStatuses.LoanedOut
+                        ) {
+                          <div class="checkout-status-banner" [class.overdue]="item.isOverdueLoan">
+                            <mat-icon class="checkout-icon">{{
+                              item.status === ItemStatuses.LoanedOut
+                                ? 'person_search'
+                                : 'construction'
+                            }}</mat-icon>
+                            <div class="checkout-banner-text">
+                              <span class="checkout-title">
                                 {{
-                                  item.activeLoadoutName
-                                    ? 'Loadout: ' + item.activeLoadoutName
-                                    : item.checkoutNote
+                                  item.status === ItemStatuses.LoanedOut
+                                    ? 'Loaned to ' + (item.checkedOutToBorrower || 'Borrower')
+                                    : 'In Use by ' + (item.checkedOutByUsername || 'User')
                                 }}
                               </span>
+                              @if (item.checkoutNote || item.activeLoadoutName) {
+                                <span class="checkout-sub">
+                                  {{
+                                    item.activeLoadoutName
+                                      ? 'Loadout: ' + item.activeLoadoutName
+                                      : item.checkoutNote
+                                  }}
+                                </span>
+                              }
+                              @if (item.checkoutDueAt) {
+                                <span class="checkout-due"
+                                  >Due: {{ item.checkoutDueAt | date: 'shortDate' }}</span
+                                >
+                              }
+                            </div>
+                            @if (item.isOverdueLoan) {
+                              <span class="overdue-chip">OVERDUE</span>
                             }
-                            @if (item.checkoutDueAt) {
-                              <span class="checkout-due"
-                                >Due: {{ item.checkoutDueAt | date: 'shortDate' }}</span
+                          </div>
+                        }
+
+                        <!-- Incomplete Kit Warning Alert -->
+                        @if (item.isIncompleteKit) {
+                          <div class="kit-alert-banner">
+                            <mat-icon>warning</mat-icon>
+                            <span
+                              >Incomplete Kit ({{ item.incompleteKitWarnings.length }} missing
+                              part{{ item.incompleteKitWarnings.length === 1 ? '' : 's' }})</span
+                            >
+                          </div>
+                        }
+
+                        <!-- Declutter Staged Banner -->
+                        @if (
+                          item.status === ItemStatuses.StagedToSell ||
+                          item.status === ItemStatuses.StagedToDonate
+                        ) {
+                          <div
+                            class="staged-status-banner"
+                            [class.donate]="item.status === ItemStatuses.StagedToDonate"
+                          >
+                            <mat-icon class="staged-icon">{{
+                              item.status === ItemStatuses.StagedToSell
+                                ? 'sell'
+                                : 'volunteer_activism'
+                            }}</mat-icon>
+                            <div class="staged-banner-text">
+                              <span class="staged-title">
+                                {{
+                                  item.status === ItemStatuses.StagedToSell
+                                    ? 'Staged to Sell'
+                                    : 'Staged to Donate'
+                                }}
+                                @if (
+                                  item.stagingTargetPrice !== null &&
+                                  item.stagingTargetPrice !== undefined
+                                ) {
+                                  &bull; {{ item.stagingTargetPrice | currency }}
+                                }
+                              </span>
+                              @if (item.stagingListingNotes) {
+                                <span class="staged-sub">{{ item.stagingListingNotes }}</span>
+                              }
+                            </div>
+                          </div>
+                        }
+
+                        <!-- Item Name & Details -->
+                        <button
+                          type="button"
+                          class="item-name-btn"
+                          (click)="openEditItemDialog(item)"
+                        >
+                          {{ item.name }}
+                        </button>
+
+                        @if (item.brand || item.modelNumber) {
+                          <p class="item-brand-model">
+                            <strong>{{ item.brand }}</strong> {{ item.modelNumber }}
+                          </p>
+                        }
+
+                        @if (item.categoryName) {
+                          <div class="item-category-row">
+                            <span class="category-chip">
+                              <mat-icon>label</mat-icon>
+                              <span>{{ item.categoryName }}</span>
+                            </span>
+                          </div>
+                        }
+
+                        @if (item.description) {
+                          <p class="card-desc">{{ item.description }}</p>
+                        }
+
+                        <!-- Quantity Stepper Controls -->
+                        @if (item.itemType === ItemTypes.Quantity) {
+                          <div class="quantity-stepper-container">
+                            <span class="stepper-label">Quantity:</span>
+                            <div class="stepper-controls">
+                              <button
+                                mat-icon-button
+                                class="step-btn"
+                                (click)="adjustItemQuantity(item, -1, $event)"
+                                [disabled]="item.currentQuantity <= 0"
+                                aria-label="Decrease quantity"
+                              >
+                                <mat-icon>remove</mat-icon>
+                              </button>
+                              <span class="quantity-value">
+                                {{ item.currentQuantity }}
+                                <small>{{ item.unit || 'units' }}</small>
+                              </span>
+                              <button
+                                mat-icon-button
+                                class="step-btn"
+                                (click)="adjustItemQuantity(item, 1, $event)"
+                                aria-label="Increase quantity"
+                              >
+                                <mat-icon>add</mat-icon>
+                              </button>
+                            </div>
+                            @if (
+                              item.minQuantity !== null && item.currentQuantity <= item.minQuantity
+                            ) {
+                              <span
+                                class="low-stock-alert"
+                                matTooltip="Below minimum quantity threshold of {{
+                                  item.minQuantity
+                                }}"
+                              >
+                                <mat-icon>error_outline</mat-icon>
+                                <span>Low Stock</span>
+                              </span>
+                            }
+                          </div>
+                        }
+
+                        <!-- Attributes Preview -->
+                        @if (item.attributeValues && item.attributeValues.length > 0) {
+                          <div class="attributes-preview-list">
+                            @for (attr of item.attributeValues.slice(0, 3); track attr.id) {
+                              <div class="attr-pill">
+                                <span class="attr-name">{{ attr.attributeName }}:</span>
+                                <span class="attr-val">{{ attr.value }} {{ attr.unit }}</span>
+                              </div>
+                            }
+                            @if (item.attributeValues.length > 3) {
+                              <span class="attr-more"
+                                >+{{ item.attributeValues.length - 3 }} more</span
                               >
                             }
                           </div>
-                          @if (item.isOverdueLoan) {
-                            <span class="overdue-chip">OVERDUE</span>
-                          }
-                        </div>
-                      }
+                        }
 
-                      <!-- Incomplete Kit Warning Alert -->
-                      @if (item.isIncompleteKit) {
-                        <div class="kit-alert-banner">
-                          <mat-icon>warning</mat-icon>
-                          <span
-                            >Incomplete Kit ({{ item.incompleteKitWarnings.length }} missing part{{
-                              item.incompleteKitWarnings.length === 1 ? '' : 's'
-                            }})</span
-                          >
-                        </div>
-                      }
-
-                      <!-- Declutter Staged Banner -->
-                      @if (
-                        item.status === ItemStatuses.StagedToSell ||
-                        item.status === ItemStatuses.StagedToDonate
-                      ) {
-                        <div
-                          class="staged-status-banner"
-                          [class.donate]="item.status === ItemStatuses.StagedToDonate"
-                        >
-                          <mat-icon class="staged-icon">{{
-                            item.status === ItemStatuses.StagedToSell
-                              ? 'sell'
-                              : 'volunteer_activism'
-                          }}</mat-icon>
-                          <div class="staged-banner-text">
-                            <span class="staged-title">
-                              {{
-                                item.status === ItemStatuses.StagedToSell
-                                  ? 'Staged to Sell'
-                                  : 'Staged to Donate'
-                              }}
-                              @if (
-                                item.stagingTargetPrice !== null &&
-                                item.stagingTargetPrice !== undefined
-                              ) {
-                                &bull; {{ item.stagingTargetPrice | currency }}
-                              }
-                            </span>
-                            @if (item.stagingListingNotes) {
-                              <span class="staged-sub">{{ item.stagingListingNotes }}</span>
-                            }
-                          </div>
-                        </div>
-                      }
-
-                      <!-- Item Name & Details -->
-                      <button
-                        type="button"
-                        class="item-name-btn"
-                        (click)="openEditItemDialog(item)"
-                      >
-                        {{ item.name }}
-                      </button>
-
-                      @if (item.brand || item.modelNumber) {
-                        <p class="item-brand-model">
-                          <strong>{{ item.brand }}</strong> {{ item.modelNumber }}
-                        </p>
-                      }
-
-                      @if (item.categoryName) {
-                        <div class="item-category-row">
-                          <span class="category-chip">
-                            <mat-icon>label</mat-icon>
-                            <span>{{ item.categoryName }}</span>
+                        <!-- Card Footer -->
+                        <div class="card-footer">
+                          <span class="location-path-pill" matTooltip="Home Location">
+                            <mat-icon>place</mat-icon>
+                            <span>{{ item.homeLocationFullPath || 'Unassigned' }}</span>
                           </span>
-                        </div>
-                      }
-
-                      @if (item.description) {
-                        <p class="card-desc">{{ item.description }}</p>
-                      }
-
-                      <!-- Quantity Stepper Controls -->
-                      @if (item.itemType === ItemTypes.Quantity) {
-                        <div class="quantity-stepper-container">
-                          <span class="stepper-label">Quantity:</span>
-                          <div class="stepper-controls">
-                            <button
-                              mat-icon-button
-                              class="step-btn"
-                              (click)="adjustItemQuantity(item, -1, $event)"
-                              [disabled]="item.currentQuantity <= 0"
-                              aria-label="Decrease quantity"
-                            >
-                              <mat-icon>remove</mat-icon>
-                            </button>
-                            <span class="quantity-value">
-                              {{ item.currentQuantity }}
-                              <small>{{ item.unit || 'units' }}</small>
-                            </span>
-                            <button
-                              mat-icon-button
-                              class="step-btn"
-                              (click)="adjustItemQuantity(item, 1, $event)"
-                              aria-label="Increase quantity"
-                            >
-                              <mat-icon>add</mat-icon>
-                            </button>
-                          </div>
-                          @if (
-                            item.minQuantity !== null && item.currentQuantity <= item.minQuantity
-                          ) {
-                            <span
-                              class="low-stock-alert"
-                              matTooltip="Below minimum quantity threshold of {{
-                                item.minQuantity
-                              }}"
-                            >
-                              <mat-icon>error_outline</mat-icon>
-                              <span>Low Stock</span>
-                            </span>
-                          }
-                        </div>
-                      }
-
-                      <!-- Attributes Preview -->
-                      @if (item.attributeValues && item.attributeValues.length > 0) {
-                        <div class="attributes-preview-list">
-                          @for (attr of item.attributeValues.slice(0, 3); track attr.id) {
-                            <div class="attr-pill">
-                              <span class="attr-name">{{ attr.attributeName }}:</span>
-                              <span class="attr-val">{{ attr.value }} {{ attr.unit }}</span>
-                            </div>
-                          }
-                          @if (item.attributeValues.length > 3) {
-                            <span class="attr-more"
-                              >+{{ item.attributeValues.length - 3 }} more</span
-                            >
-                          }
-                        </div>
-                      }
-
-                      <!-- Card Footer -->
-                      <div class="card-footer">
-                        <span class="location-path-pill" matTooltip="Home Location">
-                          <mat-icon>place</mat-icon>
-                          <span>{{ item.homeLocationFullPath || 'Unassigned' }}</span>
-                        </span>
-                        <div class="footer-actions-group">
-                          @if (item.status === ItemStatuses.InPlace) {
+                          <div class="footer-actions-group">
+                            @if (item.status === ItemStatuses.InPlace) {
+                              <button
+                                mat-icon-button
+                                class="mini-action-btn"
+                                matTooltip="Check Out / Loan..."
+                                (click)="openCheckoutReturnDialog(item, $event)"
+                              >
+                                <mat-icon>outbox</mat-icon>
+                              </button>
+                            } @else {
+                              <button
+                                mat-icon-button
+                                class="mini-action-btn return-btn"
+                                matTooltip="Return to Home Bin"
+                                (click)="quickReturnItem(item, $event)"
+                              >
+                                <mat-icon>move_to_inbox</mat-icon>
+                              </button>
+                            }
                             <button
                               mat-icon-button
                               class="mini-action-btn"
-                              matTooltip="Check Out / Loan..."
-                              (click)="openCheckoutReturnDialog(item, $event)"
-                            >
-                              <mat-icon>outbox</mat-icon>
-                            </button>
-                          } @else {
-                            <button
-                              mat-icon-button
-                              class="mini-action-btn return-btn"
-                              matTooltip="Return to Home Bin"
-                              (click)="quickReturnItem(item, $event)"
-                            >
-                              <mat-icon>move_to_inbox</mat-icon>
-                            </button>
-                          }
-                          <button
-                            mat-icon-button
-                            class="mini-action-btn"
-                            [matTooltip]="
-                              checkoutLoadoutService.isInCart(item.id)
-                                ? 'In Project Cart'
-                                : 'Add to Project Cart'
-                            "
-                            (click)="addToCart(item, $event)"
-                          >
-                            <mat-icon
-                              [class.in-cart-icon]="checkoutLoadoutService.isInCart(item.id)"
-                            >
-                              {{
+                              [matTooltip]="
                                 checkoutLoadoutService.isInCart(item.id)
-                                  ? 'shopping_cart'
-                                  : 'add_shopping_cart'
-                              }}
-                            </mat-icon>
-                          </button>
+                                  ? 'In Project Cart'
+                                  : 'Add to Project Cart'
+                              "
+                              (click)="addToCart(item, $event)"
+                            >
+                              <mat-icon
+                                [class.in-cart-icon]="checkoutLoadoutService.isInCart(item.id)"
+                              >
+                                {{
+                                  checkoutLoadoutService.isInCart(item.id)
+                                    ? 'shopping_cart'
+                                    : 'add_shopping_cart'
+                                }}
+                              </mat-icon>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </mat-card-content>
-                  </mat-card>
-                }
-              </div>
+                      </mat-card-content>
+                    </mat-card>
+                  }
+                </div>
+              } @else {
+                <div class="items-table-container">
+                  <table class="items-data-table">
+                    <thead>
+                      <tr>
+                        <th class="col-checkbox">
+                          <mat-checkbox
+                            [checked]="allDisplayedItemsSelected()"
+                            [indeterminate]="
+                              selectedItemsCount() > 0 && !allDisplayedItemsSelected()
+                            "
+                            (change)="toggleSelectAllDisplayed()"
+                            aria-label="Select all displayed items"
+                          ></mat-checkbox>
+                        </th>
+                        <th class="col-code">Code</th>
+                        <th class="col-name">Name &amp; Details</th>
+                        <th class="col-type">Type / Qty</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-category">Category</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-tags">Tags</th>
+                        <th class="col-actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of displayedItems(); track item.id) {
+                        <tr
+                          [class.selected-row]="isItemSelected(item.id)"
+                          [class.item-dimmed-row]="
+                            item.status === ItemStatuses.InUse ||
+                            item.status === ItemStatuses.LoanedOut
+                          "
+                        >
+                          <td class="col-checkbox">
+                            <mat-checkbox
+                              [checked]="isItemSelected(item.id)"
+                              (change)="toggleItemSelection(item.id, $event.checked)"
+                              (click)="$event.stopPropagation()"
+                              aria-label="Select item"
+                            ></mat-checkbox>
+                          </td>
+                          <td class="col-code">
+                            <span class="table-shortcode">{{ item.shortCode }}</span>
+                          </td>
+                          <td class="col-name">
+                            <button
+                              type="button"
+                              class="table-item-name-btn"
+                              (click)="openEditItemDialog(item)"
+                            >
+                              {{ item.name }}
+                            </button>
+                            @if (item.brand || item.modelNumber) {
+                              <span class="table-brand-sub"
+                                >{{ item.brand }} {{ item.modelNumber }}</span
+                              >
+                            }
+                          </td>
+                          <td class="col-type">
+                            <span class="archetype-pill archetype-{{ item.itemType }} mini">
+                              <mat-icon>{{ getItemTypeIcon(item.itemType) }}</mat-icon>
+                              <span>
+                                @if (item.itemType === ItemTypes.Quantity) {
+                                  {{ item.currentQuantity }} {{ item.unit || 'units' }}
+                                } @else {
+                                  {{ getItemTypeName(item.itemType) }}
+                                }
+                              </span>
+                            </span>
+                          </td>
+                          <td class="col-location">
+                            <span class="table-location-text">{{
+                              item.homeLocationFullPath || 'Unassigned'
+                            }}</span>
+                          </td>
+                          <td class="col-category">
+                            @if (item.categoryName) {
+                              <span class="table-category-badge">{{ item.categoryName }}</span>
+                            } @else {
+                              <span class="empty-cell">&mdash;</span>
+                            }
+                          </td>
+                          <td class="col-status">
+                            <span class="status-badge status-{{ item.status }}">
+                              {{ getItemStatusName(item.status) }}
+                            </span>
+                            @if (item.isIncompleteKit) {
+                              <span class="table-kit-warn" matTooltip="Incomplete Kit">⚠️</span>
+                            }
+                          </td>
+                          <td class="col-tags">
+                            @if (item.tags && item.tags.length > 0) {
+                              <div class="table-tags-cell">
+                                @for (tag of item.tags.slice(0, 2); track tag) {
+                                  <span class="table-tag-pill">{{ tag }}</span>
+                                }
+                                @if (item.tags.length > 2) {
+                                  <span class="table-tag-more">+{{ item.tags.length - 2 }}</span>
+                                }
+                              </div>
+                            } @else {
+                              <span class="empty-cell">&mdash;</span>
+                            }
+                          </td>
+                          <td class="col-actions">
+                            <div class="table-actions-cell">
+                              @if (item.status === ItemStatuses.InPlace) {
+                                <button
+                                  mat-icon-button
+                                  class="table-action-btn"
+                                  (click)="openCheckoutReturnDialog(item, $event)"
+                                  matTooltip="Check Out / Loan..."
+                                  aria-label="Check out or loan"
+                                >
+                                  <mat-icon>outbox</mat-icon>
+                                </button>
+                              } @else {
+                                <button
+                                  mat-icon-button
+                                  class="table-action-btn return-btn"
+                                  (click)="quickReturnItem(item, $event)"
+                                  matTooltip="Return to Home Bin"
+                                  aria-label="Return to home bin"
+                                >
+                                  <mat-icon>move_to_inbox</mat-icon>
+                                </button>
+                              }
+                              <button
+                                mat-icon-button
+                                class="table-action-btn"
+                                (click)="addToCart(item, $event)"
+                                [matTooltip]="
+                                  checkoutLoadoutService.isInCart(item.id)
+                                    ? 'In Project Cart'
+                                    : 'Add to Project Cart'
+                                "
+                                aria-label="Add or remove from cart"
+                              >
+                                <mat-icon
+                                  [class.in-cart-icon]="checkoutLoadoutService.isInCart(item.id)"
+                                >
+                                  {{
+                                    checkoutLoadoutService.isInCart(item.id)
+                                      ? 'shopping_cart'
+                                      : 'add_shopping_cart'
+                                  }}
+                                </mat-icon>
+                              </button>
+                              <button
+                                mat-icon-button
+                                class="table-action-btn"
+                                (click)="openEditItemDialog(item)"
+                                matTooltip="Edit"
+                                aria-label="Edit item"
+                              >
+                                <mat-icon>edit</mat-icon>
+                              </button>
+                              <button
+                                mat-icon-button
+                                class="table-action-btn"
+                                (click)="printItemLabel(item)"
+                                matTooltip="Print QR Label"
+                                aria-label="Print label"
+                              >
+                                <mat-icon>print</mat-icon>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
             </div>
           }
         }
       }
     </main>
   </div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Primary Navigation">
+    <button type="button" class="bottom-nav-item" (click)="toggleSidebar()">
+      <mat-icon>account_tree</mat-icon>
+      <span>Locations</span>
+    </button>
+    <button
+      type="button"
+      class="bottom-nav-item"
+      (click)="openRapidIntakeDialog(selectedNodeId() ?? undefined)"
+    >
+      <mat-icon>bolt</mat-icon>
+      <span>Intake</span>
+    </button>
+    <button
+      type="button"
+      class="bottom-nav-item scan-fab-item"
+      (click)="openScannerDialog()"
+      aria-label="Scan QR or Barcode"
+    >
+      <div class="scan-fab-circle">
+        <mat-icon>qr_code_scanner</mat-icon>
+      </div>
+      <span>Scan</span>
+    </button>
+    <button type="button" class="bottom-nav-item" (click)="openLoadoutsDialog('cart')">
+      <div class="icon-with-badge">
+        <mat-icon>shopping_cart</mat-icon>
+        @if (cartCount() > 0) {
+          <span class="nav-badge">{{ cartCount() }}</span>
+        }
+      </div>
+      <span>Cart</span>
+    </button>
+    <button type="button" class="bottom-nav-item" (click)="openActionCenterDialog()">
+      <div class="icon-with-badge">
+        <mat-icon>notifications_active</mat-icon>
+        @if (actionCenterAlertCount() > 0) {
+          <span class="nav-badge alert-badge">{{ actionCenterAlertCount() }}</span>
+        }
+      </div>
+      <span>Alerts</span>
+    </button>
+  </nav>
 </div>
 
 <!-- Recursive Tree Node Template -->
 <ng-template #treeNodeTemplate let-node="node" let-depth="depth">
-  <div class="tree-node-row" [style.padding-left.rem]="0.75 + depth * 1">
+  <div
+    class="tree-node-row"
+    [style.padding-left.rem]="0.75 + depth * 1"
+    draggable="true"
+    (dragstart)="onTreeNodeDragStart($event, node)"
+    (dragover)="onTreeNodeDragOver($event, node)"
+    (dragleave)="onTreeNodeDragLeave($event, node)"
+    (drop)="onTreeNodeDrop($event, node.id)"
+    (dragend)="onTreeNodeDragEnd()"
+  >
     @if (node.children && node.children.length > 0) {
       <button
         type="button"
@@ -1230,6 +1627,7 @@
       type="button"
       class="tree-node-item"
       [class.selected-node]="selectedNodeId() === node.id"
+      [class.drag-over-target]="dragOverNodeId() === node.id"
       (click)="selectNode(node.id)"
     >
       <mat-icon class="node-icon">
