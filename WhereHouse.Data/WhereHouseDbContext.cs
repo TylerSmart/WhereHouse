@@ -21,6 +21,8 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 
     public DbSet<ItemAttachment> ItemAttachments => Set<ItemAttachment>();
 
+    public DbSet<QrCode> QrCodes => Set<QrCode>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(WhereHouseDbContext).Assembly);

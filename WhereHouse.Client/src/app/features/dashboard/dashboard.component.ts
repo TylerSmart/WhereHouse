@@ -48,6 +48,13 @@ import {
   MoveLocationDialogComponent,
   MoveLocationDialogData,
 } from './move-location-dialog/move-location-dialog.component';
+import { ActivatedRoute } from '@angular/router';
+import { PrintableLabelItem } from '../../core/models/qrcode.models';
+import {
+  ScannerDialogAction,
+  ScannerDialogComponent,
+} from './scanner-dialog/scanner-dialog.component';
+import { LabelGeneratorDialogComponent } from './label-generator-dialog/label-generator-dialog.component';
 import {
   SmartSearchDialogComponent,
   SmartSearchResultAction,
@@ -94,6 +101,7 @@ export class DashboardComponent implements OnInit {
   private readonly itemService = inject(ItemService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly LocationNodeTypes = LocationNodeTypes;
   protected readonly ItemTypes = ItemTypes;
@@ -213,6 +221,10 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshAll();
+    const codeParam = this.route.snapshot.paramMap.get('code');
+    if (codeParam && codeParam.trim()) {
+      this.openScannerDialog(codeParam.trim());
+    }
   }
 
   refreshAll(): void {
@@ -680,6 +692,77 @@ export class DashboardComponent implements OnInit {
     dialogRef.afterClosed().subscribe(() => {
       this.refreshAll();
     });
+  }
+
+  openScannerDialog(initialCode?: string | null): void {
+    const dialogRef = this.dialog.open<
+      ScannerDialogComponent,
+      {
+        initialCode?: string | null;
+        availableLocations: LocationNodeDto[];
+        availableItems: ItemDto[];
+      },
+      ScannerDialogAction
+    >(ScannerDialogComponent, {
+      width: '680px',
+      maxWidth: '95vw',
+      data: {
+        initialCode: initialCode ?? null,
+        availableLocations: this.allNodes(),
+        availableItems: this.items(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((res?: ScannerDialogAction) => {
+      if (!res) {
+        return;
+      }
+      if (res.action === 'selectLocation') {
+        this.selectLocationAndExpand(res.locationId);
+      } else if (res.action === 'editItem') {
+        this.openEditItemDialog(res.item);
+      } else if (res.action === 'printLabel') {
+        this.openLabelGeneratorDialog([res.label]);
+      }
+    });
+  }
+
+  openLabelGeneratorDialog(preselectedLabels?: PrintableLabelItem[]): void {
+    this.dialog.open(LabelGeneratorDialogComponent, {
+      width: '1080px',
+      maxWidth: '96vw',
+      maxHeight: '94vh',
+      data: {
+        availableLocations: this.allNodes(),
+        availableItems: this.items(),
+        preselectedLabels,
+      },
+    });
+  }
+
+  printLocationLabel(loc: LocationNodeDto): void {
+    const label: PrintableLabelItem = {
+      code: loc.shortCode,
+      title: loc.name,
+      subtitle: loc.fullPath,
+      badgeText:
+        loc.containerStyle || (loc.nodeType === LocationNodeTypes.MovableContainer ? 'BIN' : 'LOC'),
+      primaryColor: loc.primaryColor || null,
+      accentColor: loc.accentColor || null,
+    };
+    this.openLabelGeneratorDialog([label]);
+  }
+
+  printItemLabel(item: ItemDto): void {
+    const label: PrintableLabelItem = {
+      code: item.shortCode,
+      title: item.name,
+      subtitle: item.homeLocationFullPath || item.brand || null,
+      badgeText: item.unit ? `${item.currentQuantity} ${item.unit}` : 'ITEM',
+      primaryColor: null,
+      accentColor: null,
+    };
+    this.openLabelGeneratorDialog([label]);
   }
 
   onLogout(): void {

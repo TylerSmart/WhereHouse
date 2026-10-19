@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WhereHouse.Core.Exceptions;
 using WhereHouse.Core.Locations;
+using WhereHouse.Core.QrCodes;
 using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data.Services;
@@ -523,6 +524,17 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         if (tracked is null)
         {
             return false;
+        }
+
+        var boundQrCodes = await dbContext
+            .QrCodes.Where(q => q.LocationNodeId == id)
+            .ToListAsync(cancellationToken);
+        foreach (var qr in boundQrCodes)
+        {
+            qr.TargetType = QrTargetType.Unassigned;
+            qr.LocationNodeId = null;
+            qr.BoundAt = null;
+            qr.BoundByUserId = null;
         }
 
         dbContext.LocationNodes.Remove(tracked);

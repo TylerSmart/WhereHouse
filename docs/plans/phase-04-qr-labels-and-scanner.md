@@ -1,7 +1,7 @@
 # Phase 04: QR Code Registry, Pre-Printed Blank QR Binding, X-Ray Scanner & Label Sheet Generator
 
 > **Branch:** `feature/phase-04-qr-labels-and-scanner`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/prd.md` — Sections 4.3.1 (`Identifiers & QR Encoding`), 4.3.2 (`Pre-Printed "Blank QR" Sticker Binding`), 4.3.3 (`Built-In Label Sheet Generator`), 4.3.4 (`Camera Scanning Modes: Scan-to-View X-Ray & Scan-to-Audit Bulk Move`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -558,7 +558,7 @@ Create `WhereHouse.Client/src/app/core/services/qrcode/qrcode.service.ts` (and `
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
   - Create `WhereHouse.Core/QrCodes/QrAndScanModels.cs`, `WhereHouse.Core/QrCodes/IQrCodeService.cs`, and `WhereHouse.Core/QrCodes/IScanService.cs`.
   - Create `WhereHouse.Data/Entities/QrCode.cs`, update `LocationNode.cs`, `InventoryItem.cs`, and `User.cs` with `BoundQrCodes` / `CreatedQrCodes` navigation collections.
   - Create `WhereHouse.Data/Configurations/QrCodeConfiguration.cs` (using `DeleteBehavior.Restrict` on all foreign keys) and add `DbSet<QrCode> QrCodes` to `WhereHouseDbContext.cs`.
@@ -576,7 +576,7 @@ Create `WhereHouse.Client/src/app/core/services/qrcode/qrcode.service.ts` (and `
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Create `WhereHouse.API/Controllers/QrCodesController.cs` and `WhereHouse.API/Controllers/ScanController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/qrcodes"` and `"/scan"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/QrAndScanIntegrationTests.cs` covering:
@@ -590,7 +590,7 @@ Create `WhereHouse.Client/src/app/core/services/qrcode/qrcode.service.ts` (and `
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Create `src/app/core/models/qrcode.models.ts` and `src/app/core/utils/qr-svg.ts` (with unit tests in `qr-svg.spec.ts`).
   - Create `QrCodeService` (`src/app/core/services/qrcode/qrcode.service.ts` & `qrcode.service.spec.ts`).
   - Create `ScannerDialogComponent` (`src/app/features/dashboard/scanner-dialog/scanner-dialog.component.ts` & `.spec.ts`) supporting X-Ray Scan-to-View, Unassigned QR Binding, and Scan-to-Audit Bulk Move.
@@ -603,7 +603,7 @@ Create `WhereHouse.Client/src/app/core/services/qrcode/qrcode.service.ts` (and `
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
