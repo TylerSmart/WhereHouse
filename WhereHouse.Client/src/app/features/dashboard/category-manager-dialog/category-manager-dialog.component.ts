@@ -242,9 +242,16 @@ import { CategoryService } from '../../../core/services/category/category.servic
     }
     .manager-layout {
       display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 1.25rem;
-      min-height: 440px;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 1rem;
+      min-height: 400px;
+    }
+    .category-form-pane {
+      min-width: 0;
+    }
+    ::ng-deep .category-form-pane .mat-mdc-form-field-infix {
+      width: auto !important;
+      min-width: 0 !important;
     }
     .categories-list-pane {
       border-right: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.08));
@@ -374,17 +381,21 @@ import { CategoryService } from '../../../core/services/category/category.servic
     .template-item-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      min-width: 0;
     }
     .field-name-input {
       flex: 2;
+      min-width: 0;
     }
     .field-type-select {
       flex: 1.5;
+      min-width: 0;
     }
     .field-unit-input,
     .field-options-input {
       flex: 1.5;
+      min-width: 0;
     }
     .form-actions-inline {
       margin-top: 0.5rem;

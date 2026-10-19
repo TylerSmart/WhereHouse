@@ -57,4 +57,18 @@ export class LocationService {
   deleteLocation(id: string): Observable<void> {
     return this.http.delete<void>(apiUrl(`/locations/${id}`));
   }
+
+  uploadCoverPhoto(id: string, file: File): Observable<LocationNodeDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<LocationNodeDto>(apiUrl(`/locations/${id}/cover-photo`), formData);
+  }
+
+  deleteCoverPhoto(id: string): Observable<LocationNodeDto> {
+    return this.http.delete<LocationNodeDto>(apiUrl(`/locations/${id}/cover-photo`));
+  }
+
+  getCoverPhotoUrl(id: string): string {
+    return apiUrl(`/locations/${id}/cover-photo`);
+  }
 }

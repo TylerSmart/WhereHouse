@@ -284,6 +284,10 @@ public sealed class ItemService(
                 ? null
                 : request.WarrantyNotes.Trim(),
             IsPrivate = request.IsPrivate,
+            SharedWithUserIdsJson = SerializeSharedUserIds(
+                request.SharedWithUserIds,
+                request.IsPrivate
+            ),
             OwnerId = userId,
             LastTouchedAt = DateTimeOffset.UtcNow,
         };
@@ -441,6 +445,10 @@ public sealed class ItemService(
             ? null
             : request.WarrantyNotes.Trim();
         item.IsPrivate = request.IsPrivate;
+        item.SharedWithUserIdsJson = SerializeSharedUserIds(
+            request.SharedWithUserIds,
+            request.IsPrivate
+        );
         item.LastTouchedAt = DateTimeOffset.UtcNow;
 
         // Sync AttributeValues
@@ -572,6 +580,7 @@ public sealed class ItemService(
             WarrantyExpirationDate = source.WarrantyExpirationDate,
             WarrantyNotes = source.WarrantyNotes,
             IsPrivate = source.IsPrivate,
+            SharedWithUserIdsJson = source.SharedWithUserIdsJson,
             OwnerId = userId,
             LastTouchedAt = DateTimeOffset.UtcNow,
         };
@@ -825,7 +834,16 @@ public sealed class ItemService(
     {
         if (item.IsPrivate && item.OwnerId != userId)
         {
-            return false;
+            var isShared =
+                !string.IsNullOrWhiteSpace(item.SharedWithUserIdsJson)
+                && item.SharedWithUserIdsJson.Contains(
+                    userId.ToString(),
+                    StringComparison.OrdinalIgnoreCase
+                );
+            if (!isShared)
+            {
+                return false;
+            }
         }
 
         if (item.HomeLocationId.HasValue)
@@ -1039,6 +1057,8 @@ public sealed class ItemService(
             && item.CheckoutDueAt.HasValue
             && item.CheckoutDueAt.Value < DateTimeOffset.UtcNow;
 
+        var sharedWithUserIds = DeserializeSharedUserIds(item.SharedWithUserIdsJson);
+
         return new ItemDto(
             item.Id,
             item.ShortCode,
@@ -1101,7 +1121,36 @@ public sealed class ItemService(
             item.SalePrice,
             item.ArchivedAt,
             item.ArchivedByUserId,
-            item.ArchivedByUsername
+            item.ArchivedByUsername,
+            sharedWithUserIds
         );
+    }
+
+    public static string? SerializeSharedUserIds(IReadOnlyList<Guid>? userIds, bool isPrivate)
+    {
+        if (!isPrivate || userIds is null || userIds.Count == 0)
+        {
+            return null;
+        }
+
+        var distinct = userIds.Where(id => id != Guid.Empty).Distinct().ToList();
+        return distinct.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(distinct) : null;
+    }
+
+    public static IReadOnlyList<Guid> DeserializeSharedUserIds(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 }

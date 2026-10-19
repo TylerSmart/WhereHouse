@@ -36,6 +36,12 @@ public sealed class LocationNode : IAuditable
 
     public bool IsPrivate { get; set; }
 
+    public Guid? CoverAttachmentId { get; set; }
+
+    public string? CoverPhotoRelativePath { get; set; }
+
+    public string? CoverPhotoContentType { get; set; }
+
     public Guid OwnerId { get; set; }
 
     public User Owner { get; set; } = null!;

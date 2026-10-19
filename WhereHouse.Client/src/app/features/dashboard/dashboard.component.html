@@ -83,18 +83,6 @@
         <span class="desktop-only">Rapid Intake</span>
       </button>
 
-      <!-- Import / Export -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="import-export-btn"
-        (click)="openImportExportDialog()"
-        matTooltip="Bulk Import / Export (CSV &amp; JSON)"
-      >
-        <mat-icon>import_export</mat-icon>
-        <span class="desktop-only">Import / Export</span>
-      </button>
-
       <!-- QR Scanner -->
       <button
         type="button"
@@ -105,41 +93,6 @@
       >
         <mat-icon>qr_code_scanner</mat-icon>
         <span class="desktop-only">Scan QR</span>
-      </button>
-
-      <!-- Print Labels -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="print-labels-btn"
-        (click)="openLabelGeneratorDialog()"
-        matTooltip="Print QR Labels (Avery Sheets & Thermal Rolls)"
-      >
-        <mat-icon>print</mat-icon>
-        <span class="desktop-only">Print Labels</span>
-      </button>
-
-      <!-- Manage Categories -->
-      <button
-        mat-stroked-button
-        class="categories-btn"
-        (click)="openCategoryManagerDialog()"
-        matTooltip="Manage Categories &amp; Custom Attributes"
-      >
-        <mat-icon>folder_special</mat-icon>
-        <span class="desktop-only">Categories</span>
-      </button>
-
-      <!-- Reusable Loadouts -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="loadouts-btn"
-        (click)="openLoadoutsDialog('loadouts')"
-        matTooltip="Reusable Loadouts, Pick Lists &amp; Loans"
-      >
-        <mat-icon>backpack</mat-icon>
-        <span class="desktop-only">Loadouts</span>
       </button>
 
       <!-- Project Cart -->
@@ -157,42 +110,6 @@
         }
       </button>
 
-      <!-- Declutter & Graveyard -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="declutter-btn"
-        (click)="openDeclutterGraveyardDialog()"
-        matTooltip="Declutter Staging, Dust Collectors &amp; Graveyard"
-      >
-        <mat-icon>recycling</mat-icon>
-        <span class="desktop-only">Declutter</span>
-      </button>
-
-      <!-- Maintenance -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="maintenance-btn"
-        (click)="openMaintenanceDialog()"
-        matTooltip="Maintenance Schedules, Due Dates &amp; Upkeep Logs"
-      >
-        <mat-icon>build_circle</mat-icon>
-        <span class="desktop-only">Maintenance</span>
-      </button>
-
-      <!-- Insurance Claim -->
-      <button
-        type="button"
-        mat-stroked-button
-        class="insurance-btn"
-        (click)="openInsuranceExportDialog()"
-        matTooltip="Home Insurance &amp; Loss Claim Package Export (.ZIP)"
-      >
-        <mat-icon>verified_user</mat-icon>
-        <span class="desktop-only">Insurance Claim</span>
-      </button>
-
       <!-- Action Center -->
       <button
         type="button"
@@ -207,6 +124,48 @@
           <span class="alert-pill-badge">{{ actionCenterAlertCount() }}</span>
         }
       </button>
+
+      <!-- Tools & Vault Menu -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="tools-vault-btn"
+        [matMenuTriggerFor]="toolsMenu"
+        matTooltip="Management Tools, Labels, Categories &amp; Disaster Vault"
+      >
+        <mat-icon>handyman</mat-icon>
+        <span class="desktop-only">Tools &amp; Vault</span>
+      </button>
+      <mat-menu #toolsMenu="matMenu">
+        <button mat-menu-item (click)="openLoadoutsDialog('loadouts')">
+          <mat-icon>backpack</mat-icon>
+          <span>Loadouts &amp; Loans</span>
+        </button>
+        <button mat-menu-item (click)="openLabelGeneratorDialog()">
+          <mat-icon>qr_code_2</mat-icon>
+          <span>Print Barcode &amp; QR Labels</span>
+        </button>
+        <button mat-menu-item (click)="openCategoryManagerDialog()">
+          <mat-icon>category</mat-icon>
+          <span>Manage Categories &amp; Templates</span>
+        </button>
+        <button mat-menu-item (click)="openDeclutterGraveyardDialog()">
+          <mat-icon>cleaning_services</mat-icon>
+          <span>Declutter &amp; Graveyard</span>
+        </button>
+        <button mat-menu-item (click)="openMaintenanceDialog()">
+          <mat-icon>build_circle</mat-icon>
+          <span>Maintenance &amp; Upkeep</span>
+        </button>
+        <button mat-menu-item (click)="openInsuranceExportDialog()">
+          <mat-icon>shield</mat-icon>
+          <span>Insurance &amp; Disaster Vault</span>
+        </button>
+        <button mat-menu-item (click)="openImportExportDialog()">
+          <mat-icon>import_export</mat-icon>
+          <span>Import / Export CSV &amp; ZIP</span>
+        </button>
+      </mat-menu>
 
       <!-- Theme Switcher -->
       <button
@@ -375,6 +334,21 @@
                   </div>
                   <p class="banner-path">{{ active.fullPath }}</p>
                 </div>
+                @if (active.coverAttachmentId) {
+                  <button
+                    type="button"
+                    class="banner-cover-wrap"
+                    (click)="openLocationAttachmentsDialog(active)"
+                    aria-label="View or change cover photo"
+                  >
+                    <img
+                      [src]="getCoverPhotoUrl(active.id)"
+                      class="banner-cover-photo"
+                      alt="Cover photo for {{ active.name }}"
+                      matTooltip="Click to view/change cover photo"
+                    />
+                  </button>
+                }
               </div>
 
               <div class="banner-actions">
@@ -394,6 +368,14 @@
                 >
                   <mat-icon>bolt</mat-icon>
                   <span>Rapid Intake</span>
+                </button>
+                <button
+                  mat-button
+                  (click)="openLocationAttachmentsDialog(active)"
+                  matTooltip="Manage cover photo and files"
+                >
+                  <mat-icon>add_a_photo</mat-icon>
+                  <span>Photos</span>
                 </button>
                 <button
                   mat-button
@@ -784,6 +766,10 @@
                               <mat-icon>edit</mat-icon>
                               <span>Edit</span>
                             </button>
+                            <button mat-menu-item (click)="openLocationAttachmentsDialog(node)">
+                              <mat-icon>add_a_photo</mat-icon>
+                              <span>Cover Photo &amp; Files...</span>
+                            </button>
                             <button mat-menu-item (click)="openMoveDialog(node)">
                               <mat-icon>drive_file_move</mat-icon>
                               <span>Move</span>
@@ -796,6 +782,15 @@
                           </mat-menu>
                         </div>
                       </div>
+
+                      @if (node.coverAttachmentId) {
+                        <div class="node-card-cover-thumb">
+                          <img
+                            [src]="getCoverPhotoUrl(node.id)"
+                            alt="Cover photo for {{ node.name }}"
+                          />
+                        </div>
+                      }
 
                       @if (searchQuery()) {
                         <p class="search-path-hint">{{ node.fullPath }}</p>
@@ -1256,6 +1251,33 @@
 
                         @if (item.description) {
                           <p class="card-desc">{{ item.description }}</p>
+                        }
+
+                        <!-- Kit & Nested Child Component Chips -->
+                        @if (
+                          (item.itemType === ItemTypes.Kit || item.itemType === ItemTypes.Nested) &&
+                          item.childItems &&
+                          item.childItems.length > 0
+                        ) {
+                          <div class="child-components-section">
+                            <span class="child-components-label">
+                              <mat-icon inline>account_tree</mat-icon>
+                              Components ({{ item.childItems.length }}):
+                            </span>
+                            <div class="child-chips-list">
+                              @for (child of item.childItems; track child.id) {
+                                <button
+                                  type="button"
+                                  class="child-chip-btn"
+                                  (click)="openEditItemById(child.id); $event.stopPropagation()"
+                                  [matTooltip]="child.name + ' (' + child.shortCode + ')'"
+                                >
+                                  <span class="child-code">{{ child.shortCode }}</span>
+                                  <span class="child-name">{{ child.name }}</span>
+                                </button>
+                              }
+                            </div>
+                          </div>
                         }
 
                         <!-- Quantity Stepper Controls -->

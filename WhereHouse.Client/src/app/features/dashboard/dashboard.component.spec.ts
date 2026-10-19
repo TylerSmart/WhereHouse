@@ -469,7 +469,7 @@ describe('DashboardComponent', () => {
 
     expect(mockDialog.open).toHaveBeenCalledWith(
       CategoryManagerDialogComponent,
-      expect.objectContaining({ width: '720px' }),
+      expect.objectContaining({ width: '680px' }),
     );
   });
 

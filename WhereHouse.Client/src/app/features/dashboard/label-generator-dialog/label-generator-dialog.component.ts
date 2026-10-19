@@ -362,9 +362,10 @@ export const LABEL_PRESETS: LabelPreset[] = [
       .label-generator-container {
         display: flex;
         flex-direction: column;
-        height: 90vh;
-        max-width: 1200px;
-        width: 100vw;
+        height: min(82vh, 720px);
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
         color: var(--mat-sys-on-surface, #1f1f1f);
       }
 
@@ -399,7 +400,8 @@ export const LABEL_PRESETS: LabelPreset[] = [
       }
 
       .controls-panel {
-        width: 380px;
+        width: 300px;
+        flex-shrink: 0;
         border-right: 1px solid var(--mat-sys-outline-variant, #cbd5e1);
         display: flex;
         flex-direction: column;
@@ -427,6 +429,7 @@ export const LABEL_PRESETS: LabelPreset[] = [
 
         mat-form-field {
           flex: 1;
+          min-width: 0;
         }
       }
 
@@ -649,9 +652,30 @@ export const LABEL_PRESETS: LabelPreset[] = [
         }
       }
 
+      @media screen {
+        .preview-canvas-wrapper .printable-sheet-grid {
+          zoom: 0.65;
+        }
+      }
+
       @media print {
         .no-print {
           display: none !important;
+        }
+        .preview-canvas-wrapper .printable-sheet-grid {
+          zoom: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .generator-body {
+          flex-direction: column;
+          overflow-y: auto;
+        }
+        .controls-panel {
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid #cbd5e1;
         }
       }
     `,

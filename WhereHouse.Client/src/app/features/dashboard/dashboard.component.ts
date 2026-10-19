@@ -49,6 +49,7 @@ import {
   LocationDialogData,
   LocationDialogResult,
 } from './location-dialog/location-dialog.component';
+import { LocationAttachmentsDialogComponent } from './location-attachments-dialog/location-attachments-dialog.component';
 import {
   MoveLocationDialogComponent,
   MoveLocationDialogData,
@@ -531,6 +532,35 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  getCoverPhotoUrl(locationId: string): string {
+    return this.locationService.getCoverPhotoUrl(locationId);
+  }
+
+  openLocationAttachmentsDialog(node: LocationNodeDto): void {
+    const ref = this.dialog.open(LocationAttachmentsDialogComponent, {
+      width: '580px',
+      maxWidth: '96vw',
+      data: { location: node },
+    });
+
+    ref.afterClosed().subscribe((updated) => {
+      if (updated) {
+        this.refreshAll();
+      }
+    });
+  }
+
+  openEditItemById(childId: string): void {
+    this.itemService.getItemById(childId).subscribe({
+      next: (item: ItemDto) => this.openEditItemDialog(item),
+      error: (err: { error?: { message?: string } }) => {
+        this.snackBar.open(err?.error?.message ?? 'Failed to load component item', 'Close', {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
   openCreateItemDialog(homeLocationId?: string | null): void {
     const dialogRef = this.dialog.open<ItemDialogComponent, ItemDialogData, ItemDialogResult>(
       ItemDialogComponent,
@@ -735,7 +765,8 @@ export class DashboardComponent implements OnInit {
 
   openCategoryManagerDialog(): void {
     const ref = this.dialog.open(CategoryManagerDialogComponent, {
-      width: '720px',
+      width: '680px',
+      maxWidth: '95vw',
     });
 
     ref.afterClosed().subscribe(() => {
@@ -950,9 +981,9 @@ export class DashboardComponent implements OnInit {
 
   openLabelGeneratorDialog(preselectedLabels?: PrintableLabelItem[]): void {
     this.dialog.open(LabelGeneratorDialogComponent, {
-      width: '1080px',
-      maxWidth: '96vw',
-      maxHeight: '94vh',
+      width: '860px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
       data: {
         availableLocations: this.allNodes(),
         availableItems: this.items(),

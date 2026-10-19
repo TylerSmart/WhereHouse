@@ -35,7 +35,8 @@ public sealed record LocationNodeDto(
     int ChildCount,
     int ItemCount,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt
+    DateTimeOffset ModifiedAt,
+    string? CoverAttachmentId = null
 );
 
 public sealed record LocationTreeNodeDto(
@@ -52,7 +53,8 @@ public sealed record LocationTreeNodeDto(
     bool IsPrivate,
     Guid OwnerId,
     string FullPath,
-    IReadOnlyList<LocationTreeNodeDto> Children
+    IReadOnlyList<LocationTreeNodeDto> Children,
+    string? CoverAttachmentId = null
 );
 
 public sealed record CreateLocationNodeRequest(

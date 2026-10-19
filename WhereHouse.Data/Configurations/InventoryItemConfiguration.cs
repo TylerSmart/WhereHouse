@@ -63,6 +63,7 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
         builder.Property(i => i.DispositionNote).HasMaxLength(1000);
         builder.Property(i => i.SalePrice).HasPrecision(18, 2);
         builder.Property(i => i.ArchivedByUsername).HasMaxLength(150);
+        builder.Property(i => i.SharedWithUserIdsJson).HasMaxLength(1000);
 
         builder.HasIndex(i => i.ShortCode).IsUnique();
 

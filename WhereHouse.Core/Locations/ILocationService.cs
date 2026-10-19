@@ -46,4 +46,26 @@ public interface ILocationService
         Guid id,
         CancellationToken cancellationToken = default
     );
+
+    Task<LocationNodeDto?> UploadCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        long fileSizeBytes,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<(Stream Content, string ContentType, string FileName)?> GetCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<LocationNodeDto?> DeleteCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        CancellationToken cancellationToken = default
+    );
 }

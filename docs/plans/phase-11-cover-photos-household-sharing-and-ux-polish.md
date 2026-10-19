@@ -1,5 +1,7 @@
 # Phase 11: Container Cover Photos, Household Sharing, Responsive UX Polish & Full Playwright E2E Suite
 
+**Status:** `[~] In Progress`
+
 ## 1. Scope & Milestone Mapping
 
 - **PRD Milestone:** Final PRD Completion Polish across Milestones 1–4 (`PRD Section 2`, `4.1.3`, `4.2.1`, `4.6.2`, `4.8.1`, `4.8.2`) + Comprehensive UI/UX Bugfixes, Responsive Viewport Optimization, Angular Material Datepickers, and Full-App Playwright E2E Test Suite.
@@ -394,14 +396,14 @@ public sealed record ItemDto(
 
 ## 7. Execution Checklist (For `/execute-phase`)
 
-1. [ ] Update `Item` entity (`SharedWithUserIdsJson`) and `ItemConfiguration`, then generate EF Core migration `AddItemSharedWithUsers`.
-2. [ ] Add `UserSummaryDto`, update `IAuthService`, `LocationNodeDto` (`CoverAttachmentId`), and `ItemDto` / `CreateItemRequest` / `UpdateItemRequest` (`SharedWithUserIds`).
-3. [ ] Implement `AuthService.GetHouseholdUsersAsync`, `GET /api/auth/users`, `LocationService` `CoverAttachmentId` resolution, and shared private item access across backend services.
-4. [ ] Fix the infinite request loop in `DeclutterGraveyardDialogComponent` (and chip `(selectionChange)` in `MaintenanceDialogComponent` & `SmartSearchDialogComponent`).
-5. [ ] Refactor `.top-bar` / `.top-actions` in `DashboardComponent` with the `Tools & Vault` menu, responsive breakpoints, `Ctrl+K` spacing fix, and `.empty-state > mat-icon` direct child selector fix.
-6. [ ] Fix `LocationDialogComponent` color swatches so raw hex codes are hidden and replaced with tooltips, checkmarks, and a native color picker.
-7. [ ] Register `provideNativeDateAdapter()` and convert date inputs in `ItemDialogComponent` and `CheckoutReturnDialogComponent` to `MatDatepickerModule` + add Return/Warranty quick-preset buttons.
-8. [ ] Tighten dialog widths and responsive layouts for `CategoryManagerDialogComponent` (`680px`) and `LabelGeneratorDialogComponent` (`860px` + scaled preview).
-9. [ ] Implement `LocationAttachmentsDialogComponent`, container cover photo thumbnails, household sharing selector in `ItemDialogComponent`, Owner filter in `SmartSearchDialogComponent`, and `Kit`/`Nested` component chips in `DashboardComponent`.
-10. [ ] Add backend integration tests (`Phase11CoverPhotosAndHouseholdSharingIntegrationTests.cs`), Angular unit tests, and the full Playwright E2E suite (`WhereHouseE2EServerFixture.cs` & `WhereHouseFullAppE2ETests.cs`).
-11. [ ] Build `WhereHouse.Client` (`npm run build`), run all test suites (`.NET Core`, `.NET Infrastructure`, `.NET API Integration`, `Angular Unit`, and `Playwright E2E`), format (`dotnet csharpier format .` and `npm run lint`), and commit.
+1. [x] Update `Item` entity (`SharedWithUserIdsJson`) and `ItemConfiguration`, then generate EF Core migration `AddItemSharedWithUsers`.
+2. [x] Add `UserSummaryDto`, update `IAuthService`, `LocationNodeDto` (`CoverAttachmentId`), and `ItemDto` / `CreateItemRequest` / `UpdateItemRequest` (`SharedWithUserIds`).
+3. [x] Implement `AuthService.GetHouseholdUsersAsync`, `GET /api/auth/users`, `LocationService` `CoverAttachmentId` resolution, and shared private item access across backend services.
+4. [x] Fix the infinite request loop in `DeclutterGraveyardDialogComponent` (and chip `(selectionChange)` in `MaintenanceDialogComponent` & `SmartSearchDialogComponent`).
+5. [x] Refactor `.top-bar` / `.top-actions` in `DashboardComponent` with the `Tools & Vault` menu, responsive breakpoints, `Ctrl+K` spacing fix, and `.empty-state > mat-icon` direct child selector fix.
+6. [x] Fix `LocationDialogComponent` color swatches so raw hex codes are hidden and replaced with tooltips, checkmarks, and a native color picker.
+7. [x] Register `provideNativeDateAdapter()` and convert date inputs in `ItemDialogComponent` and `CheckoutReturnDialogComponent` to `MatDatepickerModule` + add Return/Warranty quick-preset buttons.
+8. [x] Tighten dialog widths and responsive layouts for `CategoryManagerDialogComponent` (`680px`) and `LabelGeneratorDialogComponent` (`860px` + scaled preview).
+9. [x] Implement `LocationAttachmentsDialogComponent`, container cover photo thumbnails, household sharing selector in `ItemDialogComponent`, Owner filter in `SmartSearchDialogComponent`, and `Kit`/`Nested` component chips in `DashboardComponent`.
+10. [x] Add backend integration tests (`Phase11CoverPhotosAndHouseholdSharingIntegrationTests.cs`), Angular unit tests, and the full Playwright E2E suite (`WhereHouseE2EServerFixture.cs` & `WhereHouseFullAppE2ETests.cs`).
+11. [x] Build `WhereHouse.Client` (`npm run build`), run all test suites (`.NET Core`, `.NET Infrastructure`, `.NET API Integration`, `Angular Unit`, and `Playwright E2E`), format (`dotnet csharpier format .` and `npm run lint`), and commit.

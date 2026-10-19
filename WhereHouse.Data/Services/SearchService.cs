@@ -148,6 +148,20 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
         {
             if (i.IsPrivate && i.OwnerId != userId)
             {
+                var isShared =
+                    !string.IsNullOrWhiteSpace(i.SharedWithUserIdsJson)
+                    && i.SharedWithUserIdsJson.Contains(
+                        userId.ToString(),
+                        StringComparison.OrdinalIgnoreCase
+                    );
+                if (!isShared)
+                {
+                    return false;
+                }
+            }
+
+            if (searchQuery.OwnerUserId.HasValue && i.OwnerId != searchQuery.OwnerUserId.Value)
+            {
                 return false;
             }
 
@@ -599,7 +613,8 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
             item.SalePrice,
             item.ArchivedAt,
             item.ArchivedByUserId,
-            item.ArchivedByUsername
+            item.ArchivedByUsername,
+            ItemService.DeserializeSharedUserIds(item.SharedWithUserIdsJson)
         );
     }
 

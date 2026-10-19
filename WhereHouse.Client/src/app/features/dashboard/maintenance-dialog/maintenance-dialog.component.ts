@@ -265,10 +265,7 @@ interface MaintenancePreset {
             <!-- Schedules Filter Toolbar -->
             <div class="filter-toolbar">
               <mat-chip-set>
-                <mat-chip-option
-                  [selected]="dueOnlyFilter()"
-                  (selectionChange)="dueOnlyFilter.set($event.selected); loadData()"
-                >
+                <mat-chip-option [selected]="dueOnlyFilter()" (click)="toggleDueOnlyFilter()">
                   <mat-icon matChipAvatar>filter_alt</mat-icon>
                   Due & Overdue Only
                 </mat-chip-option>
@@ -1010,6 +1007,11 @@ export class MaintenanceDialogComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  toggleDueOnlyFilter(): void {
+    this.dueOnlyFilter.update((v) => !v);
+    this.loadData();
   }
 
   toggleAddForm(): void {

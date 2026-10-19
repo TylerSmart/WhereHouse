@@ -135,4 +135,14 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
         return Ok(user);
     }
+
+    [HttpGet("users")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyList<UserSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetHouseholdUsers(CancellationToken cancellationToken)
+    {
+        var users = await authService.GetHouseholdUsersAsync(cancellationToken);
+        return Ok(users);
+    }
 }

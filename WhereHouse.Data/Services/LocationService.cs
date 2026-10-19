@@ -3,11 +3,15 @@ using WhereHouse.Core.Exceptions;
 using WhereHouse.Core.Items;
 using WhereHouse.Core.Locations;
 using WhereHouse.Core.QrCodes;
+using WhereHouse.Core.Storage;
 using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data.Services;
 
-public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationService
+public sealed class LocationService(
+    WhereHouseDbContext dbContext,
+    IFileStorageService fileStorageService
+) : ILocationService
 {
     public async Task<IReadOnlyList<LocationTreeNodeDto>> GetLocationTreeAsync(
         Guid userId,
@@ -47,7 +51,8 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
                         c.IsPrivate,
                         c.OwnerId,
                         fullPath,
-                        BuildTree(c.Id)
+                        BuildTree(c.Id),
+                        c.CoverAttachmentId?.ToString()
                     );
                 })
                 .ToList();
@@ -638,6 +643,166 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         return result;
     }
 
+    public async Task<LocationNodeDto?> UploadCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        long fileSizeBytes,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var node = await dbContext.LocationNodes.FirstOrDefaultAsync(
+            l => l.Id == locationId,
+            cancellationToken
+        );
+        if (node is null)
+        {
+            return null;
+        }
+
+        var allNodes = await dbContext
+            .LocationNodes.AsNoTracking()
+            .ToDictionaryAsync(n => n.Id, cancellationToken);
+        if (!IsAccessible(node, userId, allNodes))
+        {
+            throw new ForbiddenException();
+        }
+
+        if (!string.IsNullOrWhiteSpace(node.CoverPhotoRelativePath))
+        {
+            try
+            {
+                await fileStorageService.DeleteFileAsync(
+                    node.CoverPhotoRelativePath,
+                    cancellationToken
+                );
+            }
+            catch
+            {
+                // Ignore cleanup error of previous file
+            }
+        }
+
+        var stored = await fileStorageService.SaveFileAsync(
+            fileStream,
+            fileName,
+            cancellationToken
+        );
+
+        node.CoverAttachmentId = Guid.NewGuid();
+        node.CoverPhotoRelativePath = stored.StorageRelativePath;
+        node.CoverPhotoContentType = string.IsNullOrWhiteSpace(contentType)
+            ? "image/jpeg"
+            : contentType;
+        node.ModifiedAt = DateTimeOffset.UtcNow;
+        node.ModifiedBy = userId.ToString();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var (fullPath, breadcrumbs) = ResolvePathAndBreadcrumbs(node, allNodes);
+        var childCount = allNodes.Values.Count(c => c.ParentId == node.Id);
+        var itemCount = await dbContext.InventoryItems.CountAsync(
+            i => i.HomeLocationId == node.Id,
+            cancellationToken
+        );
+
+        return MapToDto(node, fullPath, breadcrumbs, childCount, itemCount);
+    }
+
+    public async Task<(Stream Content, string ContentType, string FileName)?> GetCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var node = await dbContext
+            .LocationNodes.AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == locationId, cancellationToken);
+        if (node is null || string.IsNullOrWhiteSpace(node.CoverPhotoRelativePath))
+        {
+            return null;
+        }
+
+        var allNodes = await dbContext
+            .LocationNodes.AsNoTracking()
+            .ToDictionaryAsync(n => n.Id, cancellationToken);
+        if (!IsAccessible(node, userId, allNodes))
+        {
+            throw new ForbiddenException();
+        }
+
+        var stream = await fileStorageService.OpenReadAsync(
+            node.CoverPhotoRelativePath,
+            cancellationToken
+        );
+        if (stream is null)
+        {
+            return null;
+        }
+
+        var contentType = node.CoverPhotoContentType ?? "image/jpeg";
+        var fileName = Path.GetFileName(node.CoverPhotoRelativePath);
+        return (stream, contentType, fileName);
+    }
+
+    public async Task<LocationNodeDto?> DeleteCoverPhotoAsync(
+        Guid userId,
+        Guid locationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var node = await dbContext.LocationNodes.FirstOrDefaultAsync(
+            l => l.Id == locationId,
+            cancellationToken
+        );
+        if (node is null)
+        {
+            return null;
+        }
+
+        var allNodes = await dbContext
+            .LocationNodes.AsNoTracking()
+            .ToDictionaryAsync(n => n.Id, cancellationToken);
+        if (!IsAccessible(node, userId, allNodes))
+        {
+            throw new ForbiddenException();
+        }
+
+        if (!string.IsNullOrWhiteSpace(node.CoverPhotoRelativePath))
+        {
+            try
+            {
+                await fileStorageService.DeleteFileAsync(
+                    node.CoverPhotoRelativePath,
+                    cancellationToken
+                );
+            }
+            catch
+            {
+                // Ignore cleanup error
+            }
+        }
+
+        node.CoverAttachmentId = null;
+        node.CoverPhotoRelativePath = null;
+        node.CoverPhotoContentType = null;
+        node.ModifiedAt = DateTimeOffset.UtcNow;
+        node.ModifiedBy = userId.ToString();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var (fullPath, breadcrumbs) = ResolvePathAndBreadcrumbs(node, allNodes);
+        var childCount = allNodes.Values.Count(c => c.ParentId == node.Id);
+        var itemCount = await dbContext.InventoryItems.CountAsync(
+            i => i.HomeLocationId == node.Id,
+            cancellationToken
+        );
+
+        return MapToDto(node, fullPath, breadcrumbs, childCount, itemCount);
+    }
+
     private static LocationNodeDto MapToDto(
         LocationNode node,
         string fullPath,
@@ -664,6 +829,7 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             childCount,
             itemCount,
             node.CreatedAt,
-            node.ModifiedAt
+            node.ModifiedAt,
+            node.CoverAttachmentId?.ToString()
         );
 }

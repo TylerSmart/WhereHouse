@@ -32,6 +32,7 @@ export interface LocationNodeDto {
   itemCount?: number;
   createdAt: string;
   modifiedAt: string;
+  coverAttachmentId?: string | null;
 }
 
 export interface LocationTreeNodeDto {
@@ -49,6 +50,7 @@ export interface LocationTreeNodeDto {
   ownerId: string;
   fullPath: string;
   children: LocationTreeNodeDto[];
+  coverAttachmentId?: string | null;
 }
 
 export interface CreateLocationNodeRequest {

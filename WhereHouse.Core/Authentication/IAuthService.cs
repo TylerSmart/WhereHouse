@@ -28,4 +28,8 @@ public interface IAuthService
         ExternalUserPrincipal principal,
         CancellationToken cancellationToken = default
     );
+
+    Task<IReadOnlyList<UserSummaryDto>> GetHouseholdUsersAsync(
+        CancellationToken cancellationToken = default
+    );
 }

@@ -10,6 +10,7 @@ import {
   ExternalAuthRequest,
   LoginRequest,
   RegisterRequest,
+  UserSummaryDto,
 } from '../../models/auth.models';
 
 const TOKEN_KEY = 'where-house-token';
@@ -108,6 +109,10 @@ export class AuthService {
     return this.http
       .get<AuthProviderDto[]>(apiUrl('/auth/providers'))
       .pipe(catchError(() => of([])));
+  }
+
+  getUsers(): Observable<UserSummaryDto[]> {
+    return this.http.get<UserSummaryDto[]>(apiUrl('/auth/users')).pipe(catchError(() => of([])));
   }
 
   logout(): void {

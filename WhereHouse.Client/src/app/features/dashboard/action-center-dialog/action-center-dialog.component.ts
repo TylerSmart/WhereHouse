@@ -1458,7 +1458,7 @@ export interface ActionCenterDialogData {
         text-align: center;
         color: var(--mat-sys-on-surface-variant, #666);
 
-        mat-icon {
+        > mat-icon {
           font-size: 48px;
           width: 48px;
           height: 48px;

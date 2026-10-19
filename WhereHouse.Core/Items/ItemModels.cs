@@ -125,7 +125,8 @@ public sealed record ItemDto(
     decimal? SalePrice = null,
     DateTimeOffset? ArchivedAt = null,
     Guid? ArchivedByUserId = null,
-    string? ArchivedByUsername = null
+    string? ArchivedByUsername = null,
+    IReadOnlyList<Guid>? SharedWithUserIds = null
 );
 
 public sealed record UpsertItemAttributeValueRequest(
@@ -162,7 +163,8 @@ public sealed record CreateItemRequest(
     [MaxLength(1000)] string? WarrantyNotes = null,
     bool IsPrivate = false,
     IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null,
-    [MaxLength(64)] string? BarcodeNumber = null
+    [MaxLength(64)] string? BarcodeNumber = null,
+    IReadOnlyList<Guid>? SharedWithUserIds = null
 );
 
 public sealed record UpdateItemRequest(
@@ -191,7 +193,8 @@ public sealed record UpdateItemRequest(
     [MaxLength(1000)] string? WarrantyNotes = null,
     bool IsPrivate = false,
     IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null,
-    [MaxLength(64)] string? BarcodeNumber = null
+    [MaxLength(64)] string? BarcodeNumber = null,
+    IReadOnlyList<Guid>? SharedWithUserIds = null
 );
 
 public sealed record AdjustItemQuantityRequest(

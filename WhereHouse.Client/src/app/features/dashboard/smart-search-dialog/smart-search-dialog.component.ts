@@ -12,10 +12,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { UserSummaryDto } from '../../../core/models/auth.models';
 import { CategoryAttributeTemplateDto, CategoryDto } from '../../../core/models/category.models';
 import { DISPOSITION_REASON_LABELS, ItemDto } from '../../../core/models/item.models';
 import { LocationNodeDto } from '../../../core/models/location.models';
 import { SmartSearchParams, SmartSearchResponseDto } from '../../../core/models/search.models';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { LifecycleService } from '../../../core/services/lifecycle/lifecycle.service';
 import { SearchService } from '../../../core/services/search/search.service';
 
@@ -106,6 +108,21 @@ export type SmartSearchResultAction =
               </mat-select>
             </mat-form-field>
 
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Owner / Shared Member</mat-label>
+              <mat-select
+                [ngModel]="ownerUserId()"
+                (ngModelChange)="ownerUserId.set($event); executeSearch()"
+              >
+                <mat-option [value]="null">All Members</mat-option>
+                @for (usr of householdUsers(); track usr.id) {
+                  <mat-option [value]="usr.id"
+                    >{{ usr.displayName }} ({{ usr.username }})</mat-option
+                  >
+                }
+              </mat-select>
+            </mat-form-field>
+
             @if (availableAttributeTemplates().length > 0) {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>Attribute</mat-label>
@@ -157,27 +174,18 @@ export type SmartSearchResultAction =
 
           <div class="chips-row">
             <mat-chip-set>
-              <mat-chip-option
-                [selected]="outOfPlaceOnly()"
-                (selectionChange)="outOfPlaceOnly.set($event.selected); executeSearch()"
-              >
+              <mat-chip-option [selected]="outOfPlaceOnly()" (click)="toggleOutOfPlace()">
                 Out of Place
               </mat-chip-option>
-              <mat-chip-option
-                [selected]="lowStockOnly()"
-                (selectionChange)="lowStockOnly.set($event.selected); executeSearch()"
-              >
+              <mat-chip-option [selected]="lowStockOnly()" (click)="toggleLowStock()">
                 Low Stock
               </mat-chip-option>
-              <mat-chip-option
-                [selected]="includeArchived()"
-                (selectionChange)="includeArchived.set($event.selected); executeSearch()"
-              >
+              <mat-chip-option [selected]="includeArchived()" (click)="toggleIncludeArchived()">
                 Include Graveyard (Archived)
               </mat-chip-option>
               <mat-chip-option
                 [selected]="includeAttachmentText()"
-                (selectionChange)="includeAttachmentText.set($event.selected); executeSearch()"
+                (click)="toggleIncludeAttachmentText()"
               >
                 Search PDF Manuals
               </mat-chip-option>
@@ -772,6 +780,7 @@ export class SmartSearchDialogComponent implements OnInit {
   protected readonly dialogRef = inject(MatDialogRef<SmartSearchDialogComponent>);
   private readonly searchService = inject(SearchService);
   private readonly lifecycleService = inject(LifecycleService);
+  private readonly authService = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly dispositionReasonLabels = DISPOSITION_REASON_LABELS;
@@ -779,6 +788,8 @@ export class SmartSearchDialogComponent implements OnInit {
   protected readonly filtersOpen = signal<boolean>(false);
   protected readonly locationId = signal<string | null>(null);
   protected readonly categoryId = signal<string | null>(null);
+  protected readonly ownerUserId = signal<string | null>(null);
+  protected readonly householdUsers = signal<UserSummaryDto[]>([]);
   protected readonly selectedAttributeName = signal<string | null>(null);
   protected readonly attributeValue = signal<string>('');
   protected readonly attributeMinNumber = signal<number | null>(null);
@@ -810,6 +821,7 @@ export class SmartSearchDialogComponent implements OnInit {
     let count = 0;
     if (this.locationId()) count++;
     if (this.categoryId()) count++;
+    if (this.ownerUserId()) count++;
     if (this.selectedAttributeName()) count++;
     if (this.outOfPlaceOnly()) count++;
     if (this.lowStockOnly()) count++;
@@ -819,6 +831,10 @@ export class SmartSearchDialogComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.authService.getUsers().subscribe({
+      next: (users) => this.householdUsers.set(users),
+      error: (err) => console.error('Failed to load household users', err),
+    });
     this.executeSearch();
   }
 
@@ -840,9 +856,30 @@ export class SmartSearchDialogComponent implements OnInit {
     this.executeSearch();
   }
 
+  toggleOutOfPlace(): void {
+    this.outOfPlaceOnly.update((v) => !v);
+    this.executeSearch();
+  }
+
+  toggleLowStock(): void {
+    this.lowStockOnly.update((v) => !v);
+    this.executeSearch();
+  }
+
+  toggleIncludeArchived(): void {
+    this.includeArchived.update((v) => !v);
+    this.executeSearch();
+  }
+
+  toggleIncludeAttachmentText(): void {
+    this.includeAttachmentText.update((v) => !v);
+    this.executeSearch();
+  }
+
   clearAllFilters(): void {
     this.locationId.set(null);
     this.categoryId.set(null);
+    this.ownerUserId.set(null);
     this.selectedAttributeName.set(null);
     this.attributeValue.set('');
     this.attributeMinNumber.set(null);
@@ -861,6 +898,7 @@ export class SmartSearchDialogComponent implements OnInit {
       q: this.query().trim() || null,
       locationId: this.locationId(),
       categoryId: this.categoryId(),
+      ownerUserId: this.ownerUserId(),
       outOfPlaceOnly: this.outOfPlaceOnly() || null,
       lowStockOnly: this.lowStockOnly() || null,
       attributeName: this.selectedAttributeName(),

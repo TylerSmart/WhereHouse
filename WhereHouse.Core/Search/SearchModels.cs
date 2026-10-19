@@ -16,7 +16,8 @@ public sealed record SmartSearchQuery(
     decimal? AttributeMinNumber = null,
     decimal? AttributeMaxNumber = null,
     bool IncludeArchived = true,
-    bool IncludeAttachmentText = true
+    bool IncludeAttachmentText = true,
+    Guid? OwnerUserId = null
 );
 
 public sealed record LocationSearchHitDto(

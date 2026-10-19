@@ -16,6 +16,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import {
   CheckoutItemRequest,
   CheckoutLogDto,
@@ -48,7 +50,9 @@ export interface CheckoutReturnDialogData {
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
+    MatDatepickerModule,
   ],
+  providers: [provideNativeDateAdapter()],
   selector: 'app-checkout-return-dialog',
   template: `
     <h2 mat-dialog-title class="dialog-header">
@@ -151,7 +155,17 @@ export interface CheckoutReturnDialogData {
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Expected Return Date (Optional)</mat-label>
-                <input matInput type="date" [(ngModel)]="expectedReturnDate" />
+                <input
+                  matInput
+                  [matDatepicker]="returnDatePicker"
+                  [(ngModel)]="expectedReturnDate"
+                  placeholder="Choose return date"
+                />
+                <mat-datepicker-toggle
+                  matIconSuffix
+                  [for]="returnDatePicker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #returnDatePicker></mat-datepicker>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
@@ -573,7 +587,7 @@ export class CheckoutReturnDialogComponent implements OnInit {
   projectOrNote = '';
   borrowerName = '';
   borrowerContact = '';
-  expectedReturnDate = '';
+  expectedReturnDate: Date | string | null = null;
 
   quantityUsed = 0;
   updatedCondition: ItemCondition = this.data.item.condition;

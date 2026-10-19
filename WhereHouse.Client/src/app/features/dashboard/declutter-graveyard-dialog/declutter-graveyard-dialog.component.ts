@@ -158,19 +158,19 @@ export interface DeclutterGraveyardDialogData {
                 <mat-chip-set>
                   <mat-chip-option
                     [selected]="stagedStatusFilter() === null"
-                    (selectionChange)="setStagedStatusFilter(null)"
+                    (click)="setStagedStatusFilter(null)"
                   >
                     All Staged
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="stagedStatusFilter() === ItemStatuses.StagedToSell"
-                    (selectionChange)="setStagedStatusFilter(ItemStatuses.StagedToSell)"
+                    (click)="setStagedStatusFilter(ItemStatuses.StagedToSell)"
                   >
                     Staged to Sell
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="stagedStatusFilter() === ItemStatuses.StagedToDonate"
-                    (selectionChange)="setStagedStatusFilter(ItemStatuses.StagedToDonate)"
+                    (click)="setStagedStatusFilter(ItemStatuses.StagedToDonate)"
                   >
                     Staged to Donate
                   </mat-chip-option>
@@ -354,19 +354,19 @@ export interface DeclutterGraveyardDialogData {
                 <mat-chip-set>
                   <mat-chip-option
                     [selected]="dustThresholdDays() === 180"
-                    (selectionChange)="setDustThreshold(180)"
+                    (click)="setDustThreshold(180)"
                   >
                     &gt; 6 Months (180d)
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="dustThresholdDays() === 365"
-                    (selectionChange)="setDustThreshold(365)"
+                    (click)="setDustThreshold(365)"
                   >
                     &gt; 1 Year (365d)
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="dustThresholdDays() === 730"
-                    (selectionChange)="setDustThreshold(730)"
+                    (click)="setDustThreshold(730)"
                   >
                     &gt; 2 Years (730d)
                   </mat-chip-option>
@@ -534,37 +534,37 @@ export interface DeclutterGraveyardDialogData {
                 <mat-chip-set>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === null"
-                    (selectionChange)="setGraveyardReasonFilter(null)"
+                    (click)="setGraveyardReasonFilter(null)"
                   >
                     All ({{ gy.totalArchivedCount }})
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === DispositionReasons.Sold"
-                    (selectionChange)="setGraveyardReasonFilter(DispositionReasons.Sold)"
+                    (click)="setGraveyardReasonFilter(DispositionReasons.Sold)"
                   >
                     Sold ({{ gy.soldCount }})
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === DispositionReasons.Donated"
-                    (selectionChange)="setGraveyardReasonFilter(DispositionReasons.Donated)"
+                    (click)="setGraveyardReasonFilter(DispositionReasons.Donated)"
                   >
                     Donated ({{ gy.donatedCount }})
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === DispositionReasons.Recycled"
-                    (selectionChange)="setGraveyardReasonFilter(DispositionReasons.Recycled)"
+                    (click)="setGraveyardReasonFilter(DispositionReasons.Recycled)"
                   >
                     Recycled ({{ gy.recycledCount }})
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === DispositionReasons.BrokenTrashed"
-                    (selectionChange)="setGraveyardReasonFilter(DispositionReasons.BrokenTrashed)"
+                    (click)="setGraveyardReasonFilter(DispositionReasons.BrokenTrashed)"
                   >
                     Broken/Trashed ({{ gy.brokenTrashedCount }})
                   </mat-chip-option>
                   <mat-chip-option
                     [selected]="gyReasonFilter() === DispositionReasons.Consumed"
-                    (selectionChange)="setGraveyardReasonFilter(DispositionReasons.Consumed)"
+                    (click)="setGraveyardReasonFilter(DispositionReasons.Consumed)"
                   >
                     Consumed ({{ gy.consumedCount }})
                   </mat-chip-option>
@@ -1061,6 +1061,7 @@ export class DeclutterGraveyardDialogComponent implements OnInit {
   }
 
   setStagedStatusFilter(filter: ItemStatus | null): void {
+    if (this.stagedStatusFilter() === filter) return;
     this.stagedStatusFilter.set(filter);
     this.selectedStagedIds.set(new Set());
     this.loadStaged();
@@ -1161,6 +1162,7 @@ export class DeclutterGraveyardDialogComponent implements OnInit {
   }
 
   setDustThreshold(days: number): void {
+    if (this.dustThresholdDays() === days) return;
     this.dustThresholdDays.set(days);
     this.loadDust();
   }
@@ -1230,6 +1232,7 @@ export class DeclutterGraveyardDialogComponent implements OnInit {
   }
 
   setGraveyardReasonFilter(reason: DispositionReason | null): void {
+    if (this.gyReasonFilter() === reason) return;
     this.gyReasonFilter.set(reason);
     this.loadGraveyard();
   }

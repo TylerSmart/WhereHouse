@@ -260,4 +260,15 @@ public sealed class AuthService(
 
         return new UserSummary(user.Id, user.Email, user.Username);
     }
+
+    public async Task<IReadOnlyList<UserSummaryDto>> GetHouseholdUsersAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await dbContext
+            .Users.AsNoTracking()
+            .OrderBy(u => u.Username)
+            .Select(u => new UserSummaryDto(u.Id, u.Username, u.Username))
+            .ToListAsync(cancellationToken);
+    }
 }

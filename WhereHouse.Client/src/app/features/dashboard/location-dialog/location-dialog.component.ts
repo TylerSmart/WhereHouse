@@ -59,14 +59,14 @@ const CONTAINER_STYLE_PRESETS = [
 ];
 
 const COLOR_SWATCHES = [
-  '#1f2937', // Black / Dark Slate
-  '#eab308', // Yellow
-  '#2563eb', // Blue
-  '#dc2626', // Red
-  '#16a34a', // Green
-  '#9333ea', // Purple
-  '#9ca3af', // Gray
-  '#f3f4f6', // Translucent / White
+  { hex: '#1f2937', name: 'Black / Dark Slate' },
+  { hex: '#eab308', name: 'Yellow' },
+  { hex: '#2563eb', name: 'Blue' },
+  { hex: '#dc2626', name: 'Red' },
+  { hex: '#16a34a', name: 'Green' },
+  { hex: '#9333ea', name: 'Purple' },
+  { hex: '#9ca3af', name: 'Gray' },
+  { hex: '#ffffff', name: 'White / Clear' },
 ];
 
 @Component({
@@ -242,51 +242,107 @@ const COLOR_SWATCHES = [
               <div class="color-picker-item">
                 <span class="picker-label">Primary Body Color</span>
                 <div class="swatches-row">
-                  @for (c of colorSwatches; track c) {
+                  @for (c of colorSwatches; track c.hex) {
                     <button
                       type="button"
                       class="color-swatch-btn"
-                      [style.background-color]="c"
-                      [class.active-swatch]="form.controls['primaryColor'].value === c"
-                      (click)="form.controls['primaryColor'].setValue(c)"
-                      [attr.aria-label]="'Set primary color to ' + c"
+                      [style.background-color]="c.hex"
+                      [class.active-swatch]="form.controls['primaryColor'].value === c.hex"
+                      (click)="form.controls['primaryColor'].setValue(c.hex)"
+                      [matTooltip]="c.name"
+                      [attr.aria-label]="'Set primary color to ' + c.name"
                     >
-                      <span class="visually-hidden">{{ c }}</span>
+                      @if (form.controls['primaryColor'].value === c.hex) {
+                        <mat-icon
+                          class="swatch-check"
+                          [class.dark-check]="c.hex === '#ffffff' || c.hex === '#eab308'"
+                          >check</mat-icon
+                        >
+                      }
                     </button>
                   }
                 </div>
-                <input
-                  type="text"
-                  formControlName="primaryColor"
-                  class="color-hex-input"
-                  placeholder="#1f2937 or Black"
-                  aria-label="Primary body color hex or name"
-                />
+                <div class="custom-color-control">
+                  <input
+                    type="color"
+                    class="color-picker-native"
+                    [value]="form.controls['primaryColor'].value || '#1f2937'"
+                    (input)="form.controls['primaryColor'].setValue($any($event.target).value)"
+                    matTooltip="Pick custom body color"
+                    aria-label="Pick custom body color"
+                  />
+                  <input
+                    type="text"
+                    formControlName="primaryColor"
+                    class="color-hex-input"
+                    placeholder="#1f2937 or Black"
+                    aria-label="Primary body color hex or name"
+                  />
+                  @if (form.controls['primaryColor'].value) {
+                    <button
+                      type="button"
+                      class="clear-color-btn"
+                      (click)="form.controls['primaryColor'].setValue('')"
+                      matTooltip="Clear body color"
+                      aria-label="Clear body color"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
               </div>
 
               <div class="color-picker-item">
                 <span class="picker-label">Lid / Accent Color</span>
                 <div class="swatches-row">
-                  @for (c of colorSwatches; track c) {
+                  @for (c of colorSwatches; track c.hex) {
                     <button
                       type="button"
                       class="color-swatch-btn"
-                      [style.background-color]="c"
-                      [class.active-swatch]="form.controls['accentColor'].value === c"
-                      (click)="form.controls['accentColor'].setValue(c)"
-                      [attr.aria-label]="'Set accent color to ' + c"
+                      [style.background-color]="c.hex"
+                      [class.active-swatch]="form.controls['accentColor'].value === c.hex"
+                      (click)="form.controls['accentColor'].setValue(c.hex)"
+                      [matTooltip]="c.name"
+                      [attr.aria-label]="'Set accent color to ' + c.name"
                     >
-                      <span class="visually-hidden">{{ c }}</span>
+                      @if (form.controls['accentColor'].value === c.hex) {
+                        <mat-icon
+                          class="swatch-check"
+                          [class.dark-check]="c.hex === '#ffffff' || c.hex === '#eab308'"
+                          >check</mat-icon
+                        >
+                      }
                     </button>
                   }
                 </div>
-                <input
-                  type="text"
-                  formControlName="accentColor"
-                  class="color-hex-input"
-                  placeholder="#eab308 or Yellow"
-                  aria-label="Lid or accent color hex or name"
-                />
+                <div class="custom-color-control">
+                  <input
+                    type="color"
+                    class="color-picker-native"
+                    [value]="form.controls['accentColor'].value || '#eab308'"
+                    (input)="form.controls['accentColor'].setValue($any($event.target).value)"
+                    matTooltip="Pick custom accent color"
+                    aria-label="Pick custom accent color"
+                  />
+                  <input
+                    type="text"
+                    formControlName="accentColor"
+                    class="color-hex-input"
+                    placeholder="#eab308 or Yellow"
+                    aria-label="Lid or accent color hex or name"
+                  />
+                  @if (form.controls['accentColor'].value) {
+                    <button
+                      type="button"
+                      class="clear-color-btn"
+                      (click)="form.controls['accentColor'].setValue('')"
+                      matTooltip="Clear accent color"
+                      aria-label="Clear accent color"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -459,22 +515,71 @@ const COLOR_SWATCHES = [
       gap: 0.3rem;
     }
     .color-swatch-btn {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       border: 1px solid rgba(0, 0, 0, 0.2);
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform 0.1s ease;
+    }
+    .swatch-check {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #fff;
+    }
+    .swatch-check.dark-check {
+      color: #000;
     }
     .active-swatch {
       outline: 2px solid var(--mat-sys-primary, #1976d2);
       outline-offset: 2px;
+      transform: scale(1.1);
+    }
+    .custom-color-control {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.25rem;
+    }
+    .color-picker-native {
+      width: 32px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--mat-sys-outline-variant, #ccc);
+      border-radius: 4px;
+      cursor: pointer;
+      background: none;
     }
     .color-hex-input {
-      margin-top: 0.25rem;
+      flex: 1;
       padding: 0.3rem 0.5rem;
       font-size: 0.8rem;
       border: 1px solid var(--mat-sys-outline, rgba(0, 0, 0, 0.2));
       border-radius: 4px;
+    }
+    .clear-color-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mat-sys-outline);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      border-radius: 4px;
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+      &:hover {
+        color: var(--mat-sys-error);
+      }
     }
     .privacy-section {
       padding: 0.5rem 0;

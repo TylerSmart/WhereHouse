@@ -250,4 +250,95 @@ public sealed class LocationsController(ILocationService locationService) : Cont
             );
         }
     }
+
+    [HttpPost("{id:guid}/cover-photo")]
+    [ProducesResponseType(typeof(LocationNodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadCoverPhoto(
+        Guid id,
+        IFormFile file,
+        CancellationToken cancellationToken
+    )
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Invalid file",
+                    Detail = "A valid file must be uploaded.",
+                }
+            );
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var updated = await locationService.UploadCoverPhotoAsync(
+                CurrentUserId,
+                id,
+                stream,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                cancellationToken
+            );
+
+            return updated is not null ? Ok(updated) : NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpGet("{id:guid}/cover-photo")]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCoverPhoto(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await locationService.GetCoverPhotoAsync(
+                CurrentUserId,
+                id,
+                cancellationToken
+            );
+            if (result is null)
+            {
+                return NotFound();
+            }
+
+            return File(result.Value.Content, result.Value.ContentType, result.Value.FileName);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpDelete("{id:guid}/cover-photo")]
+    [ProducesResponseType(typeof(LocationNodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteCoverPhoto(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await locationService.DeleteCoverPhotoAsync(
+                CurrentUserId,
+                id,
+                cancellationToken
+            );
+            return updated is not null ? Ok(updated) : NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
 }

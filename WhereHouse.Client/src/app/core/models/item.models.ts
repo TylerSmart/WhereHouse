@@ -134,6 +134,7 @@ export interface ItemDto {
   archivedAt?: string | null;
   archivedByUserId?: string | null;
   archivedByUsername?: string | null;
+  sharedWithUserIds?: string[] | null;
 }
 
 export interface UpsertItemAttributeValueRequest {
@@ -170,6 +171,7 @@ export interface CreateItemRequest {
   warrantyExpirationDate?: string | null;
   warrantyNotes?: string | null;
   isPrivate?: boolean;
+  sharedWithUserIds?: string[] | null;
   attributeValues?: UpsertItemAttributeValueRequest[] | null;
 }
 
@@ -199,6 +201,7 @@ export interface UpdateItemRequest {
   warrantyExpirationDate?: string | null;
   warrantyNotes?: string | null;
   isPrivate?: boolean;
+  sharedWithUserIds?: string[] | null;
   attributeValues?: UpsertItemAttributeValueRequest[] | null;
 }
 

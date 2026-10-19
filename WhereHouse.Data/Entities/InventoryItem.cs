@@ -66,6 +66,11 @@ public sealed class InventoryItem : IAuditable
 
     public bool IsPrivate { get; set; }
 
+    /// <summary>
+    /// Optional JSON array of household User IDs (Guid[]) allowed to view this item when IsPrivate is true.
+    /// </summary>
+    public string? SharedWithUserIdsJson { get; set; }
+
     public Guid OwnerId { get; set; }
 
     public User Owner { get; set; } = null!;

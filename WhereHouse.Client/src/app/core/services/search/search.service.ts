@@ -53,6 +53,9 @@ export class SearchService {
         params.includeAttachmentText ? 'true' : 'false',
       );
     }
+    if (params.ownerUserId) {
+      httpParams = httpParams.set('ownerUserId', params.ownerUserId);
+    }
 
     return this.http.get<SmartSearchResponseDto>(apiUrl('/search'), { params: httpParams });
   }

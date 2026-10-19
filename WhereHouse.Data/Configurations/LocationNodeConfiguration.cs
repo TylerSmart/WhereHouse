@@ -28,6 +28,9 @@ public sealed class LocationNodeConfiguration : IEntityTypeConfiguration<Locatio
 
         builder.Property(l => l.ColorLabel).HasMaxLength(100);
 
+        builder.Property(l => l.CoverPhotoRelativePath).HasMaxLength(500);
+        builder.Property(l => l.CoverPhotoContentType).HasMaxLength(128);
+
         builder.Property(l => l.CreatedBy).IsRequired().HasMaxLength(256);
 
         builder.Property(l => l.ModifiedBy).IsRequired().HasMaxLength(256);

@@ -18,6 +18,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { UserSummaryDto } from '../../../core/models/auth.models';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import {
   type AttributeFieldType,
   AttributeFieldTypes,
@@ -66,7 +70,9 @@ export type ItemDialogResult =
     MatSlideToggleModule,
     MatDividerModule,
     MatTooltipModule,
+    MatDatepickerModule,
   ],
+  providers: [provideNativeDateAdapter()],
   selector: 'app-item-dialog',
   template: `
     <h2 mat-dialog-title class="dialog-title">
@@ -419,7 +425,17 @@ export type ItemDialogResult =
           <div class="form-row">
             <mat-form-field appearance="outline" class="third-width">
               <mat-label>Purchase Date</mat-label>
-              <input matInput type="date" formControlName="purchaseDate" />
+              <input
+                matInput
+                [matDatepicker]="purchaseDatePicker"
+                formControlName="purchaseDate"
+                placeholder="Choose date"
+              />
+              <mat-datepicker-toggle
+                matIconSuffix
+                [for]="purchaseDatePicker"
+              ></mat-datepicker-toggle>
+              <mat-datepicker #purchaseDatePicker></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="third-width">
@@ -450,21 +466,82 @@ export type ItemDialogResult =
               />
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Warranty Expiration Date</mat-label>
-              <input matInput type="date" formControlName="warrantyExpirationDate" />
-            </mat-form-field>
+            <div class="date-preset-col half-width">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Return Window End Date</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="returnDatePicker"
+                  formControlName="returnWindowEndDate"
+                  placeholder="Return deadline"
+                />
+                <mat-datepicker-toggle
+                  matIconSuffix
+                  [for]="returnDatePicker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #returnDatePicker></mat-datepicker>
+              </mat-form-field>
+              <div class="preset-chips-inline">
+                <span class="preset-label">Quick:</span>
+                <button type="button" class="preset-chip-btn" (click)="applyReturnPreset(14)">
+                  +14d
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyReturnPreset(30)">
+                  +30d
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyReturnPreset(60)">
+                  +60d
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyReturnPreset(90)">
+                  +90d
+                </button>
+              </div>
+            </div>
           </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Warranty Notes</mat-label>
-            <input
-              matInput
-              formControlName="warrantyNotes"
-              placeholder="e.g. Lifetime warranty via manufacturer"
-              maxlength="1000"
-            />
-          </mat-form-field>
+          <div class="form-row">
+            <div class="date-preset-col half-width">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Warranty Expiration Date</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="warrantyDatePicker"
+                  formControlName="warrantyExpirationDate"
+                  placeholder="Warranty end"
+                />
+                <mat-datepicker-toggle
+                  matIconSuffix
+                  [for]="warrantyDatePicker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #warrantyDatePicker></mat-datepicker>
+              </mat-form-field>
+              <div class="preset-chips-inline">
+                <span class="preset-label">Quick:</span>
+                <button type="button" class="preset-chip-btn" (click)="applyWarrantyPreset(1)">
+                  +1 yr
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyWarrantyPreset(2)">
+                  +2 yr
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyWarrantyPreset(3)">
+                  +3 yr
+                </button>
+                <button type="button" class="preset-chip-btn" (click)="applyWarrantyPreset(5)">
+                  +5 yr
+                </button>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Warranty Notes</mat-label>
+              <input
+                matInput
+                formControlName="warrantyNotes"
+                placeholder="e.g. Lifetime warranty via manufacturer"
+                maxlength="1000"
+              />
+            </mat-form-field>
+          </div>
         </div>
 
         <mat-divider></mat-divider>
@@ -482,6 +559,27 @@ export type ItemDialogResult =
               </div>
             </div>
           </mat-slide-toggle>
+
+          @if (form.get('isPrivate')?.value) {
+            <div class="shared-users-wrapper">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Share Privately With (Optional)</mat-label>
+                <mat-select
+                  formControlName="sharedWithUserIds"
+                  multiple
+                  placeholder="Select household members"
+                >
+                  @for (u of householdUsers(); track u.id) {
+                    <mat-option [value]="u.id">{{ u.displayName }} ({{ u.username }})</mat-option>
+                  }
+                </mat-select>
+                <mat-hint
+                  >Household members chosen here will be able to see and search this item despite
+                  Secret Mode.</mat-hint
+                >
+              </mat-form-field>
+            </div>
+          }
         </div>
       </form>
     </mat-dialog-content>
@@ -592,6 +690,38 @@ export type ItemDialogResult =
       align-items: flex-start;
       gap: 0.5rem;
     }
+    .date-preset-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .preset-chips-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: -0.35rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+    }
+    .preset-label {
+      color: var(--mat-sys-outline);
+      font-size: 0.72rem;
+    }
+    .preset-chip-btn {
+      background: var(--mat-sys-surface-container-high, rgba(0, 0, 0, 0.05));
+      border: 1px solid var(--mat-sys-outline-variant, #ccc);
+      border-radius: 12px;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.72rem;
+      cursor: pointer;
+      &:hover {
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+      }
+    }
+    .shared-users-wrapper {
+      margin-top: 0.75rem;
+    }
 
     @media (max-width: 600px) {
       .type-radio-group,
@@ -609,6 +739,7 @@ export class ItemDialogComponent implements OnInit {
     inject<MatDialogRef<ItemDialogComponent, ItemDialogResult>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly intakeService = inject(IntakePortabilityService);
+  private readonly authService = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly ItemTypes = ItemTypes;
@@ -619,6 +750,7 @@ export class ItemDialogComponent implements OnInit {
   protected readonly isEditMode = !!this.data.item;
   protected readonly isCloneMode = !this.data.item && !!this.data.cloneFromItem;
   protected readonly isLookingUpBarcode = signal(false);
+  protected readonly householdUsers = signal<UserSummaryDto[]>([]);
 
   protected form!: FormGroup;
 
@@ -630,6 +762,11 @@ export class ItemDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.authService.getUsers().subscribe({
+      next: (users) => this.householdUsers.set(users),
+      error: (err) => console.error('Failed to load household users', err),
+    });
+
     const src = this.data.item ?? this.data.cloneFromItem;
     const initialCategory = src?.categoryId
       ? (this.data.availableCategories.find((c) => c.id === src.categoryId) ?? null)
@@ -664,15 +801,15 @@ export class ItemDialogComponent implements OnInit {
       description: [src?.description ?? '', [Validators.maxLength(2000)]],
       aliasesString: [src?.aliases ? src.aliases.join(', ') : ''],
       tagsString: [src?.tags ? src.tags.join(', ') : ''],
-      purchaseDate: [src?.purchaseDate ? src.purchaseDate.substring(0, 10) : null],
+      purchaseDate: [this.toDate(src?.purchaseDate)],
       retailer: [src?.retailer ?? '', [Validators.maxLength(150)]],
       purchasePrice: [src?.purchasePrice ?? null],
       estimatedReplacementValue: [src?.estimatedReplacementValue ?? null],
-      warrantyExpirationDate: [
-        src?.warrantyExpirationDate ? src.warrantyExpirationDate.substring(0, 10) : null,
-      ],
+      returnWindowEndDate: [this.toDate(src?.returnWindowEndDate)],
+      warrantyExpirationDate: [this.toDate(src?.warrantyExpirationDate)],
       warrantyNotes: [src?.warrantyNotes ?? '', [Validators.maxLength(1000)]],
       isPrivate: [src?.isPrivate ?? false],
+      sharedWithUserIds: [src?.sharedWithUserIds ?? []],
       attributeValues: this.fb.array([]),
     });
 
@@ -686,6 +823,33 @@ export class ItemDialogComponent implements OnInit {
       this.selectedCategoryTemplates.set(cat?.attributeTemplates ?? []);
       this.syncAttributeValuesControls(cat);
     });
+  }
+
+  private toDate(val?: string | null): Date | null {
+    if (!val) return null;
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  private toIsoOrNull(val?: Date | string | null): string | null {
+    if (!val) return null;
+    const d = val instanceof Date ? val : new Date(val);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  applyReturnPreset(days: number): void {
+    const rawPurchase = this.form.get('purchaseDate')?.value;
+    const base = rawPurchase ? new Date(rawPurchase) : new Date();
+    const target = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+    this.form.patchValue({ returnWindowEndDate: target });
+  }
+
+  applyWarrantyPreset(years: number): void {
+    const rawPurchase = this.form.get('purchaseDate')?.value;
+    const base = rawPurchase ? new Date(rawPurchase) : new Date();
+    const target = new Date(base);
+    target.setFullYear(target.getFullYear() + years);
+    this.form.patchValue({ warrantyExpirationDate: target });
   }
 
   isQuantityType(): boolean {
@@ -860,16 +1024,16 @@ export class ItemDialogComponent implements OnInit {
         currentQuantity: val.currentQuantity ?? 1,
         unit: val.unit?.trim() || null,
         minQuantity: val.minQuantity !== null ? val.minQuantity : null,
-        purchaseDate: val.purchaseDate ? new Date(val.purchaseDate).toISOString() : null,
+        purchaseDate: this.toIsoOrNull(val.purchaseDate),
         retailer: val.retailer?.trim() || null,
         purchasePrice: val.purchasePrice !== null ? val.purchasePrice : null,
         estimatedReplacementValue:
           val.estimatedReplacementValue !== null ? val.estimatedReplacementValue : null,
-        warrantyExpirationDate: val.warrantyExpirationDate
-          ? new Date(val.warrantyExpirationDate).toISOString()
-          : null,
+        returnWindowEndDate: this.toIsoOrNull(val.returnWindowEndDate),
+        warrantyExpirationDate: this.toIsoOrNull(val.warrantyExpirationDate),
         warrantyNotes: val.warrantyNotes?.trim() || null,
         isPrivate: val.isPrivate,
+        sharedWithUserIds: val.isPrivate ? val.sharedWithUserIds || [] : null,
         attributeValues,
       };
 
@@ -893,16 +1057,16 @@ export class ItemDialogComponent implements OnInit {
         currentQuantity: val.currentQuantity ?? 1,
         unit: val.unit?.trim() || null,
         minQuantity: val.minQuantity !== null ? val.minQuantity : null,
-        purchaseDate: val.purchaseDate ? new Date(val.purchaseDate).toISOString() : null,
+        purchaseDate: this.toIsoOrNull(val.purchaseDate),
         retailer: val.retailer?.trim() || null,
         purchasePrice: val.purchasePrice !== null ? val.purchasePrice : null,
         estimatedReplacementValue:
           val.estimatedReplacementValue !== null ? val.estimatedReplacementValue : null,
-        warrantyExpirationDate: val.warrantyExpirationDate
-          ? new Date(val.warrantyExpirationDate).toISOString()
-          : null,
+        returnWindowEndDate: this.toIsoOrNull(val.returnWindowEndDate),
+        warrantyExpirationDate: this.toIsoOrNull(val.warrantyExpirationDate),
         warrantyNotes: val.warrantyNotes?.trim() || null,
         isPrivate: val.isPrivate,
+        sharedWithUserIds: val.isPrivate ? val.sharedWithUserIds || [] : null,
         attributeValues,
       };
 

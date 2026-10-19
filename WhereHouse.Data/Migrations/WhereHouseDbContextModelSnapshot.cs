@@ -367,6 +367,10 @@ namespace WhereHouse.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("SharedWithUserIdsJson")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("ShortCode")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -686,6 +690,17 @@ namespace WhereHouse.Data.Migrations
                     b.Property<string>("ContainerStyle")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("CoverAttachmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoverPhotoContentType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("CoverPhotoRelativePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");

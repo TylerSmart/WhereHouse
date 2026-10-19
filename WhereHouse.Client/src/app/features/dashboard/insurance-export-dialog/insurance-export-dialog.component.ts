@@ -400,7 +400,7 @@ export interface InsuranceExportDialogData {
       gap: 0.5rem;
       color: var(--mat-sys-outline);
     }
-    .empty-state mat-icon {
+    .empty-state > mat-icon {
       font-size: 40px;
       width: 40px;
       height: 40px;

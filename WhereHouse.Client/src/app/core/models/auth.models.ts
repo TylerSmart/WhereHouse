@@ -23,6 +23,12 @@ export interface CurrentUserDto {
   username: string;
 }
 
+export interface UserSummaryDto {
+  id: string;
+  username: string;
+  displayName: string;
+}
+
 export interface OidcConfigurationDto {
   enabled: boolean;
   providerName: string;
