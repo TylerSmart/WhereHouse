@@ -2,14 +2,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
+import { CategoryDto } from '../../core/models/category.models';
+import { ItemConditions, ItemDto, ItemStatuses, ItemTypes } from '../../core/models/item.models';
 import {
   LocationNodeDto,
   LocationNodeTypes,
   LocationTreeNodeDto,
 } from '../../core/models/location.models';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { CategoryService } from '../../core/services/category/category.service';
+import { ItemService } from '../../core/services/item/item.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { ThemeService } from '../../core/services/theme/theme.service';
+import { CategoryManagerDialogComponent } from './category-manager-dialog/category-manager-dialog.component';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
@@ -115,6 +120,108 @@ describe('DashboardComponent', () => {
     },
   ];
 
+  const mockCategories: CategoryDto[] = [
+    {
+      id: 'cat-1',
+      parentId: null,
+      name: 'Power Tools',
+      description: null,
+      icon: 'handyman',
+      color: null,
+      attributeTemplates: [],
+      itemCount: 1,
+      createdAt: '',
+      modifiedAt: '',
+    },
+  ];
+
+  const mockItems: ItemDto[] = [
+    {
+      id: 'itm-1',
+      shortCode: 'ITM-001',
+      name: 'Cordless Drill',
+      itemType: ItemTypes.Unique,
+      status: ItemStatuses.InPlace,
+      condition: ItemConditions.Good,
+      homeLocationId: 'loc-1',
+      homeLocationName: 'Garage',
+      homeLocationShortCode: 'LOC-001',
+      homeLocationFullPath: 'Garage',
+      categoryId: 'cat-1',
+      categoryName: 'Power Tools',
+      parentItemId: null,
+      parentItemName: null,
+      brand: 'Makita',
+      modelNumber: 'XFD13',
+      serialNumber: 'SN-100',
+      description: 'Brushless drill',
+      aliases: ['Driver'],
+      tags: ['tools'],
+      currentQuantity: 1,
+      minQuantity: null,
+      unit: null,
+      isLowStock: false,
+      isIncompleteKit: false,
+      incompleteKitWarnings: [],
+      purchaseDate: null,
+      retailer: null,
+      purchasePrice: null,
+      estimatedReplacementValue: null,
+      returnWindowEndDate: null,
+      warrantyExpirationDate: null,
+      warrantyNotes: null,
+      isPrivate: false,
+      ownerId: 'u-1',
+      attributeValues: [],
+      childItems: [],
+      lastTouchedAt: '',
+      createdAt: '',
+      modifiedAt: '',
+    },
+    {
+      id: 'itm-2',
+      shortCode: 'ITM-002',
+      name: 'AA Batteries',
+      itemType: ItemTypes.Quantity,
+      status: ItemStatuses.InPlace,
+      condition: ItemConditions.New,
+      homeLocationId: 'loc-2',
+      homeLocationName: 'Winter Camping Bin',
+      homeLocationShortCode: 'BIN-001',
+      homeLocationFullPath: 'Garage > Winter Camping Bin',
+      categoryId: null,
+      categoryName: null,
+      parentItemId: null,
+      parentItemName: null,
+      brand: 'Eneloop',
+      modelNumber: null,
+      serialNumber: null,
+      description: 'Rechargeables',
+      aliases: [],
+      tags: ['batteries'],
+      currentQuantity: 12,
+      minQuantity: 4,
+      unit: 'packs',
+      isLowStock: false,
+      isIncompleteKit: false,
+      incompleteKitWarnings: [],
+      purchaseDate: null,
+      retailer: null,
+      purchasePrice: null,
+      estimatedReplacementValue: null,
+      returnWindowEndDate: null,
+      warrantyExpirationDate: null,
+      warrantyNotes: null,
+      isPrivate: false,
+      ownerId: 'u-1',
+      attributeValues: [],
+      childItems: [],
+      lastTouchedAt: '',
+      createdAt: '',
+      modifiedAt: '',
+    },
+  ];
+
   let mockLocationService: {
     getTree: ReturnType<typeof vi.fn>;
     getLocations: ReturnType<typeof vi.fn>;
@@ -122,6 +229,23 @@ describe('DashboardComponent', () => {
     updateLocation: ReturnType<typeof vi.fn>;
     moveLocation: ReturnType<typeof vi.fn>;
     deleteLocation: ReturnType<typeof vi.fn>;
+  };
+
+  let mockCategoryService: {
+    getCategories: ReturnType<typeof vi.fn>;
+    createCategory: ReturnType<typeof vi.fn>;
+    updateCategory: ReturnType<typeof vi.fn>;
+    deleteCategory: ReturnType<typeof vi.fn>;
+  };
+
+  let mockItemService: {
+    getItems: ReturnType<typeof vi.fn>;
+    getItem: ReturnType<typeof vi.fn>;
+    createItem: ReturnType<typeof vi.fn>;
+    updateItem: ReturnType<typeof vi.fn>;
+    adjustQuantity: ReturnType<typeof vi.fn>;
+    duplicateItem: ReturnType<typeof vi.fn>;
+    deleteItem: ReturnType<typeof vi.fn>;
   };
 
   let mockAuthService: {
@@ -147,6 +271,23 @@ describe('DashboardComponent', () => {
       deleteLocation: vi.fn().mockReturnValue(of(undefined)),
     };
 
+    mockCategoryService = {
+      getCategories: vi.fn().mockReturnValue(of(mockCategories)),
+      createCategory: vi.fn(),
+      updateCategory: vi.fn(),
+      deleteCategory: vi.fn().mockReturnValue(of(undefined)),
+    };
+
+    mockItemService = {
+      getItems: vi.fn().mockReturnValue(of(mockItems)),
+      getItem: vi.fn(),
+      createItem: vi.fn(),
+      updateItem: vi.fn(),
+      adjustQuantity: vi.fn(),
+      duplicateItem: vi.fn(),
+      deleteItem: vi.fn().mockReturnValue(of(undefined)),
+    };
+
     mockAuthService = {
       currentUser: vi.fn().mockReturnValue({
         id: 'u-1',
@@ -168,6 +309,8 @@ describe('DashboardComponent', () => {
       imports: [DashboardComponent],
       providers: [
         { provide: LocationService, useValue: mockLocationService },
+        { provide: CategoryService, useValue: mockCategoryService },
+        { provide: ItemService, useValue: mockItemService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: MatDialog, useValue: mockDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
@@ -180,15 +323,19 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create the component and load tree and locations', () => {
+  it('should create the component and load tree, locations, categories, and items', () => {
     expect(component).toBeTruthy();
     expect(mockLocationService.getTree).toHaveBeenCalled();
     expect(mockLocationService.getLocations).toHaveBeenCalled();
+    expect(mockCategoryService.getCategories).toHaveBeenCalled();
+    expect(mockItemService.getItems).toHaveBeenCalled();
     expect(component['allNodes']().length).toBe(2);
     expect(component['treeNodes']().length).toBe(1);
+    expect(component['categories']().length).toBe(1);
+    expect(component['items']().length).toBe(2);
   });
 
-  it('should display root nodes when no parent is selected', () => {
+  it('should display root nodes and items when no parent is selected', () => {
     expect(component['selectedNodeId']()).toBeNull();
     expect(component['displayedNodes']().length).toBe(1);
     expect(component['displayedNodes']()[0].name).toBe('Garage');
@@ -214,12 +361,68 @@ describe('DashboardComponent', () => {
     expect(component['displayedNodes']()[0].name).toBe('Winter Camping Bin');
   });
 
-  it('should navigate hierarchy when a node is selected', () => {
+  it('should filter items based on search query', () => {
+    component['searchQuery'].set('Makita');
+    expect(component['displayedItems']().length).toBe(1);
+    expect(component['displayedItems']()[0].name).toBe('Cordless Drill');
+
+    component['searchQuery'].set('batteries');
+    expect(component['displayedItems']().length).toBe(1);
+    expect(component['displayedItems']()[0].name).toBe('AA Batteries');
+  });
+
+  it('should filter items inside selected location', () => {
     component.selectNode('loc-1');
     expect(component['selectedNodeId']()).toBe('loc-1');
-    expect(component['selectedNode']()?.name).toBe('Garage');
-    expect(component['displayedNodes']().length).toBe(1);
-    expect(component['displayedNodes']()[0].name).toBe('Winter Camping Bin');
+    expect(component['displayedItems']().length).toBe(1);
+    expect(component['displayedItems']()[0].name).toBe('Cordless Drill');
+
+    component.selectNode('loc-2');
+    expect(component['displayedItems']().length).toBe(1);
+    expect(component['displayedItems']()[0].name).toBe('AA Batteries');
+  });
+
+  it('should open category manager dialog', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openCategoryManagerDialog();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      CategoryManagerDialogComponent,
+      expect.objectContaining({ width: '720px' }),
+    );
+  });
+
+  it('should adjust item quantity on stepper click', () => {
+    const updated = { ...mockItems[1], currentQuantity: 13 };
+    mockItemService.adjustQuantity.mockReturnValue(of(updated));
+
+    const mouseEvent = new MouseEvent('click');
+    const stopPropagationSpy = vi.spyOn(mouseEvent, 'stopPropagation');
+
+    component.adjustItemQuantity(mockItems[1], 1, mouseEvent);
+
+    expect(stopPropagationSpy).toHaveBeenCalled();
+    expect(mockItemService.adjustQuantity).toHaveBeenCalledWith('itm-2', { delta: 1 });
+    const itm = component['items']().find((i) => i.id === 'itm-2');
+    expect(itm?.currentQuantity).toBe(13);
+  });
+
+  it('should duplicate item when triggered', () => {
+    const cloned = {
+      ...mockItems[0],
+      id: 'itm-clone',
+      shortCode: 'ITM-003',
+      name: 'Cordless Drill (Copy)',
+    };
+    mockItemService.duplicateItem.mockReturnValue(of(cloned));
+
+    component.openDuplicateItemDialog(mockItems[0]);
+
+    expect(mockItemService.duplicateItem).toHaveBeenCalledWith('itm-1');
+    expect(mockSnackBar.open).toHaveBeenCalled();
   });
 
   it('should delete location when confirmed', () => {
@@ -230,6 +433,17 @@ describe('DashboardComponent', () => {
     component.deleteNode(mockNodes[0]);
 
     expect(mockLocationService.deleteLocation).toHaveBeenCalledWith('loc-1');
+    expect(mockSnackBar.open).toHaveBeenCalled();
+  });
+
+  it('should delete item when confirmed', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(true),
+    });
+
+    component.deleteItem(mockItems[0]);
+
+    expect(mockItemService.deleteItem).toHaveBeenCalledWith('itm-1');
     expect(mockSnackBar.open).toHaveBeenCalled();
   });
 });

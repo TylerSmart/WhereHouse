@@ -1,7 +1,7 @@
 # Phase 02: Categories, Attribute Templates & Core Items
 
 > **Branch:** `feature/phase-02-categories-and-items`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/PRD.md` — Sections 4.2 (`Item Typology, Granularity & Custom Attributes`), 4.3.1 (`Identifiers & QR Encoding`), 4.4.2 (`Quick-Clone / Duplicate Item`), 4.5.1 (`Permanent Home Location vs. Current Status`), 4.6.2 (`Purchase, Return Window & Warranty Lifecycle`), and 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -593,7 +593,7 @@ public interface IItemService
 
 ## 7. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (Categories, Attribute Templates & Inventory Items)**
+- [x] **Task 1: Backend Core & Data Layer (Categories, Attribute Templates & Inventory Items)**
   - Create `WhereHouse.Core/Categories/CategoryModels.cs` and `WhereHouse.Core/Categories/ICategoryService.cs`.
   - Create `WhereHouse.Core/Items/ItemModels.cs` and `WhereHouse.Core/Items/IItemService.cs`.
   - Update `WhereHouse.Core/Locations/LocationModels.cs` to add `int ItemCount = 0` to `LocationNodeDto`.
@@ -614,7 +614,7 @@ public interface IItemService
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests**
+- [x] **Task 2: API Controllers & Integration Tests**
   - Create `WhereHouse.API/Controllers/CategoriesController.cs` and `WhereHouse.API/Controllers/ItemsController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/categories"` and `"/items"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/CategoryAndItemIntegrationTests.cs` covering:
@@ -629,7 +629,7 @@ public interface IItemService
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests**
+- [x] **Task 3: Angular Client & Unit Tests**
   - Create `src/app/core/models/category.models.ts` and `src/app/core/models/item.models.ts` (and add `itemCount?: number` to `location.models.ts`).
   - Create `CategoryService` (`category.service.ts` & `.spec.ts`) and `ItemService` (`item.service.ts` & `.spec.ts`).
   - Create `CategoryManagerDialogComponent` (`.ts` & `.spec.ts`) and `ItemDialogComponent` (`.ts` & `.spec.ts`).
@@ -641,7 +641,7 @@ public interface IItemService
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E and full test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

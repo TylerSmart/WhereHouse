@@ -1,0 +1,824 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle,
+} from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  type AttributeFieldType,
+  AttributeFieldTypes,
+  CategoryAttributeTemplateDto,
+  CategoryDto,
+} from '../../../core/models/category.models';
+import {
+  CreateItemRequest,
+  ItemConditions,
+  ItemDto,
+  ItemStatuses,
+  type ItemType,
+  ItemTypes,
+  ItemAttributeValueDto,
+  UpdateItemRequest,
+  UpsertItemAttributeValueRequest,
+} from '../../../core/models/item.models';
+import { LocationNodeDto } from '../../../core/models/location.models';
+
+export interface ItemDialogData {
+  item?: ItemDto;
+  homeLocationId?: string | null;
+  availableLocations: LocationNodeDto[];
+  availableCategories: CategoryDto[];
+  availableParentItems: ItemDto[];
+}
+
+export type ItemDialogResult =
+  { mode: 'create'; request: CreateItemRequest } | { mode: 'update'; request: UpdateItemRequest };
+
+@Component({
+  imports: [
+    ReactiveFormsModule,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSelectModule,
+    MatRadioModule,
+    MatCheckboxModule,
+    MatSlideToggleModule,
+    MatDividerModule,
+    MatTooltipModule,
+  ],
+  selector: 'app-item-dialog',
+  template: `
+    <h2 mat-dialog-title class="dialog-title">
+      <mat-icon>{{ getItemTypeIcon() }}</mat-icon>
+      <span>{{ isEditMode ? 'Edit Item' : 'Add Item' }}</span>
+    </h2>
+
+    <mat-dialog-content>
+      <form [formGroup]="form" class="item-form">
+        <!-- Archetype Selector -->
+        <div class="form-section">
+          <span class="section-label">Item Archetype</span>
+          <mat-radio-group formControlName="itemType" class="type-radio-group">
+            <mat-radio-button [value]="ItemTypes.Unique">
+              <div class="radio-label-content">
+                <mat-icon>fingerprint</mat-icon>
+                <div>
+                  <strong>Unique (1-of-1)</strong>
+                  <span class="sub-desc">Serialized, branded gear</span>
+                </div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button [value]="ItemTypes.Quantity">
+              <div class="radio-label-content">
+                <mat-icon>layers</mat-icon>
+                <div>
+                  <strong>Quantity / Consumable</strong>
+                  <span class="sub-desc">Bulk spares, stackable</span>
+                </div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button [value]="ItemTypes.Kit">
+              <div class="radio-label-content">
+                <mat-icon>cases</mat-icon>
+                <div>
+                  <strong>Kit / Bundle</strong>
+                  <span class="sub-desc">Composite packing kit</span>
+                </div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button [value]="ItemTypes.Nested">
+              <div class="radio-label-content">
+                <mat-icon>account_tree</mat-icon>
+                <div>
+                  <strong>Nested Component</strong>
+                  <span class="sub-desc">Accessory attached to parent</span>
+                </div>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <!-- Name & Short Code -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Item Name</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            placeholder="e.g. DeWalt 20V Hammer Drill"
+            required
+            maxlength="200"
+          />
+        </mat-form-field>
+
+        @if (!isEditMode) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Short Code (Optional)</mat-label>
+            <input
+              matInput
+              formControlName="shortCode"
+              placeholder="Auto-generated (e.g. ITM-001)"
+              maxlength="32"
+            />
+            <mat-hint>Leave blank to auto-generate sequentially</mat-hint>
+          </mat-form-field>
+        } @else {
+          <div class="shortcode-badge-row">
+            <span class="shortcode-pill">{{ data.item?.shortCode }}</span>
+            <span class="shortcode-path">{{
+              data.item?.homeLocationFullPath || 'No Location'
+            }}</span>
+          </div>
+        }
+
+        <!-- Home Location & Category Selectors -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Home Location / Container</mat-label>
+            <mat-select formControlName="homeLocationId">
+              <mat-option [value]="null"><em>Unassigned</em></mat-option>
+              @for (loc of data.availableLocations; track loc.id) {
+                <mat-option [value]="loc.id"> [{{ loc.shortCode }}] {{ loc.fullPath }} </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="categoryId">
+              <mat-option [value]="null"><em>None</em></mat-option>
+              @for (cat of data.availableCategories; track cat.id) {
+                <mat-option [value]="cat.id">
+                  {{ cat.name }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Parent Item / Kit Selector (if Nested or child member) -->
+        @if (isNestedOrChild()) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Parent Kit or Primary Asset</mat-label>
+            <mat-select formControlName="parentItemId">
+              <mat-option [value]="null"><em>None</em></mat-option>
+              @for (p of data.availableParentItems; track p.id) {
+                @if (p.id !== data.item?.id) {
+                  <mat-option [value]="p.id">
+                    [{{ p.shortCode }}] {{ p.name }} ({{ getItemTypeName(p.itemType) }})
+                  </mat-option>
+                }
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <!-- Quantity Section (highlighted for Quantity archetype) -->
+        @if (isQuantityType()) {
+          <div class="quantity-highlight-box">
+            <div class="box-title">
+              <mat-icon>inventory</mat-icon>
+              <span>Quantity Tracking</span>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="third-width">
+                <mat-label>Current Quantity</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="currentQuantity"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="third-width">
+                <mat-label>Unit of Measure</mat-label>
+                <input
+                  matInput
+                  formControlName="unit"
+                  placeholder="pcs, ft, pack, roll"
+                  maxlength="32"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="third-width">
+                <mat-label>Low-Stock Threshold</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="minQuantity"
+                  min="0"
+                  placeholder="Optional alert"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+        }
+
+        <!-- Condition and Status (on edit) -->
+        <div class="form-row">
+          <mat-form-field
+            appearance="outline"
+            [class.half-width]="isEditMode"
+            [class.full-width]="!isEditMode"
+          >
+            <mat-label>Condition</mat-label>
+            <mat-select formControlName="condition">
+              <mat-option [value]="ItemConditions.New">New</mat-option>
+              <mat-option [value]="ItemConditions.Excellent">Excellent</mat-option>
+              <mat-option [value]="ItemConditions.Good">Good</mat-option>
+              <mat-option [value]="ItemConditions.Fair">Fair</mat-option>
+              <mat-option [value]="ItemConditions.Broken">Broken</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          @if (isEditMode) {
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option [value]="ItemStatuses.InPlace">In Place</mat-option>
+                <mat-option [value]="ItemStatuses.InUse">In Use</mat-option>
+                <mat-option [value]="ItemStatuses.LoanedOut">Loaned Out</mat-option>
+                <mat-option [value]="ItemStatuses.StagedToSell">Staged to Sell</mat-option>
+                <mat-option [value]="ItemStatuses.StagedToDonate">Staged to Donate</mat-option>
+                <mat-option [value]="ItemStatuses.Archived">Archived</mat-option>
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+
+        <!-- Brand, Model, Serial # -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Brand / Manufacturer</mat-label>
+            <input
+              matInput
+              formControlName="brand"
+              placeholder="e.g. DeWalt, Anker"
+              maxlength="100"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Model #</mat-label>
+            <input
+              matInput
+              formControlName="modelNumber"
+              placeholder="Model number"
+              maxlength="100"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Serial #</mat-label>
+            <input
+              matInput
+              formControlName="serialNumber"
+              placeholder="Serial number"
+              maxlength="100"
+            />
+          </mat-form-field>
+        </div>
+
+        <!-- Dynamic Category Attributes Section -->
+        @if (selectedCategoryTemplates().length > 0) {
+          <div class="dynamic-attributes-box">
+            <div class="box-title">
+              <mat-icon>tune</mat-icon>
+              <span>Custom Category Fields ({{ selectedCategory()?.name }})</span>
+            </div>
+
+            <div formArrayName="attributeValues" class="dynamic-fields-list">
+              @for (ctrl of attributeValuesArray.controls; track $index) {
+                <div [formGroupName]="$index" class="dynamic-field-item">
+                  @switch (ctrl.value.fieldType) {
+                    @case (AttributeFieldTypes.Text) {
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>{{ ctrl.value.attributeName }}</mat-label>
+                        <input matInput formControlName="value" />
+                      </mat-form-field>
+                    }
+                    @case (AttributeFieldTypes.Number) {
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label
+                          >{{ ctrl.value.attributeName }}
+                          {{ ctrl.value.unit ? '(' + ctrl.value.unit + ')' : '' }}</mat-label
+                        >
+                        <input matInput type="number" formControlName="value" />
+                        @if (ctrl.value.unit) {
+                          <span matSuffix>{{ ctrl.value.unit }}</span>
+                        }
+                      </mat-form-field>
+                    }
+                    @case (AttributeFieldTypes.Enum) {
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>{{ ctrl.value.attributeName }}</mat-label>
+                        <mat-select formControlName="value">
+                          @for (
+                            opt of getOptionsForField(ctrl.value.attributeTemplateId);
+                            track opt
+                          ) {
+                            <mat-option [value]="opt">{{ opt }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    }
+                    @case (AttributeFieldTypes.Boolean) {
+                      <mat-checkbox formControlName="value">
+                        {{ ctrl.value.attributeName }}
+                      </mat-checkbox>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Description, Aliases, Tags -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description / Notes</mat-label>
+          <textarea matInput formControlName="description" rows="2" maxlength="2000"></textarea>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Aliases / Synonyms (comma separated)</mat-label>
+            <input matInput formControlName="aliasesString" placeholder="e.g. Hex key, Allen key" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Tags (comma separated)</mat-label>
+            <input
+              matInput
+              formControlName="tagsString"
+              placeholder="e.g. camping, cooking, emergency"
+            />
+          </mat-form-field>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Purchase & Warranty Lifecycle Section -->
+        <div class="vault-section">
+          <div class="box-title">
+            <mat-icon>receipt_long</mat-icon>
+            <span>Purchase &amp; Warranty Vault</span>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="third-width">
+              <mat-label>Purchase Date</mat-label>
+              <input matInput type="date" formControlName="purchaseDate" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="third-width">
+              <mat-label>Retailer / Store</mat-label>
+              <input
+                matInput
+                formControlName="retailer"
+                placeholder="Amazon, Home Depot"
+                maxlength="150"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="third-width">
+              <mat-label>Purchase Price ($)</mat-label>
+              <input matInput type="number" formControlName="purchasePrice" min="0" step="0.01" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Estimated Replacement Value ($)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="estimatedReplacementValue"
+                min="0"
+                step="0.01"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Warranty Expiration Date</mat-label>
+              <input matInput type="date" formControlName="warrantyExpirationDate" />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Warranty Notes</mat-label>
+            <input
+              matInput
+              formControlName="warrantyNotes"
+              placeholder="e.g. Lifetime warranty via manufacturer"
+              maxlength="1000"
+            />
+          </mat-form-field>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Secret / Gift Mode Toggle -->
+        <div class="privacy-section">
+          <mat-slide-toggle formControlName="isPrivate" color="primary">
+            <div class="toggle-label-content">
+              <mat-icon>lock</mat-icon>
+              <div>
+                <strong>Secret / Gift Mode</strong>
+                <span class="sub-desc">
+                  Hide this item from other household members' views and searches
+                </span>
+              </div>
+            </div>
+          </mat-slide-toggle>
+        </div>
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="dialogRef.close()">Cancel</button>
+      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="onSubmit()">
+        {{ isEditMode ? 'Save Changes' : 'Create Item' }}
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .dialog-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .item-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-top: 0.5rem;
+    }
+    .full-width {
+      width: 100%;
+    }
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .half-width {
+      flex: 1;
+    }
+    .third-width {
+      flex: 1;
+    }
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.8;
+    }
+    .type-radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .radio-label-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+    }
+    .sub-desc {
+      display: block;
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+    .shortcode-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .shortcode-pill {
+      font-family: monospace;
+      font-weight: bold;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background-color: var(--mat-sys-primary-container, #dbe6cf);
+      color: var(--mat-sys-on-primary-container, #0d2003);
+    }
+    .shortcode-path {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    .quantity-highlight-box,
+    .dynamic-attributes-box,
+    .vault-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: var(--mat-sys-surface-container-low, rgba(0, 0, 0, 0.02));
+      border: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.08));
+    }
+    .box-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .dynamic-fields-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .toggle-label-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .type-radio-group,
+      .form-row,
+      .dynamic-fields-list {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+      }
+    }
+  `,
+})
+export class ItemDialogComponent implements OnInit {
+  protected readonly data = inject<ItemDialogData>(MAT_DIALOG_DATA);
+  protected readonly dialogRef =
+    inject<MatDialogRef<ItemDialogComponent, ItemDialogResult>>(MatDialogRef);
+  private readonly fb = inject(FormBuilder);
+
+  protected readonly ItemTypes = ItemTypes;
+  protected readonly ItemStatuses = ItemStatuses;
+  protected readonly ItemConditions = ItemConditions;
+  protected readonly AttributeFieldTypes = AttributeFieldTypes;
+
+  protected readonly isEditMode = !!this.data.item;
+
+  protected form!: FormGroup;
+
+  protected readonly selectedCategory = signal<CategoryDto | null>(null);
+  protected readonly selectedCategoryTemplates = signal<CategoryAttributeTemplateDto[]>([]);
+
+  get attributeValuesArray(): FormArray {
+    return this.form.get('attributeValues') as FormArray;
+  }
+
+  ngOnInit(): void {
+    const itm = this.data.item;
+    const initialCategory = itm?.categoryId
+      ? (this.data.availableCategories.find((c) => c.id === itm.categoryId) ?? null)
+      : null;
+
+    this.selectedCategory.set(initialCategory);
+    this.selectedCategoryTemplates.set(initialCategory?.attributeTemplates ?? []);
+
+    this.form = this.fb.group({
+      name: [itm?.name ?? '', [Validators.required, Validators.maxLength(200)]],
+      itemType: [itm?.itemType ?? ItemTypes.Unique, [Validators.required]],
+      shortCode: [itm?.shortCode ?? '', [Validators.maxLength(32)]],
+      homeLocationId: [itm?.homeLocationId ?? this.data.homeLocationId ?? null],
+      categoryId: [itm?.categoryId ?? null],
+      parentItemId: [itm?.parentItemId ?? null],
+      condition: [itm?.condition ?? ItemConditions.Good],
+      status: [itm?.status ?? ItemStatuses.InPlace],
+      currentQuantity: [itm?.currentQuantity ?? 1, [Validators.min(0)]],
+      unit: [itm?.unit ?? '', [Validators.maxLength(32)]],
+      minQuantity: [itm?.minQuantity ?? null],
+      brand: [itm?.brand ?? '', [Validators.maxLength(100)]],
+      modelNumber: [itm?.modelNumber ?? '', [Validators.maxLength(100)]],
+      serialNumber: [itm?.serialNumber ?? '', [Validators.maxLength(100)]],
+      description: [itm?.description ?? '', [Validators.maxLength(2000)]],
+      aliasesString: [itm?.aliases ? itm.aliases.join(', ') : ''],
+      tagsString: [itm?.tags ? itm.tags.join(', ') : ''],
+      purchaseDate: [itm?.purchaseDate ? itm.purchaseDate.substring(0, 10) : null],
+      retailer: [itm?.retailer ?? '', [Validators.maxLength(150)]],
+      purchasePrice: [itm?.purchasePrice ?? null],
+      estimatedReplacementValue: [itm?.estimatedReplacementValue ?? null],
+      warrantyExpirationDate: [
+        itm?.warrantyExpirationDate ? itm.warrantyExpirationDate.substring(0, 10) : null,
+      ],
+      warrantyNotes: [itm?.warrantyNotes ?? '', [Validators.maxLength(1000)]],
+      isPrivate: [itm?.isPrivate ?? false],
+      attributeValues: this.fb.array([]),
+    });
+
+    this.syncAttributeValuesControls(initialCategory, itm?.attributeValues);
+
+    this.form.controls['categoryId'].valueChanges.subscribe((catId: string | null) => {
+      const cat = catId
+        ? (this.data.availableCategories.find((c) => c.id === catId) ?? null)
+        : null;
+      this.selectedCategory.set(cat);
+      this.selectedCategoryTemplates.set(cat?.attributeTemplates ?? []);
+      this.syncAttributeValuesControls(cat);
+    });
+  }
+
+  isQuantityType(): boolean {
+    return this.form.controls['itemType'].value === ItemTypes.Quantity;
+  }
+
+  isNestedOrChild(): boolean {
+    const t = this.form.controls['itemType'].value;
+    return t === ItemTypes.Nested || this.data.availableParentItems.length > 0;
+  }
+
+  getItemTypeIcon(): string {
+    const t = this.form?.controls['itemType']?.value;
+    switch (t) {
+      case ItemTypes.Quantity:
+        return 'layers';
+      case ItemTypes.Kit:
+        return 'cases';
+      case ItemTypes.Nested:
+        return 'account_tree';
+      default:
+        return 'fingerprint';
+    }
+  }
+
+  getItemTypeName(type: ItemType): string {
+    switch (type) {
+      case ItemTypes.Quantity:
+        return 'Quantity';
+      case ItemTypes.Kit:
+        return 'Kit';
+      case ItemTypes.Nested:
+        return 'Nested';
+      default:
+        return 'Unique';
+    }
+  }
+
+  getOptionsForField(tmplId: string): string[] {
+    const tmpl = this.selectedCategoryTemplates().find((t) => t.id === tmplId);
+    return tmpl?.options ?? [];
+  }
+
+  private syncAttributeValuesControls(
+    category: CategoryDto | null,
+    existingValues?: ItemAttributeValueDto[],
+  ): void {
+    this.attributeValuesArray.clear();
+    if (!category?.attributeTemplates) {
+      return;
+    }
+
+    for (const tmpl of category.attributeTemplates) {
+      const match = existingValues?.find(
+        (v) => v.attributeTemplateId === tmpl.id || v.attributeName === tmpl.name,
+      );
+
+      this.attributeValuesArray.push(
+        this.fb.group({
+          attributeTemplateId: [tmpl.id],
+          attributeName: [tmpl.name],
+          fieldType: [tmpl.fieldType],
+          unit: [tmpl.unit ?? ''],
+          value: [match?.value ?? (tmpl.fieldType === AttributeFieldTypes.Boolean ? 'false' : '')],
+        }),
+      );
+    }
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) {
+      return;
+    }
+
+    const val = this.form.value;
+
+    const aliases = val.aliasesString
+      ? val.aliasesString
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter((s: string) => s.length > 0)
+      : null;
+
+    const tags = val.tagsString
+      ? val.tagsString
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter((s: string) => s.length > 0)
+      : null;
+
+    interface FormAttributeValue {
+      attributeTemplateId?: string | null;
+      attributeName: string;
+      fieldType: AttributeFieldType;
+      unit?: string | null;
+      value?: string | boolean | null;
+    }
+
+    const attributeValues: UpsertItemAttributeValueRequest[] = (
+      (val.attributeValues || []) as FormAttributeValue[]
+    ).map((a) => ({
+      attributeTemplateId: a.attributeTemplateId || null,
+      attributeName: a.attributeName,
+      fieldType: a.fieldType,
+      unit: a.unit || null,
+      value:
+        typeof a.value === 'boolean' ? (a.value ? 'true' : 'false') : (a.value?.toString() ?? ''),
+    }));
+
+    if (this.isEditMode) {
+      const updateReq: UpdateItemRequest = {
+        name: val.name.trim(),
+        itemType: val.itemType,
+        homeLocationId: val.homeLocationId || null,
+        categoryId: val.categoryId || null,
+        parentItemId: val.parentItemId || null,
+        description: val.description?.trim() || null,
+        aliases,
+        tags,
+        status: val.status,
+        condition: val.condition,
+        brand: val.brand?.trim() || null,
+        modelNumber: val.modelNumber?.trim() || null,
+        serialNumber: val.serialNumber?.trim() || null,
+        currentQuantity: val.currentQuantity ?? 1,
+        unit: val.unit?.trim() || null,
+        minQuantity: val.minQuantity !== null ? val.minQuantity : null,
+        purchaseDate: val.purchaseDate ? new Date(val.purchaseDate).toISOString() : null,
+        retailer: val.retailer?.trim() || null,
+        purchasePrice: val.purchasePrice !== null ? val.purchasePrice : null,
+        estimatedReplacementValue:
+          val.estimatedReplacementValue !== null ? val.estimatedReplacementValue : null,
+        warrantyExpirationDate: val.warrantyExpirationDate
+          ? new Date(val.warrantyExpirationDate).toISOString()
+          : null,
+        warrantyNotes: val.warrantyNotes?.trim() || null,
+        isPrivate: val.isPrivate,
+        attributeValues,
+      };
+
+      this.dialogRef.close({ mode: 'update', request: updateReq });
+    } else {
+      const createReq: CreateItemRequest = {
+        name: val.name.trim(),
+        itemType: val.itemType,
+        homeLocationId: val.homeLocationId || null,
+        categoryId: val.categoryId || null,
+        parentItemId: val.parentItemId || null,
+        shortCode: val.shortCode?.trim() || null,
+        description: val.description?.trim() || null,
+        aliases,
+        tags,
+        condition: val.condition,
+        brand: val.brand?.trim() || null,
+        modelNumber: val.modelNumber?.trim() || null,
+        serialNumber: val.serialNumber?.trim() || null,
+        currentQuantity: val.currentQuantity ?? 1,
+        unit: val.unit?.trim() || null,
+        minQuantity: val.minQuantity !== null ? val.minQuantity : null,
+        purchaseDate: val.purchaseDate ? new Date(val.purchaseDate).toISOString() : null,
+        retailer: val.retailer?.trim() || null,
+        purchasePrice: val.purchasePrice !== null ? val.purchasePrice : null,
+        estimatedReplacementValue:
+          val.estimatedReplacementValue !== null ? val.estimatedReplacementValue : null,
+        warrantyExpirationDate: val.warrantyExpirationDate
+          ? new Date(val.warrantyExpirationDate).toISOString()
+          : null,
+        warrantyNotes: val.warrantyNotes?.trim() || null,
+        isPrivate: val.isPrivate,
+        attributeValues,
+      };
+
+      this.dialogRef.close({ mode: 'create', request: createReq });
+    }
+  }
+}

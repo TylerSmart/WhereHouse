@@ -33,6 +33,7 @@ public sealed record LocationNodeDto(
     string FullPath,
     IReadOnlyList<LocationBreadcrumbDto> Breadcrumbs,
     int ChildCount,
+    int ItemCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset ModifiedAt
 );

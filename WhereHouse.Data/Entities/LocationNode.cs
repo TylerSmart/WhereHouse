@@ -12,6 +12,8 @@ public sealed class LocationNode : IAuditable
 
     public ICollection<LocationNode> Children { get; set; } = new List<LocationNode>();
 
+    public ICollection<InventoryItem> Items { get; set; } = new List<InventoryItem>();
+
     public string Name { get; set; } = string.Empty;
 
     public string? Description { get; set; }
