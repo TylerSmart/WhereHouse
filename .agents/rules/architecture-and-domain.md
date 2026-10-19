@@ -12,14 +12,16 @@ When implementing a new feature across the stack, follow the existing vertical-s
    - Create EF configuration in `Configurations/<Entity>Configuration.cs` implementing `IEntityTypeConfiguration<Entity>` (automatically discovered via `ApplyConfigurationsFromAssembly`).
    - Add `public DbSet<Entity> <Entities> => Set<Entity>();` to `WhereHouseDbContext`.
    - Implement `<Feature>Service` in `WhereHouse.Data/Services/` and register `services.AddScoped<I<Feature>Service, <Feature>Service>();` in `DataServiceCollectionExtensions.AddDataServices`.
+   - **Create & apply the EF Core migration** (`dotnet ef migrations add <Name> --project WhereHouse.Data` and `dotnet ef database update --project WhereHouse.Data`), then format `WhereHouse.Data/Migrations` with CSharpier.
 3. **`WhereHouse.API/Controllers/`**:
    - Create `<Feature>Controller` with `[ApiController]`, `[Authorize]`, and relative `[Route("<feature-kebab>")]` (do **not** prefix with `api/`—`Program.cs` mounts all controllers under `app.MapGroup("/api")`).
-4. **`Tests/WhereHouse.API.IntegrationTests/`**:
-   - Add integration tests using `WhereHouseWebApplicationFactory` (uses EF Core InMemory DB automatically).
-5. **`WhereHouse.Client/src/app/`**:
+4. **`WhereHouse.Client/src/app/`**:
    - Add TypeScript interfaces in `core/models/<feature>.models.ts`.
    - Add `@Service()` HTTP service in `core/services/<feature>/<feature>.service.ts` using `apiUrl('/<feature-kebab>')`.
    - Add standalone feature components under `features/<feature>/` and register routes in `app.routes.ts`.
+5. **Automated Tests & Verification Loop (Required on Every Implementation)**:
+   - Add/update `.NET` Unit Tests (`WhereHouse.Core.UnitTests` / `WhereHouse.Infrastructure.UnitTests`), `.NET` API Integration Tests (`WhereHouse.API.IntegrationTests` via `WhereHouseWebApplicationFactory`), Angular `.spec.ts` unit tests, and Playwright E2E tests (`WhereHouse.Client.E2ETests` for end-to-end user flows).
+   - Run all relevant builds, linters, and test suites; fix any errors and re-run until everything compiles and passes cleanly.
 
 ---
 
