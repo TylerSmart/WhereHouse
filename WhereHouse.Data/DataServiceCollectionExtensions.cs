@@ -1,0 +1,79 @@
+using WhereHouse.Core.Authentication;
+using WhereHouse.Core.Todos;
+using WhereHouse.Data.Auditing;
+using WhereHouse.Data.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace WhereHouse.Data;
+
+public static class DataServiceCollectionExtensions
+{
+    public static IServiceCollection AddDataServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ITodoService, TodoService>();
+
+        if (
+            string.Equals(
+                configuration["UseInMemoryDatabase"],
+                "true",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var inMemoryDbName =
+                configuration["InMemoryDatabaseName"] ?? "WhereHouse_Testing";
+            services.AddDbContext<WhereHouseDbContext>(
+                (provider, options) =>
+                {
+                    options.UseInMemoryDatabase(inMemoryDbName);
+                    options.AddInterceptors(
+                        provider.GetRequiredService<AuditSaveChangesInterceptor>()
+                    );
+                }
+            );
+
+            return services;
+        }
+
+        var whereHouseConnectionString =
+            configuration.GetConnectionString("WhereHouse")
+            ?? configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionString:WhereHouse"];
+
+        if (
+            string.IsNullOrWhiteSpace(whereHouseConnectionString)
+            || string.Equals(
+                whereHouseConnectionString,
+                "REPLACE_ME",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            whereHouseConnectionString =
+                "Server=localhost,14333;Database=WhereHouse;User Id=sa;Password=WhereHouse_Local_Dev_1;TrustServerCertificate=True;Encrypt=True;Application Name=WhereHouse;";
+        }
+
+        services.AddDbContext<WhereHouseDbContext>(
+            (provider, options) =>
+            {
+                options.UseSqlServer(
+                    whereHouseConnectionString,
+                    sql => sql.EnableRetryOnFailure()
+                );
+                options.AddInterceptors(provider.GetRequiredService<AuditSaveChangesInterceptor>());
+            }
+        );
+
+        return services;
+    }
+}

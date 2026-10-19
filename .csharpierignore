@@ -1,5 +1,5 @@
 # Frontend is formatted with Prettier / ESLint.
-FullStackTemplate.Client/
+WhereHouse.Client/
 
 # Generated WCF proxies — do not reformat.
 **/Wcf/**/Reference.cs

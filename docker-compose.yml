@@ -1,22 +1,22 @@
-name: full-stack-template-dev
+name: where-house-dev
 
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: full-stack-template-sqlserver
+    container_name: where-house-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: FullStackTemplate_Local_Dev_1
+      MSSQL_SA_PASSWORD: WhereHouse_Local_Dev_1
       MSSQL_PID: Developer
     ports:
       - "14333:1433"
     volumes:
-      - full-stack-template-sqlserver:/var/opt/mssql
+      - where-house-sqlserver:/var/opt/mssql
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P FullStackTemplate_Local_Dev_1 -C -Q \"SELECT 1\" -b -o /dev/null",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P WhereHouse_Local_Dev_1 -C -Q \"SELECT 1\" -b -o /dev/null",
         ]
       interval: 5s
       timeout: 5s
@@ -25,4 +25,4 @@ services:
 
 
 volumes:
-  full-stack-template-sqlserver:
+  where-house-sqlserver:

@@ -12,7 +12,7 @@ const path = require('path');
 const repoRoot = path.join(__dirname, '..');
 
 function readSupportedFloor() {
-	const manifest = path.join(repoRoot, 'FullStackTemplate.Client', 'package.json');
+	const manifest = path.join(repoRoot, 'WhereHouse.Client', 'package.json');
 	const engines = JSON.parse(fs.readFileSync(manifest, 'utf8')).engines || {};
 
 	// engines.node is written lowest-range-first, so the first version wins.
@@ -59,7 +59,7 @@ const message = [
 	'',
 	'  active       v' + process.versions.node,
 	'               ' + process.execPath,
-	'  minimum      v' + floor.join('.') + '  (FullStackTemplate.Client/package.json, engines.node)',
+	'  minimum      v' + floor.join('.') + '  (WhereHouse.Client/package.json, engines.node)',
 	pinned ? '  recommended  v' + pinned + '  (.nvmrc)' : null,
 	'',
 	'NVM for Windows switches Node globally and does not read .nvmrc, so an',

@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Full Debug",
+    "Projects": [
+      {
+        "Path": "WhereHouse.API\\WhereHouse.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "WhereHouse.Client\\WhereHouse.Client.esproj",
+        "Action": "Start",
+        "DebugTarget": "launch"
+      }
+    ]
+  }
+]

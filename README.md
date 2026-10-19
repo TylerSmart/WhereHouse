@@ -1,13 +1,13 @@
-# FullStackTemplate (.NET 10 + Angular 22)
+# WhereHouse (.NET 10 + Angular 22)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Publish Docker](https://github.com/TylerSmart/FullStackTemplate/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/TylerSmart/FullStackTemplate/actions/workflows/docker-publish.yml)
+[![Publish Docker](https://github.com/TylerSmart/WhereHouse/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/TylerSmart/WhereHouse/actions/workflows/docker-publish.yml)
 
-**FullStackTemplate** is a production-ready, self-hostable full-stack starter template built with **ASP.NET Core 10**, **Entity Framework Core (SQL Server)**, and **Angular 22 (Material 3)**. It provides authentication (local JWT + external OIDC/SSO), automatic database migrations, entity auditing, customizable theming, multi-arch Docker packaging, and NAS/homelab deployment guides out of the box.
+**WhereHouse** is a production-ready, self-hostable full-stack starter template built with **ASP.NET Core 10**, **Entity Framework Core (SQL Server)**, and **Angular 22 (Material 3)**. It provides authentication (local JWT + external OIDC/SSO), automatic database migrations, entity auditing, customizable theming, multi-arch Docker packaging, and NAS/homelab deployment guides out of the box.
 
 > [!IMPORTANT]
 > **Starting a new project from this template?**
-> Follow the **[Template Usage & Project Rename Guide](docs/template-usage.md)** for a single PowerShell script and step-by-step instructions to rename `FullStackTemplate` (`full-stack-template`, `fullstacktemplate`) to your new project's name and automatically assign a **randomized external host port** so your deployed apps never collide on your NAS.
+> Follow the **[Template Usage & Project Rename Guide](docs/template-usage.md)** for a single PowerShell script and step-by-step instructions to rename `WhereHouse` (`where-house`, `wherehouse`) to your new project's name and automatically assign a **randomized external host port** so your deployed apps never collide on your NAS.
 
 ---
 
@@ -49,21 +49,21 @@
 You can launch the full stack in seconds using Docker Compose:
 
 ```yaml
-name: full-stack-template-prod
+name: where-house-prod
 
 services:
   api:
-    image: ghcr.io/tylersmart/fullstacktemplate:latest
-    container_name: full-stack-template-api
+    image: ghcr.io/tylersmart/wherehouse:latest
+    container_name: where-house-api
     restart: unless-stopped
     ports:
-      # Randomized host port (62949 -> 8080) to avoid port collisions across multiple apps on your NAS/server.
+      # Randomized host port (51793 -> 8080) to avoid port collisions across multiple apps on your NAS/server.
       # The template initialization script (docs/template-usage.md) automatically generates a unique random port per project.
-      - "62949:8080"
+      - "51793:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=FullStackTemplate;User Id=sa;Password=YourStrongPassword123!_MustIncludeCaps;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=WhereHouse;User Id=sa;Password=YourStrongPassword123!_MustIncludeCaps;TrustServerCertificate=True;"
       Authentication__Jwt__Secret: "ReplaceWithAStrongSecretKeyAtLeast32CharactersLong!"
     depends_on:
       sqlserver:
@@ -71,7 +71,7 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: full-stack-template-sqlserver
+    container_name: where-house-sqlserver
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
@@ -100,7 +100,7 @@ Run:
 docker compose up -d
 ```
 
-Open `http://localhost:62949` (or your project's randomized host port) in your web browser.
+Open `http://localhost:51793` (or your project's randomized host port) in your web browser.
 
 ---
 
@@ -108,7 +108,7 @@ Open `http://localhost:62949` (or your project's randomized host port) in your w
 
 All documentation is organized in the [`docs/`](docs/) directory using consistent `kebab-case` naming:
 
-- 🧩 **[Template Usage & Rename Guide](docs/template-usage.md)** — How to fork/use this template, rename `FullStackTemplate` to your new project name, and auto-assign a randomized host port.
+- 🧩 **[Template Usage & Rename Guide](docs/template-usage.md)** — How to fork/use this template, rename `WhereHouse` to your new project name, and auto-assign a randomized host port.
 - 🐳 **[Production Docker Deployment Guide](docs/deployment/docker-deployment.md)** — Step-by-step production deployment with reverse proxies (Nginx, Caddy, Traefik, Cloudflare Tunnel), automated backups, and environment tuning.
 - 🚀 **[TrueNAS Scale Deployment Guide](docs/deployment/truenas-scale.md)** — Native Docker Compose setup for TrueNAS Scale (Electric Eel 24.10+) and Dragonfish (24.04), ZFS datasets, and automated snapshots.
 - 🔐 **[OIDC & SSO Authentication Guide](docs/deployment/oidc-authentication.md)** — Configure Single Sign-On with Google OAuth 2.0, Authentik, Keycloak, or Microsoft Entra ID.

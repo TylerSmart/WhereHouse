@@ -1,5 +1,5 @@
 # CSharpier reads these C# / XML settings. Visual Studio uses the same file for
-# non-formatting IDE behavior. Angular keeps its own editorconfig under FullStackTemplate.Client.
+# non-formatting IDE behavior. Angular keeps its own editorconfig under WhereHouse.Client.
 root = true
 
 [*]

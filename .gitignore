@@ -35,11 +35,11 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/*
-!.vs/FullStackTemplate.slnx/
-.vs/FullStackTemplate.slnx/*
-!.vs/FullStackTemplate.slnx/v17/
-.vs/FullStackTemplate.slnx/v17/*
-!.vs/FullStackTemplate.slnx/v17/csharpier.json
+!.vs/WhereHouse.slnx/
+.vs/WhereHouse.slnx/*
+!.vs/WhereHouse.slnx/v17/
+.vs/WhereHouse.slnx/v17/*
+!.vs/WhereHouse.slnx/v17/csharpier.json
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -191,7 +191,7 @@ publish/
 *.azurePubxml
 # Keep shared folder-publish profiles (no passwords). *.pubxml.user stays ignored.
 *.pubxml
-!FullStackTemplate.API/Properties/PublishProfiles/*.pubxml
+!WhereHouse.API/Properties/PublishProfiles/*.pubxml
 *.pubxml.user
 *.publishproj
 
@@ -371,5 +371,5 @@ FodyWeavers.xsd
 
 # Serilog file sink output
 logs/
-!FullStackTemplate.Client/src/app/features/admin/logs/
-!FullStackTemplate.Client/src/app/features/admin/logs/**
+!WhereHouse.Client/src/app/features/admin/logs/
+!WhereHouse.Client/src/app/features/admin/logs/**

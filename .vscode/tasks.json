@@ -6,12 +6,12 @@
       "type": "shell",
       "command": "npm start",
       "options": {
-        "cwd": "${workspaceFolder}/FullStackTemplate.Client"
+        "cwd": "${workspaceFolder}/WhereHouse.Client"
       },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
-        "fileLocation": ["relative", "${workspaceFolder}/FullStackTemplate.Client"],
+        "fileLocation": ["relative", "${workspaceFolder}/WhereHouse.Client"],
         "pattern": {
           "regexp": "^$"
         },
@@ -33,7 +33,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/FullStackTemplate.API/FullStackTemplate.API.csproj",
+        "${workspaceFolder}/WhereHouse.API/WhereHouse.API.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],

@@ -1,6 +1,6 @@
-# Contributing to FullStackTemplate
+# Contributing to WhereHouse
 
-Thank you for your interest in contributing to FullStackTemplate! We welcome contributions from everyone—whether you are fixing bugs, proposing new features, improving documentation, or testing out the application.
+Thank you for your interest in contributing to WhereHouse! We welcome contributions from everyone—whether you are fixing bugs, proposing new features, improving documentation, or testing out the application.
 
 ---
 
@@ -79,12 +79,12 @@ Run the setup script from the repository root:
 .\scripts\ensure-local-infra.ps1
 ```
 
-This starts the SQL Server container (defined in `docker-compose.yml`) and ensures the `FullStackTemplate` database exists.
+This starts the SQL Server container (defined in `docker-compose.yml`) and ensures the `WhereHouse` database exists.
 
 ### Running the Backend (API)
 
 ```powershell
-dotnet run --project FullStackTemplate.API
+dotnet run --project WhereHouse.API
 ```
 
 The API will start at `https://localhost:7080` / `http://localhost:5000` (or the ports configured in `launchSettings.json`). OpenAPI / Scalar documentation is accessible at `/scalar/v1`.
@@ -92,7 +92,7 @@ The API will start at `https://localhost:7080` / `http://localhost:5000` (or the
 ### Running the Frontend (Angular)
 
 ```powershell
-cd FullStackTemplate.Client
+cd WhereHouse.Client
 npm install
 npm start
 ```
@@ -103,7 +103,7 @@ The Angular dev server will start at `http://localhost:4200/` with hot-reload en
 
 ## Database Migrations (EF Core)
 
-Schema definitions live in `FullStackTemplateDbContext` (`FullStackTemplate.Data`).
+Schema definitions live in `WhereHouseDbContext` (`WhereHouse.Data`).
 
 Restore the EF CLI tool once per workstation:
 
@@ -115,28 +115,28 @@ All commands below should be executed from the repository root:
 
 - **Add a new migration**:
   ```powershell
-  dotnet ef migrations add <MigrationName> --project FullStackTemplate.Data --startup-project FullStackTemplate.API
+  dotnet ef migrations add <MigrationName> --project WhereHouse.Data --startup-project WhereHouse.API
   ```
 
 - **Apply pending migrations**:
   ```powershell
-  dotnet ef database update --project FullStackTemplate.Data --startup-project FullStackTemplate.API
+  dotnet ef database update --project WhereHouse.Data --startup-project WhereHouse.API
   ```
 
 - **List applied migrations**:
   ```powershell
-  dotnet ef migrations list --project FullStackTemplate.Data --startup-project FullStackTemplate.API
+  dotnet ef migrations list --project WhereHouse.Data --startup-project WhereHouse.API
   ```
 
 - **Revert the last migration**:
   ```powershell
-  dotnet ef database update <PreviousMigrationName> --project FullStackTemplate.Data --startup-project FullStackTemplate.API
-  dotnet ef migrations remove --project FullStackTemplate.Data --startup-project FullStackTemplate.API
+  dotnet ef database update <PreviousMigrationName> --project WhereHouse.Data --startup-project WhereHouse.API
+  dotnet ef migrations remove --project WhereHouse.Data --startup-project WhereHouse.API
   ```
 
 - **Generate raw SQL script**:
   ```powershell
-  dotnet ef migrations script --project FullStackTemplate.Data --startup-project FullStackTemplate.API --output FullStackTemplate.sql
+  dotnet ef migrations script --project WhereHouse.Data --startup-project WhereHouse.API --output WhereHouse.sql
   ```
 
 ---
@@ -154,7 +154,7 @@ We maintain consistent formatting via automated tooling:
   ```
 - **Frontend (Angular)**: Formatted and linted using Prettier and ESLint:
   ```powershell
-  cd FullStackTemplate.Client
+  cd WhereHouse.Client
   npm run lint:fix
   npm run format
   ```
@@ -170,7 +170,7 @@ Ensure all test suites pass before submitting a pull request:
 
 - **Frontend Unit Tests**:
   ```powershell
-  cd FullStackTemplate.Client
+  cd WhereHouse.Client
   npm test
   ```
 
@@ -190,4 +190,4 @@ Ensure all test suites pass before submitting a pull request:
 
 ---
 
-*Thank you for contributing to FullStackTemplate!*
+*Thank you for contributing to WhereHouse!*

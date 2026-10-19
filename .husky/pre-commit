@@ -23,12 +23,12 @@ fi
 "$NODE" .husky/require-node.js
 
 # Angular: ESLint + Prettier on staged Client files
-cd FullStackTemplate.Client
+cd WhereHouse.Client
 
 if [ ! -f node_modules/lint-staged/bin/lint-staged.js ]; then
 	echo "" >&2
 	echo "pre-commit stopped: lint-staged is not installed." >&2
-	echo "Run 'npm install' in FullStackTemplate.Client." >&2
+	echo "Run 'npm install' in WhereHouse.Client." >&2
 	echo "" >&2
 	exit 1
 fi

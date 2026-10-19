@@ -1,6 +1,6 @@
 # Production Docker Deployment Guide
 
-This guide provides step-by-step instructions for deploying FullStackTemplate in production using Docker and Docker Compose on any Linux host, VPS, homelab, or cloud VM (Ubuntu, Debian, Fedora, Arch, etc.).
+This guide provides step-by-step instructions for deploying WhereHouse in production using Docker and Docker Compose on any Linux host, VPS, homelab, or cloud VM (Ubuntu, Debian, Fedora, Arch, etc.).
 
 ---
 
@@ -18,21 +18,21 @@ This guide provides step-by-step instructions for deploying FullStackTemplate in
    - [Traefik](#traefik)
    - [Cloudflare Tunnel](#cloudflare-tunnel)
 8. [Database Backup & Restore](#database-backup--restore)
-9. [Updating FullStackTemplate](#updating-fullstacktemplate)
+9. [Updating WhereHouse](#updating-wherehouse)
 10. [Troubleshooting & Logs](#troubleshooting--logs)
 
 ---
 
 ## Architecture Overview
 
-FullStackTemplate's production container architecture is designed to be streamlined, lightweight, and robust:
+WhereHouse's production container architecture is designed to be streamlined, lightweight, and robust:
 
-- **`full-stack-template-api` (Unified Application Container)**:
+- **`where-house-api` (Unified Application Container)**:
   - Serves the compiled Angular Single Page Application (SPA) from static files.
   - Hosts the ASP.NET Core 10 Web API and OpenAPI / Scalar documentation endpoints.
-  - Listens on internal port `8080` (mapped to a randomized host port such as `62949` so multiple apps deployed on the same host never collide).
+  - Listens on internal port `8080` (mapped to a randomized host port such as `51793` so multiple apps deployed on the same host never collide).
   - Automatically verifies and applies pending database schema migrations on container boot.
-- **`full-stack-template-sqlserver` (Database Container)**:
+- **`where-house-sqlserver` (Database Container)**:
   - Microsoft SQL Server 2022 Linux container (`mcr.microsoft.com/mssql/server:2022-latest`).
   - Persists all relational data and user credentials in a persistent named volume or host bind-mount.
 
@@ -44,9 +44,9 @@ FullStackTemplate's production container architecture is designed to be streamli
 ┌───────────────────────────▼────────────────────────────┐
 │          Reverse Proxy (Nginx / Caddy / Traefik)       │
 └───────────────────────────┬────────────────────────────┘
-                            │ HTTP (Randomized Port: 62949)
+                            │ HTTP (Randomized Port: 51793)
 ┌───────────────────────────▼────────────────────────────┐
-│          FullStackTemplate Container (SPA + API)       │
+│          WhereHouse Container (SPA + API)       │
 └───────────────────────────┬────────────────────────────┘
                             │ SQL TDS (1433)
 ┌───────────────────────────▼────────────────────────────┐
@@ -73,10 +73,10 @@ FullStackTemplate's production container architecture is designed to be streamli
 
 ### 1. Create Application Directory
 
-You do not need to clone the full source code repository to run FullStackTemplate in production. Create an application directory on your server:
+You do not need to clone the full source code repository to run WhereHouse in production. Create an application directory on your server:
 
 ```bash
-mkdir -p /opt/fullstacktemplate && cd /opt/fullstacktemplate
+mkdir -p /opt/wherehouse && cd /opt/wherehouse
 ```
 
 ### 2. Configure Environment Variables (`.env`)
@@ -100,11 +100,11 @@ Configure your `.env` file:
 # Database SA Password (must include uppercase, lowercase, numbers, and special characters)
 MSSQL_SA_PASSWORD=YourStrongDatabasePassword123!_MustIncludeCapsAndSpecial
 
-# FullStackTemplate Security Settings (at least 32 characters)
+# WhereHouse Security Settings (at least 32 characters)
 JWT_SECRET=ReplaceWithYourGeneratedBase64SecretKeyAtLeast32CharsLong!
 
 # Randomized Application Host Port Mapping (assigned per-app to avoid port conflicts across services)
-APP_PORT=62949
+APP_PORT=51793
 
 # Optional: Hostname for Reverse Proxy / CORS
 APP_HOST=app.yourdomain.com
@@ -121,25 +121,25 @@ nano docker-compose.yml
 Paste the production configuration:
 
 ```yaml
-name: full-stack-template-prod
+name: where-house-prod
 
 services:
   api:
-    image: ghcr.io/tylersmart/fullstacktemplate:latest
-    container_name: full-stack-template-api
+    image: ghcr.io/tylersmart/wherehouse:latest
+    container_name: where-house-api
     restart: unless-stopped
     ports:
-      # Maps a randomized external host port (e.g. 62949) to internal container port 8080
-      - "${APP_PORT:-62949}:8080"
+      # Maps a randomized external host port (e.g. 51793) to internal container port 8080
+      - "${APP_PORT:-51793}:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=FullStackTemplate;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=WhereHouse;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
 
       # JWT Authentication Secret
       Authentication__Jwt__Secret: "${JWT_SECRET}"
-      Authentication__Jwt__Issuer: "FullStackTemplate"
-      Authentication__Jwt__Audience: "FullStackTemplate"
+      Authentication__Jwt__Issuer: "WhereHouse"
+      Authentication__Jwt__Audience: "WhereHouse"
       Authentication__Jwt__ExpirationMinutes: 1440
 
       # Optional: External OIDC / SSO (Google, Authentik, Keycloak, Entra ID)
@@ -158,7 +158,7 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: full-stack-template-sqlserver
+    container_name: where-house-sqlserver
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
@@ -190,7 +190,7 @@ volumes:
 > ```yaml
 > build:
 >   context: .
->   dockerfile: FullStackTemplate.API/Dockerfile
+>   dockerfile: WhereHouse.API/Dockerfile
 > ```
 
 ### 4. Launch the Application
@@ -215,7 +215,7 @@ Now listening on: http://[::]:8080
 Application started. Press Ctrl+C to shut down.
 ```
 
-Open `http://<your-server-ip>:62949` in your web browser. You should see the FullStackTemplate sign-in page!
+Open `http://<your-server-ip>:51793` in your web browser. You should see the WhereHouse sign-in page!
 
 ---
 
@@ -229,8 +229,8 @@ The following environment variables can be customized in `.env` or passed direct
 | `ASPNETCORE_HTTP_PORTS`                       | `8080`                | Internal listening port inside the container.                                |
 | `ConnectionStrings__DefaultConnection`        | Required              | ADO.NET connection string pointing to SQL Server.                            |
 | `Authentication__Jwt__Secret`                 | Required              | Secret signing key for JWT tokens. Must be >= 32 characters.                 |
-| `Authentication__Jwt__Issuer`                 | `FullStackTemplate`      | Token issuer claim.                                                          |
-| `Authentication__Jwt__Audience`               | `FullStackTemplate`      | Token audience claim.                                                        |
+| `Authentication__Jwt__Issuer`                 | `WhereHouse`      | Token issuer claim.                                                          |
+| `Authentication__Jwt__Audience`               | `WhereHouse`      | Token audience claim.                                                        |
 | `Authentication__Jwt__ExpirationMinutes`      | `1440` (24 hours)     | Session token validity duration in minutes.                                  |
 | `Authentication__Oidc__Enabled`               | `false`               | Set to `true` to enable external Single Sign-On.                             |
 | `Authentication__Oidc__ProviderName`          | `OIDC`                | Display label on the login screen (e.g. `Google`, `Authentik`, `Keycloak`).  |
@@ -249,11 +249,11 @@ The following environment variables can be customized in `.env` or passed direct
 
 ## Database Persistence & Automated Migrations
 
-FullStackTemplate uses Entity Framework Core with automatic startup migrations:
+WhereHouse uses Entity Framework Core with automatic startup migrations:
 
-1. When the `full-stack-template-api` container boots, it checks the database specified in `ConnectionStrings__DefaultConnection`.
-2. If the `FullStackTemplate` database does not exist, it creates it automatically.
-3. It evaluates pending migrations in `FullStackTemplate.Data/Migrations` and executes any unapplied schema updates.
+1. When the `where-house-api` container boots, it checks the database specified in `ConnectionStrings__DefaultConnection`.
+2. If the `WhereHouse` database does not exist, it creates it automatically.
+3. It evaluates pending migrations in `WhereHouse.Data/Migrations` and executes any unapplied schema updates.
 4. Database tables, indexes, CRDT snapshots, revision history, and user accounts are fully managed without requiring manual SQL script execution.
 
 All database files reside inside `/var/opt/mssql` inside the `sqlserver` container and are persisted across updates in the `sqlserver_data` Docker volume.
@@ -262,11 +262,11 @@ All database files reside inside `/var/opt/mssql` inside the `sqlserver` contain
 
 ## Reverse Proxy & SSL / TLS Configuration
 
-To securely serve FullStackTemplate with HTTPS and support real-time WebSocket collaboration, place a reverse proxy in front of the container.
+To securely serve WhereHouse with HTTPS and support real-time WebSocket collaboration, place a reverse proxy in front of the container.
 
 ### Nginx
 
-Create `/etc/nginx/sites-available/fullstacktemplate.conf`:
+Create `/etc/nginx/sites-available/wherehouse.conf`:
 
 ```nginx
 map $http_upgrade $connection_upgrade {
@@ -290,7 +290,7 @@ server {
     client_max_body_size 50M;
 
     location / {
-        proxy_pass http://127.0.0.1:62949;
+        proxy_pass http://127.0.0.1:51793;
         proxy_http_version 1.1;
 
         # WebSocket support for SignalR real-time collaboration
@@ -313,7 +313,7 @@ server {
 Enable the site and reload Nginx:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/fullstacktemplate.conf /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/wherehouse.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -325,7 +325,7 @@ Add the following block to your `/etc/caddy/Caddyfile`:
 
 ```caddy
 diagrams.yourdomain.com {
-    reverse_proxy 127.0.0.1:62949 {
+    reverse_proxy 127.0.0.1:51793 {
         # Caddy automatically proxies WebSockets out of the box
         header_up X-Forwarded-Proto {scheme}
     }
@@ -350,10 +350,10 @@ services:
     # ...
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.fullstacktemplate.rule=Host(`diagrams.yourdomain.com`)"
-      - "traefik.http.routers.fullstacktemplate.entrypoints=websecure"
-      - "traefik.http.routers.fullstacktemplate.tls.certresolver=myresolver"
-      - "traefik.http.services.fullstacktemplate.loadbalancer.server.port=8080"
+      - "traefik.http.routers.wherehouse.rule=Host(`diagrams.yourdomain.com`)"
+      - "traefik.http.routers.wherehouse.entrypoints=websecure"
+      - "traefik.http.routers.wherehouse.tls.certresolver=myresolver"
+      - "traefik.http.services.wherehouse.loadbalancer.server.port=8080"
 ```
 
 ---
@@ -367,7 +367,7 @@ If using `cloudflared` (Zero Trust Tunnel):
    - Subdomain: `diagrams`
    - Domain: `yourdomain.com`
    - Service Type: `HTTP`
-   - URL: `localhost:62949` (or `full-stack-template-api:8080` if in same Docker network)
+   - URL: `localhost:51793` (or `where-house-api:8080` if in same Docker network)
 3. Under **Additional application settings** -> **HTTP Settings**, enable **No TLS Verify** (if applicable) and ensure **WebSockets** are enabled on your Cloudflare zone.
 
 ---
@@ -379,42 +379,42 @@ If using `cloudflared` (Zero Trust Tunnel):
 You can take a clean SQL Server backup using `sqlcmd` directly inside the container without stopping the service:
 
 ```bash
-docker exec -t full-stack-template-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+docker exec -t where-house-sqlserver /opt/mssql-tools18/bin/sqlcmd \
   -S localhost -U sa -P "${MSSQL_SA_PASSWORD}" -C \
-  -Q "BACKUP DATABASE [FullStackTemplate] TO DISK = N'/var/opt/mssql/data/FullStackTemplate_backup.bak' WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10"
+  -Q "BACKUP DATABASE [WhereHouse] TO DISK = N'/var/opt/mssql/data/WhereHouse_backup.bak' WITH NOFORMAT, NOINIT, SKIP, NOREWIND, NOUNLOAD, STATS = 10"
 ```
 
 Then copy the backup file to your host backup directory:
 
 ```bash
-docker cp full-stack-template-sqlserver:/var/opt/mssql/data/FullStackTemplate_backup.bak /backups/fullstacktemplate_$(date +%F).bak
+docker cp where-house-sqlserver:/var/opt/mssql/data/WhereHouse_backup.bak /backups/wherehouse_$(date +%F).bak
 ```
 
 ### Restoring the Database
 
 1. Copy the backup file into the SQL Server container:
    ```bash
-   docker cp /backups/fullstacktemplate_backup.bak full-stack-template-sqlserver:/var/opt/mssql/data/restore.bak
+   docker cp /backups/wherehouse_backup.bak where-house-sqlserver:/var/opt/mssql/data/restore.bak
    ```
 2. Execute the restore command:
    ```bash
-   docker exec -t full-stack-template-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+   docker exec -t where-house-sqlserver /opt/mssql-tools18/bin/sqlcmd \
      -S localhost -U sa -P "${MSSQL_SA_PASSWORD}" -C \
-     -Q "RESTORE DATABASE [FullStackTemplate] FROM DISK = N'/var/opt/mssql/data/restore.bak' WITH REPLACE"
+     -Q "RESTORE DATABASE [WhereHouse] FROM DISK = N'/var/opt/mssql/data/restore.bak' WITH REPLACE"
    ```
-3. Restart the `full-stack-template-api` container to re-initialize connection pools:
+3. Restart the `where-house-api` container to re-initialize connection pools:
    ```bash
    docker compose restart api
    ```
 
 ---
 
-## Updating FullStackTemplate
+## Updating WhereHouse
 
 To update to a new version:
 
 ```bash
-cd /opt/fullstacktemplate
+cd /opt/wherehouse
 
 # 1. Pull latest image from GHCR
 docker compose pull
@@ -456,5 +456,5 @@ docker compose logs -f sqlserver
 3. **WebSockets disconnecting frequently**:
    - Cause: Reverse proxy timeout is too short for idle persistent connections.
    - Fix: Increase `proxy_read_timeout` to `86400s` in Nginx, or enable keep-alive pings.
-4. **Port 62949 already in use**:
+4. **Port 51793 already in use**:
    - Fix: Change `APP_PORT=8585` in `.env` and update your reverse proxy `proxy_pass` to match.
