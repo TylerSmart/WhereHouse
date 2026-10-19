@@ -1,424 +1,407 @@
-# Phase 11: Container Cover Photos, Shared "Secret / Gift Mode" Access, Household Directory & Vault UX Presets
+# Phase 11: Container Cover Photos, Household Sharing, Responsive UX Polish & Full Playwright E2E Suite
 
-> **Branch:** `feature/phase-11-cover-photos-household-sharing-and-ux-polish`
-> **Status:** [ ] Not Started
-> **PRD Reference:** `docs/prd.md` — Sections 2 (`Household Admin / Managing Household Users`), 4.1.3 (`Container Visual Appearance Tags — Cover Photo`), 4.2.1 (`Kits & Nested Items Component Visibility`), 4.6.2 (`Return Window & Warranty Quick Presets`), 4.8.1 (`Smart Search — Owner Filter`), and 4.8.2 (`"Secret / Gift Mode" Shared with Explicitly Selected Users`)
-> **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
+## 1. Scope & Milestone Mapping
+
+- **PRD Milestone:** Final PRD Completion Polish across Milestones 1–4 (`PRD Section 2`, `4.1.3`, `4.2.1`, `4.6.2`, `4.8.1`, `4.8.2`) + Comprehensive UI/UX Bugfixes, Responsive Viewport Optimization, Angular Material Datepickers, and Full-App Playwright E2E Test Suite.
+- **Included Features & Fixes:**
+  1. **Fix Declutter Dialog Infinite API Loop (`GET /api/lifecycle/staged?includeSubtreeLocations=true`) & Filter Chip Re-render Loops:**
+     - Fix `DeclutterGraveyardDialogComponent` where `<mat-chip-option [selected]="..." (selectionChange)="...">` inside an `@if (isLoading()) ... @else` block re-emits `selectionChange` every time `isLoading` flips from `true` to `false`, causing an endless HTTP request loop on `/api/lifecycle/staged`, `/api/lifecycle/dust-collectors`, and `/api/lifecycle/graveyard`.
+     - Replace `(selectionChange)` on `<mat-chip-option>` with `(click)` handlers and no-op equality guards in `DeclutterGraveyardDialogComponent`, `MaintenanceDialogComponent`, and `SmartSearchDialogComponent`.
+  2. **Responsive Top Navbar & Viewport Optimization (Mobile, Tablet, Narrow Desktop & Full Desktop):**
+     - Eliminate the horizontal scrollbar caused by 13 side-by-side buttons in `.top-actions` on `DashboardComponent`.
+     - Keep primary high-frequency actions directly in `.top-actions` (**Add**, **Rapid Intake**, **Scan QR**, **Cart**, **Action Center**, **Tools & Vault** menu, **Theme**, **User**) and consolidate secondary management/vault dialogs (**Loadouts & Loans**, **Print Labels**, **Categories**, **Declutter & Graveyard**, **Maintenance**, **Insurance Claim**, **Import / Export**) into a clean **Tools & Vault** (`[matMenuTriggerFor]="toolsMenu"`) dropdown menu.
+     - Add responsive breakpoints (`1280px`, `1024px`, `768px`) and `overflow-x: clip` / `min-width: 0` rules so no horizontal scrollbar appears at any viewport width (`360px` to `2560px`).
+  3. **Fix Oversized Button Icons in Empty States:**
+     - Scope `.empty-state > mat-icon` (direct child selector) in `dashboard.component.scss`, `action-center-dialog.component.ts`, and `insurance-export-dialog.component.ts` so `<mat-icon>` inside `.empty-actions` buttons (`"Add Item"`, `"Add Sub-Location"`, `"Add Container"`) renders at standard button icon size (`18px`) instead of `48px`.
+  4. **Fix Missing Space Between `"Smart Search"` and `"Ctrl+K"`:**
+     - Add `margin-left: 0.45rem` on `.kbd-pill` in `dashboard.component.scss` so `"Smart Search"` and `"Ctrl+K"` have proper visual separation inside `.mdc-button__label`.
+  5. **Fix Container Body & Lid Color Swatches Showing Raw Hex Codes (`LocationDialogComponent`):**
+     - Remove the unstyled `<span class="visually-hidden">{{ c }}</span>` text inside `.color-swatch-btn` that rendered raw hex strings (`#1f2937`, `#eab308`, etc.) over the 24px circular swatch buttons.
+     - Use named color swatch metadata (`{ hex, name }`) with `matTooltip`, `aria-label`, a clean selected `<mat-icon class="swatch-check">check</mat-icon>`, and a native `<input type="color">` custom color picker button + clear button.
+  6. **Convert Date Inputs to Angular Material Datepicker (`MatDatepickerModule`):**
+     - Register `provideNativeDateAdapter()` in `app.config.ts`.
+     - Convert all `<input matInput type="date">` fields in `ItemDialogComponent` (`purchaseDate`, `returnWindowEndDate`, `warrantyExpirationDate`) and `CheckoutReturnDialogComponent` (`expectedReturnDate`) to `<input matInput [matDatepicker]="..." />` with `<mat-datepicker-toggle matIconSuffix>` and `<mat-datepicker>`.
+  7. **Fix Overly Wide Dialogs (`CategoryManagerDialogComponent` & `LabelGeneratorDialogComponent`):**
+     - **`CategoryManagerDialogComponent`:** Reduce dialog width to `680px` (`maxWidth: '95vw'`), tighten `.manager-layout` (`200px minmax(0, 1fr)`), and set `min-width: 0` on flex/grid form fields in `.template-item-row` so 3-field attribute template rows fit cleanly without stretching or overflowing.
+     - **`LabelGeneratorDialogComponent`:** Reduce dialog width from `1080px` to `860px` (`maxWidth: '95vw'`), remove `width: 100vw; max-width: 1200px` from `.label-generator-container`, narrow `.controls-panel` to `310px`, and scale the on-screen preview sheet (`zoom: 0.65` in `@media screen`) while preserving exact physical inch dimensions in `@media print`.
+  8. **Container & Location Cover Photos (`PRD 4.1.3`):**
+     - Expose `CoverAttachmentId` on `LocationNodeDto`, add location photo upload/management from the dashboard (`LocationAttachmentsDialogComponent`), and render cover photo thumbnails on container/location cards and the selected location header.
+  9. **Household User Directory & Multi-User Shared "Secret / Gift Mode" (`PRD Section 2 & 4.8.2`):**
+     - Add `GET /api/auth/users` returning `IReadOnlyList<UserSummaryDto>`.
+     - Add `SharedWithUserIdsJson` on `Item` (`SharedWithUserIds` on `ItemDto`, `CreateItemRequest`, `UpdateItemRequest`) + EF migration `AddItemSharedWithUsers` so private items are visible to both their owner and explicitly shared household members across all services, plus a multi-select share picker in `ItemDialogComponent` and an **Owner** faceted filter in `SmartSearchDialogComponent` (`PRD 4.8.1`).
+  10. **Return Window & Warranty Quick Presets + Kit/Nested Component Visibility (`PRD 4.2.1 & 4.6.2`):**
+      - Add quick-preset buttons (`+14d`, `+30d`, `+60d`, `+90d` and `+1 yr`, `+2 yr`, `+3 yr`, `+5 yr`) in `ItemDialogComponent` and render child component count/chips on `Kit` and `Nested` items in `DashboardComponent`.
+  11. **Full-App Playwright E2E Test Suite (`Tests/WhereHouse.Client.E2ETests`):**
+      - Build a self-contained Kestrel + SPA Playwright test harness (`WhereHouseE2EServerFixture`) and comprehensive E2E tests covering Auth/Setup, Responsive Viewports (verifying zero horizontal scrollbars), Locations/Containers (color swatches & cover photos), Categories & Items (Material Datepicker, presets, private sharing), Smart Search, Label Generator, and Declutter Dialog (verifying no infinite request loop).
+- **Deferred to Future Phases:**
+  - None — this completes 100% of `docs/prd.md` Milestones 1–4 and all user-reported polish items.
 
 ---
 
-## 1. Scope & Objectives
+## 2. Database & Entity Changes (`WhereHouse.Data`)
 
-This phase closes out the remaining fine-grained functional and UX specifications across **PRD Sections 2, 4.1.3, 4.2.1, 4.6.2, 4.8.1, and 4.8.2**:
-
-1. **Container & Location Cover Photos (`PRD 4.1.3`):**
-   - Extends `LocationNode` with optional cover photo storage (`CoverPhotoFileName`, `CoverPhotoContentType`, `CoverPhotoData`) and exposes `HasCoverPhoto`, `CoverPhotoFileName`, and `CoverPhotoContentType` on `LocationNodeDto` and `LocationTreeNodeDto`.
-   - Adds endpoints on `LocationsController`:
-     - `PUT /api/locations/{id}/cover-photo` (`multipart/form-data`, up to 10 MB image upload)
-     - `GET /api/locations/{id}/cover-photo` (returns raw image bytes with content type)
-     - `DELETE /api/locations/{id}/cover-photo` (removes cover photo)
-   - Updates `LocationDialogComponent`, `DashboardComponent`, and `ScannerDialogComponent` so users can upload, preview, and remove a photo of a physical container or shelf position and view it on bin cards and the selected location banner.
-
-2. **Household User Directory & Shared "Secret / Gift Mode" Access (`PRD Section 2 & 4.8.2`):**
-   - Adds `GET /api/auth/users` (`IAuthService.GetHouseholdUsersAsync`) returning `IReadOnlyList<HouseholdUserDto>` (`Id`, `Username`, `Email`, `CreatedAt`, `OwnedItemsCount`, `ActiveCheckoutsCount`) so authenticated household members can view household members, filter by owner, and share private bins/items.
-   - Extends `LocationNode` and `InventoryItem` with `SharedWithUserIdsJson` (`string?`, serialized JSON array of `Guid`s) and exposes `IReadOnlyList<Guid>? SharedWithUserIds` on DTOs and Create/Update requests.
-   - Updates privacy enforcement (`PrivacyAccessHelper.CanAccess`) across `LocationService`, `ItemService`, `SearchService`, and `ScanService`: when `IsPrivate == true`, a location or item is accessible if `OwnerId == userId` **OR** `SharedWithUserIds` contains `userId` (e.g., sharing a "Holiday Gifts Bin" with a spouse while keeping it hidden from kids' accounts). Only the `OwnerId` can modify privacy settings or delete the private entity.
-
-3. **Smart Search Owner Faceted Filter (`PRD 4.8.1`):**
-   - Adds `Guid? OwnerId = null` to `SmartSearchQuery` (`WhereHouse.Core/Search/SearchModels.cs`), `SearchService.SearchAsync`, `SearchController.Search`, and the `SmartSearchDialogComponent` filter bar.
-
-4. **Return Window & Warranty Quick Presets + Kit/Nested Component Visibility (`PRD 4.2.1 & 4.6.2`):**
-   - Updates `ItemDialogComponent` to include the `returnWindowEndDate` date input, **1-tap Return Window preset buttons** (`14d`, `30d`, `60d`, `90d` from Purchase Date or today), **1-tap Warranty preset buttons** (`1 Yr`, `2 Yr`, `3 Yr`, `5 Yr`, `Lifetime`), and a **"Share Private Access With..."** multi-select when `isPrivate` is toggled on.
-   - Updates `DashboardComponent` item cards to display `parentItemName` (*"Linked to: ..."*) and `childItems` summary chips on Kit and Nested parent items.
-
----
-
-## 2. Domain & Database Design (`WhereHouse.Core` & `WhereHouse.Data`)
-
-### 2.1 Privacy Access Helper (`WhereHouse.Core/Privacy/PrivacyAccessHelper.cs` — New File)
-
-Create a zero-dependency helper in `WhereHouse.Core/Privacy/PrivacyAccessHelper.cs` for parsing `SharedWithUserIdsJson` and evaluating "Secret / Gift Mode" visibility:
-
+### 2.1 Modify Entity: `WhereHouse.Data/Entities/Item.cs`
+Add `SharedWithUserIdsJson` to `Item`:
 ```csharp
-using System.Text.Json;
+public bool IsPrivate { get; set; }
 
-namespace WhereHouse.Core.Privacy;
+/// <summary>
+/// Optional JSON array of household User IDs (Guid[]) allowed to view this item when IsPrivate is true.
+/// </summary>
+public string? SharedWithUserIdsJson { get; set; }
+```
 
-public static class PrivacyAccessHelper
-{
-    public static IReadOnlyList<Guid> ParseSharedUserIds(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return [];
-        }
+### 2.2 Modify Configuration: `WhereHouse.Data/Configurations/ItemConfiguration.cs`
+Add column configuration for `SharedWithUserIdsJson`:
+```csharp
+builder.Property(x => x.SharedWithUserIdsJson).HasMaxLength(1000);
+```
 
-        try
-        {
-            var list = JsonSerializer.Deserialize<List<Guid>>(json);
-            return list?.Distinct().ToList() ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
-    public static string? SerializeSharedUserIds(IEnumerable<Guid>? userIds, Guid ownerId)
-    {
-        if (userIds is null)
-        {
-            return null;
-        }
-
-        var cleaned = userIds.Where(id => id != Guid.Empty && id != ownerId).Distinct().ToList();
-        return cleaned.Count == 0 ? null : JsonSerializer.Serialize(cleaned);
-    }
-
-    public static bool CanView(bool isPrivate, Guid ownerId, string? sharedWithUserIdsJson, Guid currentUserId)
-    {
-        if (!isPrivate || ownerId == currentUserId)
-        {
-            return true;
-        }
-
-        if (string.IsNullOrWhiteSpace(sharedWithUserIdsJson))
-        {
-            return false;
-        }
-
-        var sharedIds = ParseSharedUserIds(sharedWithUserIdsJson);
-        return sharedIds.Contains(currentUserId);
-    }
-}
+### 2.3 EF Core Migration
+Run from repository root:
+```powershell
+dotnet ef migrations add AddItemSharedWithUsers --project WhereHouse.Data --startup-project WhereHouse.API
 ```
 
 ---
 
-### 2.2 Entities & EF Configurations (`WhereHouse.Data/`)
+## 3. Core Contracts & Models (`WhereHouse.Core`)
 
-1. **Update `WhereHouse.Data/Entities/LocationNode.cs`:**
-   - Add properties:
-     ```csharp
-     public string? CoverPhotoFileName { get; set; }
+### 3.1 New DTO: `WhereHouse.Core/Authentication/UserSummaryDto.cs`
+```csharp
+namespace WhereHouse.Core.Authentication;
 
-     public string? CoverPhotoContentType { get; set; }
+public sealed record UserSummaryDto(
+    Guid Id,
+    string Username,
+    string DisplayName
+);
+```
 
-     public byte[]? CoverPhotoData { get; set; }
+### 3.2 Update Interface: `WhereHouse.Core/Authentication/IAuthService.cs`
+Add household user directory method:
+```csharp
+Task<IReadOnlyList<UserSummaryDto>> GetHouseholdUsersAsync(
+    CancellationToken cancellationToken = default
+);
+```
 
-     public string? SharedWithUserIdsJson { get; set; }
-     ```
+### 3.3 Update Location DTO: `WhereHouse.Core/Locations/LocationDtos.cs`
+Add `string? CoverAttachmentId = null` to `LocationNodeDto`:
+```csharp
+public sealed record LocationNodeDto(
+    Guid Id,
+    string Name,
+    string? Description,
+    string ShortCode,
+    LocationNodeType NodeType,
+    string? ContainerStyle,
+    string? PrimaryColor,
+    string? AccentColor,
+    bool IsTransparent,
+    Guid? ParentLocationId,
+    string FullPath,
+    IReadOnlyList<LocationBreadcrumbDto> Breadcrumbs,
+    int DirectChildCount,
+    int DirectItemCount,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset UpdatedAtUtc,
+    string? CoverAttachmentId = null
+);
+```
 
-2. **Update `WhereHouse.Data/Configurations/LocationNodeConfiguration.cs`:**
-   - Add column length configurations:
-     ```csharp
-     builder.Property(x => x.CoverPhotoFileName).HasMaxLength(255);
-     builder.Property(x => x.CoverPhotoContentType).HasMaxLength(128);
-     builder.Property(x => x.SharedWithUserIdsJson).HasMaxLength(2000);
-     ```
-
-3. **Update `WhereHouse.Data/Entities/InventoryItem.cs`:**
-   - Add property:
-     ```csharp
-     public string? SharedWithUserIdsJson { get; set; }
-     ```
-
-4. **Update `WhereHouse.Data/Configurations/InventoryItemConfiguration.cs`:**
-   - Add column length configuration:
-     ```csharp
-     builder.Property(x => x.SharedWithUserIdsJson).HasMaxLength(2000);
-     ```
-
-5. **EF Core Migration:**
-   - Run:
-     ```powershell
-     dotnet ef migrations add AddCoverPhotosAndSharedPrivacy --project WhereHouse.Data --startup-project WhereHouse.API
-     ```
-
----
-
-### 2.3 DTOs, Requests & Service Contracts (`WhereHouse.Core/`)
-
-1. **Update `WhereHouse.Core/Authentication/AuthModels.cs` & `IAuthService.cs`:**
-   - Add `HouseholdUserDto` to `AuthModels.cs`:
-     ```csharp
-     public sealed record HouseholdUserDto(
-         Guid Id,
-         string Username,
-         string Email,
-         DateTimeOffset CreatedAt,
-         int OwnedItemsCount,
-         int ActiveCheckoutsCount
-     );
-     ```
-   - Add to `IAuthService`:
-     ```csharp
-     Task<IReadOnlyList<HouseholdUserDto>> GetHouseholdUsersAsync(
-         CancellationToken cancellationToken = default
-     );
-     ```
-
-2. **Update `WhereHouse.Core/Locations/LocationModels.cs` & `ILocationService.cs`:**
-   - Append optional default parameters to `LocationNodeDto`, `LocationTreeNodeDto`, `CreateLocationNodeRequest`, and `UpdateLocationNodeRequest`:
-     ```csharp
-     public sealed record LocationNodeDto(
-         Guid Id,
-         Guid? ParentId,
-         string Name,
-         string? Description,
-         LocationNodeType NodeType,
-         string ShortCode,
-         string? Icon,
-         string? ContainerStyle,
-         string? PrimaryColor,
-         string? AccentColor,
-         string? ColorLabel,
-         bool IsPrivate,
-         Guid OwnerId,
-         string FullPath,
-         IReadOnlyList<LocationBreadcrumbDto> Breadcrumbs,
-         int ChildCount,
-         int ItemCount,
-         DateTimeOffset CreatedAt,
-         DateTimeOffset ModifiedAt,
-         bool HasCoverPhoto = false,
-         string? CoverPhotoFileName = null,
-         string? CoverPhotoContentType = null,
-         IReadOnlyList<Guid>? SharedWithUserIds = null
-     );
-
-     public sealed record LocationTreeNodeDto(
-         Guid Id,
-         Guid? ParentId,
-         string Name,
-         LocationNodeType NodeType,
-         string ShortCode,
-         string? Icon,
-         string? ContainerStyle,
-         string? PrimaryColor,
-         string? AccentColor,
-         string? ColorLabel,
-         bool IsPrivate,
-         Guid OwnerId,
-         string FullPath,
-         IReadOnlyList<LocationTreeNodeDto> Children,
-         bool HasCoverPhoto = false,
-         IReadOnlyList<Guid>? SharedWithUserIds = null
-     );
-
-     public sealed record CreateLocationNodeRequest(
-         [Required, MaxLength(150)] string Name,
-         LocationNodeType NodeType = LocationNodeType.FixedLocation,
-         Guid? ParentId = null,
-         [MaxLength(1000)] string? Description = null,
-         [MaxLength(32)] string? ShortCode = null,
-         [MaxLength(64)] string? Icon = null,
-         [MaxLength(100)] string? ContainerStyle = null,
-         [MaxLength(32)] string? PrimaryColor = null,
-         [MaxLength(32)] string? AccentColor = null,
-         [MaxLength(100)] string? ColorLabel = null,
-         bool IsPrivate = false,
-         IReadOnlyList<Guid>? SharedWithUserIds = null
-     );
-
-     public sealed record UpdateLocationNodeRequest(
-         [Required, MaxLength(150)] string Name,
-         LocationNodeType NodeType,
-         [MaxLength(1000)] string? Description = null,
-         [MaxLength(64)] string? Icon = null,
-         [MaxLength(100)] string? ContainerStyle = null,
-         [MaxLength(32)] string? PrimaryColor = null,
-         [MaxLength(32)] string? AccentColor = null,
-         [MaxLength(100)] string? ColorLabel = null,
-         bool IsPrivate = false,
-         IReadOnlyList<Guid>? SharedWithUserIds = null
-     );
-
-     public sealed record UploadLocationCoverPhotoRequest(
-         [Required, MaxLength(255)] string FileName,
-         [Required, MaxLength(128)] string ContentType,
-         [Required] byte[] Data
-     );
-
-     public sealed record LocationCoverPhotoDownloadDto(
-         string FileName,
-         string ContentType,
-         byte[] Data
-     );
-     ```
-   - Add cover photo methods to `ILocationService`:
-     ```csharp
-     Task<LocationNodeDto?> SetCoverPhotoAsync(
-         Guid userId,
-         Guid id,
-         UploadLocationCoverPhotoRequest request,
-         CancellationToken cancellationToken = default
-     );
-
-     Task<LocationCoverPhotoDownloadDto?> GetCoverPhotoAsync(
-         Guid userId,
-         Guid id,
-         CancellationToken cancellationToken = default
-     );
-
-     Task<LocationNodeDto?> DeleteCoverPhotoAsync(
-         Guid userId,
-         Guid id,
-         CancellationToken cancellationToken = default
-     );
-     ```
-
-3. **Update `WhereHouse.Core/Items/ItemModels.cs`:**
-   - Append `IReadOnlyList<Guid>? SharedWithUserIds = null` as the final optional parameter on `ItemDto`, `CreateItemRequest`, and `UpdateItemRequest`.
-
-4. **Update `WhereHouse.Core/Search/SearchModels.cs`:**
-   - Append `Guid? OwnerId = null` as the final optional parameter on `SmartSearchQuery`, and `bool HasCoverPhoto = false` on `LocationSearchHitDto`.
+### 3.4 Update Item DTOs: `WhereHouse.Core/Items/ItemDtos.cs`
+1. Add `IReadOnlyList<Guid>? SharedWithUserIds = null` as an optional trailing parameter on `ItemDto`:
+```csharp
+public sealed record ItemDto(
+    Guid Id,
+    string Name,
+    string? Description,
+    string ShortCode,
+    ItemType ItemType,
+    ItemStatus Status,
+    Guid? CategoryId,
+    string? CategoryName,
+    string? CategoryIcon,
+    string? CategoryColor,
+    Guid HomeLocationId,
+    string HomeLocationName,
+    string HomeLocationFullPath,
+    Guid? CurrentLocationId,
+    string? CurrentLocationName,
+    string? CurrentLocationFullPath,
+    bool IsOutOfPlace,
+    Guid? ParentItemId,
+    string? ParentItemName,
+    decimal CurrentQuantity,
+    decimal? MinQuantity,
+    string? Unit,
+    bool IsLowStock,
+    string? Brand,
+    string? ModelNumber,
+    string? SerialNumber,
+    string? BarcodeUpc,
+    DateTimeOffset? PurchaseDate,
+    decimal? PurchasePrice,
+    decimal? EstimatedReplacementValue,
+    string? Retailer,
+    DateTimeOffset? ReturnWindowEndDate,
+    DateTimeOffset? WarrantyExpirationDate,
+    ItemCondition Condition,
+    string? Notes,
+    bool IsPrivate,
+    Guid? OwnerUserId,
+    string? OwnerDisplayName,
+    IReadOnlyList<string> Tags,
+    IReadOnlyDictionary<string, string?> CustomAttributes,
+    string? CoverAttachmentId,
+    int AttachmentCount,
+    string? ActiveBorrowerName,
+    DateTimeOffset? ActiveCheckoutExpectedReturnUtc,
+    DateTimeOffset? ActiveCheckedOutAtUtc,
+    DateTimeOffset? StagedAtUtc,
+    decimal? SuggestedListingPrice,
+    string? StagingNotes,
+    ArchiveReason? ArchiveReason,
+    DateTimeOffset? ArchivedAtUtc,
+    string? ArchiveNotes,
+    DateTimeOffset? LastUsedAtUtc,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset UpdatedAtUtc,
+    IReadOnlyList<Guid>? SharedWithUserIds = null
+);
+```
+2. Add `IReadOnlyList<Guid>? SharedWithUserIds = null` to `CreateItemRequest` and `UpdateItemRequest`.
 
 ---
 
-### 2.4 Service Implementations (`WhereHouse.Data/Services/`)
+## 4. Backend Services & Controllers (`WhereHouse.Data` & `WhereHouse.API`)
 
-1. **`AuthService.GetHouseholdUsersAsync` (`WhereHouse.Data/Services/AuthService.cs`):**
-   - Queries `dbContext.Users.AsNoTracking()` ordered by `Username`:
-   - Computes `OwnedItemsCount` (non-archived, non-private items owned by that user) and `ActiveCheckoutsCount` (items currently `InUse` where `CheckedOutByUserId == u.Id`).
-   - Returns `IReadOnlyList<HouseholdUserDto>`.
+### 4.1 `WhereHouse.Data/Services/AuthService.cs` & `WhereHouse.API/Controllers/AuthController.cs`
+- Implement `GetHouseholdUsersAsync` in `AuthService`:
+  - Query `_dbContext.Users.AsNoTracking().Where(u => u.IsActive).OrderBy(u => u.DisplayName).Select(u => new UserSummaryDto(u.Id, u.Username, u.DisplayName)).ToListAsync(cancellationToken)`.
+- Add `GET /api/auth/users` in `AuthController`:
+  ```csharp
+  [Authorize]
+  [HttpGet("users")]
+  [ProducesResponseType<IReadOnlyList<UserSummaryDto>>(StatusCodes.Status200OK)]
+  public async Task<ActionResult<IReadOnlyList<UserSummaryDto>>> GetUsers(
+      CancellationToken cancellationToken
+  )
+  {
+      var users = await _authService.GetHouseholdUsersAsync(cancellationToken);
+      return Ok(users);
+  }
+  ```
 
-2. **`LocationService` (`WhereHouse.Data/Services/LocationService.cs`):**
-   - Update `IsAccessible` to call `PrivacyAccessHelper.CanView(current.IsPrivate, current.OwnerId, current.SharedWithUserIdsJson, userId)`.
-   - In `GetLocationNodesAsync`, update item count filtering to also check `PrivacyAccessHelper.CanView(i.IsPrivate, i.OwnerId, i.SharedWithUserIdsJson, userId)`.
-   - In `CreateLocationNodeAsync` and `UpdateLocationNodeAsync`, persist `SharedWithUserIdsJson = request.IsPrivate ? PrivacyAccessHelper.SerializeSharedUserIds(request.SharedWithUserIds, node.OwnerId) : null`. Note: if `node.IsPrivate` is being changed or `SharedWithUserIds` is being modified on an existing private node, only `node.OwnerId == userId` is allowed to change privacy settings (`ForbiddenException` if a shared non-owner tries to alter `IsPrivate` or `SharedWithUserIds` or delete the node).
-   - Implement `SetCoverPhotoAsync`, `GetCoverPhotoAsync`, and `DeleteCoverPhotoAsync`:
-     - Validate file size (`> 0` and `<= 10 * 1024 * 1024` bytes, otherwise `DomainValidationException`) and image content type (`image/jpeg`, `image/png`, `image/webp`, `image/gif`).
-     - Enforce `IsAccessible(node, userId, allNodes)` (throw `ForbiddenException` if inaccessible).
-     - Populate `HasCoverPhoto = node.CoverPhotoData is { Length: > 0 }`, `CoverPhotoFileName`, `CoverPhotoContentType`, and `SharedWithUserIds = PrivacyAccessHelper.ParseSharedUserIds(node.SharedWithUserIdsJson)` in `MapToDto` and `BuildTree`.
+### 4.2 `WhereHouse.Data/Services/LocationService.cs`
+- In `GetTreeAsync`, `GetByIdAsync`, `GetByShortCodeAsync`, `CreateAsync`, `UpdateAsync`, and `MoveAsync`:
+  - Query non-deleted attachments (`_dbContext.Attachments.AsNoTracking()`) where `LocationId` is in the loaded location IDs, ordered by `AttachmentType == AttachmentType.Photo ? 0 : 1`, then `CreatedAtUtc`.
+  - Populate `CoverAttachmentId` (`Guid.ToString()`) on `LocationNodeDto`.
 
-3. **`ItemService` (`WhereHouse.Data/Services/ItemService.cs`):**
-   - Update `IsItemAccessible` and `IsLocationAccessible` to use `PrivacyAccessHelper.CanView(...)`.
-   - In `CreateItemAsync` and `UpdateItemAsync`, persist `SharedWithUserIdsJson = request.IsPrivate ? PrivacyAccessHelper.SerializeSharedUserIds(request.SharedWithUserIds, item.OwnerId) : null`.
-   - Include `SharedWithUserIds: PrivacyAccessHelper.ParseSharedUserIds(item.SharedWithUserIdsJson)` in `MapToDto`.
-
-4. **`SearchService` (`WhereHouse.Data/Services/SearchService.cs`) & `ScanService` (`WhereHouse.Data/Services/ScanService.cs`):**
-   - Update location and item accessibility checks in `SearchService` and `ScanService` to use `PrivacyAccessHelper.CanView(...)`.
-   - In `SearchService.SearchAsync`, if `query.OwnerId.HasValue`, filter items by `i.OwnerId == query.OwnerId.Value` and locations by `n.OwnerId == query.OwnerId.Value`.
-
----
-
-## 3. API Endpoints (`WhereHouse.API/Controllers/`)
-
-| Verb | Route (`/api/...`) | Request Body / Query | Response (`200`/`204`) | Error Cases (`400`/`403`/`404`) |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/auth/users` | — | `200 OK` (`IReadOnlyList<HouseholdUserDto>`) | `401 Unauthorized` |
-| `PUT` | `/api/locations/{id:guid}/cover-photo` | `IFormFile file` (`multipart/form-data`) | `200 OK` (`LocationNodeDto`) | `400` invalid image/size, `403` private node, `404` not found |
-| `GET` | `/api/locations/{id:guid}/cover-photo` | — | `200 OK` (`FileResult` binary stream) | `403` private node, `404` not found or no photo |
-| `DELETE` | `/api/locations/{id:guid}/cover-photo` | — | `200 OK` (`LocationNodeDto`) | `403` private node, `404` not found |
-| `GET` | `/api/search` | Existing params + `[FromQuery] Guid? ownerId = null` | `200 OK` (`SmartSearchResponseDto`) | `401 Unauthorized` |
-
----
-
-## 4. Angular Frontend Design (`WhereHouse.Client`)
-
-### 4.1 Models & Services (`src/app/core/`)
-
-1. **Update `src/app/core/models/auth.models.ts` & `src/app/core/services/auth/auth.service.ts`:**
-   - Add `HouseholdUserDto` interface (`id`, `username`, `email`, `createdAt`, `ownedItemsCount`, `activeCheckoutsCount`).
-   - Add `getHouseholdUsers(): Observable<HouseholdUserDto[]>` to `AuthService` calling `GET /api/auth/users`.
-
-2. **Update `src/app/core/models/location.models.ts` & `src/app/core/services/location/location.service.ts`:**
-   - Add `hasCoverPhoto?: boolean`, `coverPhotoFileName?: string | null`, `coverPhotoContentType?: string | null`, and `sharedWithUserIds?: string[]` to `LocationNodeDto`, `LocationTreeNodeDto`, `CreateLocationNodeRequest`, and `UpdateLocationNodeRequest`.
-   - Add `uploadCoverPhoto(id: string, file: File): Observable<LocationNodeDto>`, `deleteCoverPhoto(id: string): Observable<LocationNodeDto>`, and `getCoverPhotoDownload(id: string): Observable<Blob>` to `LocationService` (invalidating tree/list cache on upload/delete).
-
-3. **Update `src/app/core/models/item.models.ts`:**
-   - Add `sharedWithUserIds?: string[]` to `ItemDto`, `CreateItemRequest`, and `UpdateItemRequest`.
-
-4. **Update `src/app/core/models/search.models.ts` & `src/app/core/services/search/search.service.ts`:**
-   - Add `ownerId?: string | null` to `SmartSearchQuery` and pass `ownerId` in `SearchService.search(...)`.
+### 4.3 Shared Private Item Access Helper & `ItemService` (`WhereHouse.Data/Services/ItemService.cs`)
+- Add static helpers in `ItemService`:
+  - `SerializeSharedUserIds(IReadOnlyList<Guid>? userIds, bool isPrivate)`: returns `null` if `!isPrivate` or empty; otherwise serializes distinct non-empty `Guid`s as lowercase strings in JSON (`["guid1","guid2"]`).
+  - `DeserializeSharedUserIds(string? json)`: deserializes `Guid` list safely (returns `[]` on null/invalid).
+  - `CanUserAccessItem(Item item, Guid? currentUserId)`: returns `true` if `!item.IsPrivate`, OR `currentUserId.HasValue` and (`item.OwnerUserId == currentUserId.Value` || ` (item.SharedWithUserIdsJson != null && item.SharedWithUserIdsJson.Contains(currentUserId.Value.ToString(), StringComparison.OrdinalIgnoreCase))`).
+- Update `ApplyPrivacyFilter(IQueryable<Item> query)` in `ItemService`, `SearchService`, `LifecycleService`, `MaintenanceService`, `InsuranceExportService`, `ActionCenterService`, `CheckoutService`, `LoadoutService`, and `DataPortabilityService`:
+  ```csharp
+  if (_userContext.UserId is { } currentUserId)
+  {
+      var userIdToken = $"\"{currentUserId.ToString().ToLowerInvariant()}\"";
+      query = query.Where(i =>
+          !i.IsPrivate
+          || i.OwnerUserId == currentUserId
+          || (i.SharedWithUserIdsJson != null && i.SharedWithUserIdsJson.Contains(userIdToken))
+      );
+  }
+  else
+  {
+      query = query.Where(i => !i.IsPrivate);
+  }
+  ```
+- In `ItemService.CreateAsync`, `UpdateAsync`, and `DuplicateAsync`:
+  - Persist `SharedWithUserIdsJson = SerializeSharedUserIds(request.SharedWithUserIds, request.IsPrivate)`.
+  - Map `SharedWithUserIds: DeserializeSharedUserIds(item.SharedWithUserIdsJson)` in `MapToDto`.
 
 ---
 
-### 4.2 Feature Components (`src/app/features/dashboard/`)
+## 5. Frontend Implementation (`WhereHouse.Client`)
 
-1. **`LocationDialogComponent` (`location-dialog.component.ts`):**
-   - Pass `householdUsers?: HouseholdUserDto[]` in `LocationDialogData`.
-   - When `isPrivate` is enabled, show a **"Share Secret Access With Household Members"** `mat-select [multiple]="true"` (`sharedWithUserIds` control) so the owner can grant specific family members access to the secret location/bin.
-   - In Edit mode (or when editing a location/container), display a **Container / Shelf Cover Photo** section allowing the user to upload an image file (`uploadCoverPhoto`) or remove an existing cover photo (`deleteCoverPhoto`).
+### 5.1 Fix Declutter Dialog Infinite API Loop & Chip Selection Loops
+1. **`WhereHouse.Client/src/app/features/dashboard/declutter-graveyard-dialog/declutter-graveyard-dialog.component.ts`:**
+   - Remove `(selectionChange)` from all `<mat-chip-option>` elements across Tab 1 (`Staged`), Tab 2 (`Dust Collector`), and Tab 3 (`Graveyard`), replacing them with `(click)` handlers:
+     - Tab 1 (`staged`): `(click)="setStagedStatusFilter(null)"`, `(click)="setStagedStatusFilter(ItemStatuses.StagedToSell)"`, `(click)="setStagedStatusFilter(ItemStatuses.StagedToDonate)"`.
+     - Tab 2 (`dust`): `(click)="setDustThreshold(90)"`, `(click)="setDustThreshold(180)"`, `(click)="setDustThreshold(365)"`, `(click)="setDustThreshold(730)"`.
+     - Tab 3 (`graveyard`): `(click)="setGyReasonFilter(null)"`, `(click)="setGyReasonFilter(ArchiveReasons.Sold)"`, `(click)="setGyReasonFilter(ArchiveReasons.Donated)"`, `(click)="setGyReasonFilter(ArchiveReasons.Trashed)"`, `(click)="setGyReasonFilter(ArchiveReasons.Recycled)"`, `(click)="setGyReasonFilter(ArchiveReasons.Lost)"`, `(click)="setGyReasonFilter(ArchiveReasons.Consumed)"`.
+   - Add equality guards at the top of `setStagedStatusFilter`, `setDustThreshold`, and `setGyReasonFilter`:
+     ```ts
+     setStagedStatusFilter(status: ItemStatus | null): void {
+       if (this.stagedStatusFilter() === status) return;
+       this.stagedStatusFilter.set(status);
+       this.loadStaged();
+     }
 
-2. **`ItemDialogComponent` (`item-dialog.component.ts`):**
-   - Pass `householdUsers?: HouseholdUserDto[]` in `ItemDialogData`.
-   - In the **Purchase & Warranty Vault** section:
-     - Add the **Return Window End Date** (`returnWindowEndDate`) date picker input alongside **1-tap Return Window preset buttons** (`+14d`, `+30d`, `+60d`, `+90d` calculated relative to `purchaseDate` if set, otherwise today).
-     - Add **1-tap Warranty preset buttons** (`1 Yr`, `2 Yr`, `3 Yr`, `5 Yr`, `Lifetime` — where `Lifetime` sets `warrantyNotes` to `'Lifetime Warranty'` and clears expiration date, and `1–5 Yr` adds $N$ years to `purchaseDate` or today).
-   - In the **Secret / Gift Mode** section:
-     - When `isPrivate` is enabled, show a **"Share Secret Access With Household Members"** `mat-select [multiple]="true"` (`sharedWithUserIds` control).
-   - When editing an item that has `childItems` (`data.item.childItems.length > 0`), render a read-only **Linked Kit / Nested Components** summary list showing each child item's short code, name, quantity, and status.
+     setDustThreshold(days: number): void {
+       if (this.dustThresholdDays() === days) return;
+       this.dustThresholdDays.set(days);
+       this.loadDustCollectors();
+     }
 
-3. **`SmartSearchDialogComponent` (`smart-search-dialog.component.ts`):**
-   - Pass `availableUsers?: HouseholdUserDto[]` in `SmartSearchDialogData` and add an **Owner** `mat-select` filter dropdown in the faceted filters panel (`ownerId` signal).
+     setGyReasonFilter(reason: ArchiveReason | null): void {
+       if (this.gyReasonFilter() === reason) return;
+       this.gyReasonFilter.set(reason);
+       this.loadGraveyard();
+     }
+     ```
+2. **`WhereHouse.Client/src/app/features/dashboard/maintenance-dialog/maintenance-dialog.component.ts`:**
+   - Replace `(selectionChange)="dueOnlyFilter.set($event.selected); loadData()"` on `<mat-chip-option>` with `(click)="toggleDueOnlyFilter()"` where `toggleDueOnlyFilter()` flips `dueOnlyFilter` and calls `loadData()`.
+3. **`WhereHouse.Client/src/app/features/dashboard/smart-search-dialog/smart-search-dialog.component.ts`:**
+   - Replace `(selectionChange)` on `<mat-chip-option>` (lines 161, 169, 177, 185) with `(click)` toggle handlers (`toggleFilterLowStock()`, `toggleFilterOutOfPlace()`, `toggleFilterWarrantyExpiring()`, `toggleFilterIncludeArchived()`) so chip state initialization never fires duplicate search requests.
 
-4. **`DashboardComponent` (`dashboard.component.ts`, `.html`, `.scss`):**
-   - Load `householdUsers = signal<HouseholdUserDto[]>([])` via `authService.getHouseholdUsers()` in `refreshAll()` and pass to `LocationDialogComponent`, `ItemDialogComponent`, and `SmartSearchDialogComponent`.
-   - On `DashboardComponent` item cards (`.item-card`), render:
-     - If `item.parentItemName`, display a subtle linked parent badge (`account_tree` icon + `"Part of: {{ item.parentItemName }}"`).
-     - If `item.childItems && item.childItems.length > 0`, display a compact **Components ({{ item.childItems.length }})** chip list showing the first 3 child items.
-   - On `DashboardComponent` location cards and the selected node banner, show a `"Cover Photo"` indicator badge when `node.hasCoverPhoto` is true, with a button to preview/manage the photo in `LocationDialogComponent`.
+### 5.2 Responsive Top Navbar & Viewport Layout (`dashboard.component.html` & `dashboard.component.scss`)
+1. **`WhereHouse.Client/src/app/features/dashboard/dashboard.component.html`:**
+   - Reorganize `.top-actions` so it never overflows horizontal viewports:
+     - Keep direct top-bar buttons:
+       1. `+ Add` (`[matMenuTriggerFor]="addMenu"`)
+       2. `Rapid Intake` (`openRapidIntakeDialog()`)
+       3. `Scan QR` (`openScannerDialog()`)
+       4. `Cart` (`openLoadoutsDialog('cart')` with cart badge)
+       5. `Action Center` (`openActionCenterDialog()` with alert badge)
+       6. `Tools & Vault` (`[matMenuTriggerFor]="toolsMenu"`, icon `apps` or `handyman`, label `Tools & Vault`)
+       7. `Theme` toggle icon button
+       8. `User` menu button
+     - Create `<mat-menu #toolsMenu="matMenu">` containing:
+       - `Loadouts & Loans` (`backpack` — `openLoadoutsDialog('loadouts')`)
+       - `Print Barcode & QR Labels` (`qr_code_2` — `openLabelGeneratorDialog()`)
+       - `Manage Categories & Templates` (`category` — `openCategoryManagerDialog()`)
+       - `Declutter & Graveyard` (`cleaning_services` — `openDeclutterGraveyardDialog()`)
+       - `Maintenance & Upkeep` (`build_circle` — `openMaintenanceDialog()`)
+       - `Insurance & Disaster Vault` (`shield` — `openInsuranceExportDialog()`)
+       - `Import / Export CSV & ZIP` (`import_export` — `openImportExportDialog()`)
+2. **`WhereHouse.Client/src/app/features/dashboard/dashboard.component.scss`:**
+   - Add `overflow-x: clip;` on `.dashboard-layout` and `.top-bar`.
+   - Ensure `.top-search-area` has `flex: 1 1 200px; min-width: 0; max-width: 560px;`.
+   - Add `margin-left: 0.45rem;` to `.kbd-pill` so `"Smart Search"` and `"Ctrl+K"` have clear horizontal spacing.
+   - Change `.empty-state { mat-icon { ... } }` to `.empty-state { > mat-icon { ... } }` so buttons inside `.empty-actions` (`"Add Item"`, `"Add Sub-Location"`, `"Add Container"`) do not inherit `48px` icons.
+   - Add responsive breakpoints:
+     - `@media (max-width: 1280px)`: hide `.btn-label-collapsible` on secondary `.top-actions` buttons (`Rapid Intake`, `Scan QR`, `Cart`, `Action Center`) or tighten button padding (`0 0.5rem`) so `.top-bar` fits cleanly on `1024px–1280px` screens without any horizontal scrollbar.
+     - `@media (max-width: 960px)`: collapse sidebar to drawer mode or narrower `240px` pane and keep `.top-bar` compact.
+     - `@media (max-width: 768px)`: mobile layout with drawer toggle, compact search, and zero horizontal overflow.
+3. **Also fix `.empty-state > mat-icon` in:**
+   - `WhereHouse.Client/src/app/features/dashboard/action-center-dialog/action-center-dialog.component.ts`
+   - `WhereHouse.Client/src/app/features/dashboard/insurance-export-dialog/insurance-export-dialog.component.ts`
+
+### 5.3 Fix Container Color Swatches (`LocationDialogComponent`)
+- **File:** `WhereHouse.Client/src/app/features/dashboard/location-dialog/location-dialog.component.ts`
+- Replace `commonColors: string[]` with `commonColors: { hex: string; name: string }[]`:
+  ```ts
+  protected readonly commonColors = [
+    { hex: '#1f2937', name: 'Black / Dark Slate' },
+    { hex: '#eab308', name: 'Yellow' },
+    { hex: '#dc2626', name: 'Red' },
+    { hex: '#2563eb', name: 'Blue' },
+    { hex: '#16a34a', name: 'Green' },
+    { hex: '#f97316', name: 'Orange' },
+    { hex: '#9ca3af', name: 'Gray' },
+    { hex: '#ffffff', name: 'White / Clear' },
+  ];
+  ```
+- In both **Primary Color (Body)** and **Accent Color (Lid / latches)**:
+  - Remove `<span class="visually-hidden">{{ c }}</span>` from `.color-swatch-btn`.
+  - Render `<button type="button" class="color-swatch-btn" [style.background-color]="c.hex" [class.selected-swatch]="form.get('primaryColor')?.value === c.hex" (click)="selectPrimaryColor(c.hex)" [matTooltip]="c.name" [attr.aria-label]="'Body color ' + c.name"> @if (form.get('primaryColor')?.value === c.hex) { <mat-icon class="swatch-check" [class.dark-check]="c.hex === '#ffffff' || c.hex === '#eab308'">check</mat-icon> } </button>`.
+  - Replace `<input class="color-hex-input" ...>` with a clean native `<input type="color" class="color-picker-native" [value]="form.get('primaryColor')?.value || '#2563eb'" (input)="selectPrimaryColor($any($event.target).value)" matTooltip="Custom color" aria-label="Custom body color" />` and a small clear button (`@if (form.get('primaryColor')?.value) { <button type="button" class="clear-color-btn" (click)="selectPrimaryColor('')" matTooltip="Clear color" aria-label="Clear body color"><mat-icon>close</mat-icon></button> }`).
+
+### 5.4 Convert Date Inputs to Angular Material Datepicker (`MatDatepickerModule`)
+1. **`WhereHouse.Client/src/app/app.config.ts`:**
+   - Import and register `provideNativeDateAdapter()` from `@angular/material/core`.
+2. **`WhereHouse.Client/src/app/features/dashboard/item-dialog/item-dialog.component.ts`:**
+   - Import `MatDatepickerModule` from `@angular/material/datepicker` and `provideNativeDateAdapter` from `@angular/material/core` (in component `providers: [provideNativeDateAdapter()]` so standalone component unit tests also work out-of-the-box without needing global config).
+   - Convert `purchaseDate`, `returnWindowEndDate`, and `warrantyExpirationDate` fields to use `<input matInput [matDatepicker]="..." formControlName="..." />` + `<mat-datepicker-toggle matIconSuffix [for]="..."></mat-datepicker-toggle><mat-datepicker #...></mat-datepicker>`.
+   - Update `toDateInputString` $\rightarrow$ `toDateObject(iso?: string | null): Date | null` and `toIsoOrNull(val?: Date | string | null): string | null` so `MatDatepicker` `Date` instances serialize cleanly to ISO strings.
+   - Add Return Window quick presets (`+14d`, `+30d`, `+60d`, `+90d`) and Warranty Expiration quick presets (`+1 yr`, `+2 yr`, `+3 yr`, `+5 yr`) that set `Date` objects on `returnWindowEndDate` / `warrantyExpirationDate`.
+3. **`WhereHouse.Client/src/app/features/dashboard/checkout-return-dialog/checkout-return-dialog.component.ts`:**
+   - Import `MatDatepickerModule` and add `providers: [provideNativeDateAdapter()]`.
+   - Convert `expectedReturnDate` from `<input matInput type="date">` to `<input matInput [matDatepicker]="expectedReturnPicker" [(ngModel)]="expectedReturnDate" name="expectedReturnDate" />` + `<mat-datepicker-toggle matIconSuffix [for]="expectedReturnPicker"></mat-datepicker-toggle><mat-datepicker #expectedReturnPicker></mat-datepicker>`.
+   - Update `expectedReturnDate` model to accept `Date | string | null` and convert to ISO string on submit.
+
+### 5.5 Fix Overly Wide Dialogs (`CategoryManagerDialogComponent` & `LabelGeneratorDialogComponent`)
+1. **`WhereHouse.Client/src/app/features/dashboard/category-manager-dialog/category-manager-dialog.component.ts` & `dashboard.component.ts`:**
+   - In `dashboard.component.ts`: open `CategoryManagerDialogComponent` with `{ width: '680px', maxWidth: '95vw' }`.
+   - In `category-manager-dialog.component.ts`:
+     - Update `.manager-layout` to `grid-template-columns: 190px minmax(0, 1fr); gap: 1rem; min-height: 400px;`.
+     - Add `min-width: 0;` on `.category-form-pane`, `.half-width`, `.field-name-input`, `.field-type-select`, `.field-unit-input`, and `.field-options-input`.
+     - Override MDC form-field infix min-width inside `.category-form-pane` (`::ng-deep .mat-mdc-form-field-infix { width: auto !important; min-width: 0 !important; }`) so 2-column and 3-column rows shrink gracefully inside the `680px` dialog without horizontal overflow.
+2. **`WhereHouse.Client/src/app/features/dashboard/label-generator-dialog/label-generator-dialog.component.ts` & `dashboard.component.ts`:**
+   - In `dashboard.component.ts`: change `openLabelGeneratorDialog` width from `'1080px'` to `'860px'`, `maxWidth: '95vw'`, `maxHeight: '90vh'`.
+   - In `label-generator-dialog.component.ts`:
+     - Change `.label-generator-container` from `width: 100vw; max-width: 1200px; height: 90vh;` to `width: 100%; max-width: 100%; height: min(82vh, 720px); box-sizing: border-box;`.
+     - Change `.controls-panel` width from `380px` to `300px` (`flex-shrink: 0`) with `min-width: 0` on `.inline-fields mat-form-field`.
+     - Add `zoom: 0.65;` on `.preview-canvas-wrapper .printable-sheet-grid` inside `@media screen` so the 8.5"x11" label sheet preview fits neatly inside the right-hand preview pane without forcing a huge dialog or horizontal scrollbar, while `@media print` renders at `zoom: 1`.
+     - Add `@media (max-width: 768px)` rule stacking `.generator-body` vertically.
+
+### 5.6 Container Cover Photos, Household Sharing & Kit/Nested Chips
+1. **New Component:** `WhereHouse.Client/src/app/features/dashboard/location-attachments-dialog/location-attachments-dialog.component.ts`
+   - Standalone dialog to view, upload (`AttachmentService.uploadLocationAttachment`), and delete attachments for any `LocationNodeDto`.
+2. **Update `DashboardComponent`:**
+   - Render cover photo thumbnails on sub-location/container cards (`loc.coverAttachmentId`) and the selected location header, plus a `"Photos & Files"` (`add_a_photo`) button opening `LocationAttachmentsDialogComponent`.
+   - Render child component count and clickable component chips (`childItemsByParentId()`) on `Kit` and `Nested` items.
+3. **Update `AuthService`, `ItemDialogComponent`, and `SmartSearchDialogComponent`:**
+   - Add `getUsers(): Observable<UserSummaryDto[]>` to `AuthService`.
+   - Add `sharedWithUserIds` multi-select in `ItemDialogComponent` when `isPrivate` is checked.
+   - Add **Owner** `<mat-select>` filter in `SmartSearchDialogComponent`.
 
 ---
 
-## 5. Step-by-Step Execution Checklist (For Implementation Agent)
+## 6. Verification & Full Playwright E2E Test Plan
 
-- [ ] **Task 1: Backend Core, Data Entities, Migration & Services (`WhereHouse.Core`, `WhereHouse.Data`)**
-  - Create `WhereHouse.Core/Privacy/PrivacyAccessHelper.cs`.
-  - Update `WhereHouse.Core/Authentication/AuthModels.cs` and `IAuthService.cs` with `HouseholdUserDto` and `GetHouseholdUsersAsync`.
-  - Update `WhereHouse.Core/Locations/LocationModels.cs` and `ILocationService.cs` with cover photo DTOs/methods and `SharedWithUserIds`.
-  - Update `WhereHouse.Core/Items/ItemModels.cs` with `SharedWithUserIds`.
-  - Update `WhereHouse.Core/Search/SearchModels.cs` with `OwnerId` and `HasCoverPhoto`.
-  - Update `WhereHouse.Data/Entities/LocationNode.cs`, `InventoryItem.cs`, `LocationNodeConfiguration.cs`, and `InventoryItemConfiguration.cs`.
-  - Generate and apply EF Core migration:
-    ```powershell
-    dotnet ef migrations add AddCoverPhotosAndSharedPrivacy --project WhereHouse.Data --startup-project WhereHouse.API
-    ```
-  - Update `AuthService.cs`, `LocationService.cs`, `ItemService.cs`, `SearchService.cs`, and `ScanService.cs`.
-  - Run unit tests:
-    ```powershell
-    dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
-    dotnet test --project Tests/WhereHouse.Infrastructure.UnitTests/WhereHouse.Infrastructure.UnitTests.csproj
-    ```
+### 6.1 Unit Tests (`Tests/WhereHouse.Core.UnitTests` & `WhereHouse.Client`)
+- Update Angular unit tests in `dashboard.component.spec.ts`, `declutter-graveyard-dialog.component.spec.ts`, and `item-dialog.component.spec.ts` to verify:
+  - `DeclutterGraveyardDialogComponent` calls `getStagedItems` only **once** on initialization (no infinite loop).
+  - `LocationNodeDto.coverAttachmentId` renders container cover thumbnails and opens `LocationAttachmentsDialogComponent`.
+  - `ItemDialogComponent` Return Window / Warranty presets populate `Date` values and `sharedWithUserIds` submits properly.
+  - `DashboardComponent` renders `Kit` / `Nested` child component chips.
 
-- [ ] **Task 2: API Endpoints & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
-  - Add `GET /api/auth/users` to `WhereHouse.API/Controllers/AuthController.cs`.
-  - Add `PUT /api/locations/{id:guid}/cover-photo`, `GET /api/locations/{id:guid}/cover-photo`, and `DELETE /api/locations/{id:guid}/cover-photo` to `WhereHouse.API/Controllers/LocationsController.cs`.
-  - Add `[FromQuery] Guid? ownerId = null` to `WhereHouse.API/Controllers/SearchController.cs`.
-  - Create `Tests/WhereHouse.API.IntegrationTests/Phase11CoverPhotosAndSharedPrivacyIntegrationTests.cs` covering:
-    1. **Container Cover Photo Lifecycle (`PRD 4.1.3`):** Uploading a PNG cover photo to a movable container, verifying `HasCoverPhoto == true`, downloading the photo bytes, and deleting the cover photo.
-    2. **Shared "Secret / Gift Mode" Access (`PRD 4.8.2`):** User A creates a private container and a private item shared explicitly with User B (`SharedWithUserIds = [userB.Id]`), while User C is excluded. Verify User B can view/scan/search the shared private container and item (`200 OK`), whereas User C receives `403 Forbidden` / omitted from search, and verify User B cannot delete User A's private container (`403 Forbidden`).
-    3. **Household User Directory & Smart Search Owner Filter (`PRD Section 2 & 4.8.1`):** Calling `GET /api/auth/users` to list household members with item/checkout counts, and filtering `GET /api/search?ownerId=...` to return only items/locations owned by the specified user.
-  - Run integration tests until 100% green:
-    ```powershell
-    dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
-    ```
+### 6.2 API Integration Tests (`Tests/WhereHouse.API.IntegrationTests`)
+- Create `Tests/WhereHouse.API.IntegrationTests/Phase11CoverPhotosAndHouseholdSharingIntegrationTests.cs`:
+  1. `GetHouseholdUsers_ReturnsActiveUsersSortedByDisplayName` (`GET /api/auth/users`).
+  2. `PrivateItem_SharedWithHouseholdUser_IsVisibleToSharedUserAndHiddenFromUnsharedUser`.
+  3. `LocationAttachment_UploadPhoto_PopulatesLocationCoverAttachmentIdInTreeAndDetail`.
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
-  - Update `auth.models.ts`, `auth.service.ts`, `location.models.ts`, `location.service.ts`, `item.models.ts`, `search.models.ts`, and `search.service.ts` (& spec files).
-  - Update `LocationDialogComponent` with cover photo upload/delete and `sharedWithUserIds` selector.
-  - Update `ItemDialogComponent` with `returnWindowEndDate`, Return Window quick preset chips (`+14d`, `+30d`, `+60d`, `+90d`), Warranty quick preset chips (`1 Yr`, `2 Yr`, `3 Yr`, `5 Yr`, `Lifetime`), `sharedWithUserIds` selector, and `childItems` summary list.
-  - Update `SmartSearchDialogComponent` with the `Owner` filter dropdown.
-  - Update `DashboardComponent` to load household users, display Kit/Nested `childItems` & `parentItemName` badges, and show container cover photo indicators.
-  - Run frontend lint, build, and unit tests in `WhereHouse.Client` until 100% green:
-    ```powershell
-    npm run lint
-    npm run build
-    npm test -- --watch=false
-    ```
+### 6.3 Full Playwright E2E Suite (`Tests/WhereHouse.Client.E2ETests`)
+- Update `Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj` to reference `WhereHouse.API` so the API assembly is available, and create:
+  - `Tests/WhereHouse.Client.E2ETests/WhereHouseE2EServerFixture.cs`:
+    - Ensures `WhereHouse.Client/dist/WhereHouse.Client/browser/index.html` exists (runs `npm run build` in `WhereHouse.Client` if missing).
+    - Starts `WhereHouse.API` on a free local TCP loopback port (`http://127.0.0.1:{port}`) with `--environment Testing`, `--webroot {browserDistPath}`, `--UseInMemoryDatabase=true`, and temporary file storage.
+  - `Tests/WhereHouse.Client.E2ETests/WhereHouseFullAppE2ETests.cs`:
+    1. **`FullApp_SetupAuthAndResponsiveLayout_HasNoHorizontalScrollAndProperButtonSizing`:**
+       - Completes initial setup (`/setup`) or logs in, lands on `/dashboard`.
+       - Asserts `document.documentElement.scrollWidth <= window.innerWidth` across `1920x1080` (Desktop), `1280x800` (Narrow Desktop), `768x1024` (Tablet), and `375x812` (Mobile).
+       - Verifies `"Smart Search"` and `"Ctrl+K"` have positive horizontal spacing (`marginLeft > 0`).
+       - Verifies empty-state action button icons (`"Add Item"`, `"Add Sub-Location"`, `"Add Container"`) have bounding box width `<= 24px` (not `48px`).
+    2. **`FullApp_CreateLocationsAndContainers_ColorSwatchesAndCoverPhotoWorkCleanly`:**
+       - Creates a Fixed Location (`"Main Garage"`) and a Movable Container (`"Heavy Duty Tote"`).
+       - Asserts `.color-swatch-btn` inner text does NOT contain `#` hex codes (`#1f2937`, `#eab308`).
+       - Selects primary & accent colors and saves the container.
+    3. **`FullApp_CategoriesItemsMaterialDatepickerAndPresets_WorkEndToEnd`:**
+       - Opens `Tools & Vault` menu $\rightarrow$ `Manage Categories & Templates`, asserts dialog width `<= 720px`, creates a category with a custom attribute field.
+       - Opens `Add Item` dialog, uses Angular Material Datepicker toggle (`mat-datepicker-toggle`) and quick-preset buttons (`+30d`, `+1 yr`), creates the item, and verifies it appears in the dashboard grid.
+    4. **`FullApp_SmartSearchLabelGeneratorAndDeclutterDialog_NoInfiniteLoopAndCompactDialogs`:**
+       - Opens `Barcode & QR Label Generator` from `Tools & Vault`, asserts dialog width `<= 880px`, mints blank QR stickers.
+       - Opens `Declutter & Graveyard` from `Tools & Vault`, monitors `/api/lifecycle/staged` network requests over 1,500ms, and asserts the endpoint is called **at most once** on open (zero infinite loop!).
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
-  - Run E2E test suite to verify zero regressions:
-    ```powershell
-    dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
-    ```
-  - Format all backend and frontend files:
-    ```powershell
-    dotnet csharpier format .
-    # In WhereHouse.Client:
-    npm run format
-    npm run lint:fix
-    ```
-  - Update `docs/plans/phase-11-cover-photos-household-sharing-and-ux-polish.md` status to `[x] Completed`.
+---
+
+## 7. Execution Checklist (For `/execute-phase`)
+
+1. [ ] Update `Item` entity (`SharedWithUserIdsJson`) and `ItemConfiguration`, then generate EF Core migration `AddItemSharedWithUsers`.
+2. [ ] Add `UserSummaryDto`, update `IAuthService`, `LocationNodeDto` (`CoverAttachmentId`), and `ItemDto` / `CreateItemRequest` / `UpdateItemRequest` (`SharedWithUserIds`).
+3. [ ] Implement `AuthService.GetHouseholdUsersAsync`, `GET /api/auth/users`, `LocationService` `CoverAttachmentId` resolution, and shared private item access across backend services.
+4. [ ] Fix the infinite request loop in `DeclutterGraveyardDialogComponent` (and chip `(selectionChange)` in `MaintenanceDialogComponent` & `SmartSearchDialogComponent`).
+5. [ ] Refactor `.top-bar` / `.top-actions` in `DashboardComponent` with the `Tools & Vault` menu, responsive breakpoints, `Ctrl+K` spacing fix, and `.empty-state > mat-icon` direct child selector fix.
+6. [ ] Fix `LocationDialogComponent` color swatches so raw hex codes are hidden and replaced with tooltips, checkmarks, and a native color picker.
+7. [ ] Register `provideNativeDateAdapter()` and convert date inputs in `ItemDialogComponent` and `CheckoutReturnDialogComponent` to `MatDatepickerModule` + add Return/Warranty quick-preset buttons.
+8. [ ] Tighten dialog widths and responsive layouts for `CategoryManagerDialogComponent` (`680px`) and `LabelGeneratorDialogComponent` (`860px` + scaled preview).
+9. [ ] Implement `LocationAttachmentsDialogComponent`, container cover photo thumbnails, household sharing selector in `ItemDialogComponent`, Owner filter in `SmartSearchDialogComponent`, and `Kit`/`Nested` component chips in `DashboardComponent`.
+10. [ ] Add backend integration tests (`Phase11CoverPhotosAndHouseholdSharingIntegrationTests.cs`), Angular unit tests, and the full Playwright E2E suite (`WhereHouseE2EServerFixture.cs` & `WhereHouseFullAppE2ETests.cs`).
+11. [ ] Build `WhereHouse.Client` (`npm run build`), run all test suites (`.NET Core`, `.NET Infrastructure`, `.NET API Integration`, `Angular Unit`, and `Playwright E2E`), format (`dotnet csharpier format .` and `npm run lint`), and commit.
