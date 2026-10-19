@@ -1,7 +1,7 @@
 # Phase 01: Spatial Hierarchy, Movable Containers & Sample Todo Cleanup
 
 > **Branch:** `feature/phase-01-location-hierarchy`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/PRD.md` — Sections 4.1 (`Spatial Hierarchy & Movable Containers`), 4.3.1 (`Identifiers & QR Encoding`), 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`), and 5 (`UX & Responsive Design Principles`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -560,7 +560,7 @@ export interface MoveLocationNodeRequest {
 
 ## 6. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (Remove `Todo`, Add `LocationNode`)**
+- [x] **Task 1: Backend Core & Data Layer (Remove `Todo`, Add `LocationNode`)**
   - Delete the sample `Todo` files in `WhereHouse.Core/Todos/`, `WhereHouse.Data/Entities/TodoItem.cs`, `WhereHouse.Data/Configurations/TodoItemConfiguration.cs`, and `WhereHouse.Data/Services/TodoService.cs`.
   - Create `WhereHouse.Core/Locations/LocationModels.cs` and `WhereHouse.Core/Locations/ILocationService.cs`.
   - Create `WhereHouse.Data/Entities/LocationNode.cs` and `WhereHouse.Data/Configurations/LocationNodeConfiguration.cs` (using `DeleteBehavior.Restrict` on both `Parent` and `Owner`).
@@ -578,7 +578,7 @@ export interface MoveLocationNodeRequest {
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests**
+- [x] **Task 2: API Controllers & Integration Tests**
   - Delete `WhereHouse.API/Controllers/TodosController.cs` and `Tests/WhereHouse.API.IntegrationTests/TodoIntegrationTests.cs`.
   - Create `WhereHouse.API/Controllers/LocationsController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/locations"` instead of `"/todos"`.
@@ -593,7 +593,7 @@ export interface MoveLocationNodeRequest {
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests**
+- [x] **Task 3: Angular Client & Unit Tests**
   - Delete `src/app/core/models/todo.models.ts`, `src/app/core/services/todo/`, and `src/app/features/dashboard/todo-dialog/`.
   - Create `src/app/core/models/location.models.ts`.
   - Create `src/app/core/services/location/location.service.ts` and `src/app/core/services/location/location.service.spec.ts`.
@@ -606,7 +606,7 @@ export interface MoveLocationNodeRequest {
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E and full test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
@@ -619,3 +619,4 @@ export interface MoveLocationNodeRequest {
     npm run lint:fix
     ```
   - Update `docs/plans/phase-01-location-hierarchy.md` status to `[x] Completed`.
+

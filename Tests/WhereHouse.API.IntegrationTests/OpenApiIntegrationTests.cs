@@ -33,7 +33,7 @@ public sealed class OpenApiIntegrationTests
         var content = await response.Content.ReadAsStringAsync();
         Assert.IsFalse(string.IsNullOrWhiteSpace(content));
         StringAssert.Contains(content, "WhereHouse");
-        StringAssert.Contains(content, "/todos");
+        StringAssert.Contains(content, "/locations");
         StringAssert.Contains(content, "/auth");
         StringAssert.Contains(content, "securitySchemes");
         StringAssert.Contains(content, "Bearer");

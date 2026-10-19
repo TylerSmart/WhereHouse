@@ -26,5 +26,5 @@ public sealed class User : IAuditable
 
     public string ModifiedBy { get; set; } = "System";
 
-    public ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
+    public ICollection<LocationNode> OwnedLocations { get; set; } = new List<LocationNode>();
 }
