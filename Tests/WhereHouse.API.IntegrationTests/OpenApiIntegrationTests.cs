@@ -47,6 +47,7 @@ public sealed class OpenApiIntegrationTests
         StringAssert.Contains(content, "/lifecycle");
         StringAssert.Contains(content, "/maintenance");
         StringAssert.Contains(content, "/insurance");
+        StringAssert.Contains(content, "/action-center");
         StringAssert.Contains(content, "/auth");
         StringAssert.Contains(content, "securitySchemes");
         StringAssert.Contains(content, "Bearer");

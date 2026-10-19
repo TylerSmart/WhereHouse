@@ -27,6 +27,8 @@ import { DeclutterGraveyardDialogComponent } from './declutter-graveyard-dialog/
 import { StageArchiveDialogComponent } from './stage-archive-dialog/stage-archive-dialog.component';
 import { MaintenanceDialogComponent } from './maintenance-dialog/maintenance-dialog.component';
 import { InsuranceExportDialogComponent } from './insurance-export-dialog/insurance-export-dialog.component';
+import { ActionCenterDialogComponent } from './action-center-dialog/action-center-dialog.component';
+import { ActionCenterService } from '../../core/services/action-center/action-center.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -285,6 +287,10 @@ describe('DashboardComponent', () => {
     unstageItem: ReturnType<typeof vi.fn>;
   };
 
+  let mockActionCenterService: {
+    getOverview: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
     mockLocationService = {
       getTree: vi.fn().mockReturnValue(of(mockTree)),
@@ -342,6 +348,26 @@ describe('DashboardComponent', () => {
       unstageItem: vi.fn().mockReturnValue(of(mockItems[0])),
     };
 
+    mockActionCenterService = {
+      getOverview: vi.fn().mockReturnValue(
+        of({
+          totalAlertsCount: 2,
+          outOfPlaceCount: 1,
+          activeLoansCount: 1,
+          overdueLoansCount: 0,
+          maintenanceDueCount: 0,
+          maintenanceOverdueCount: 0,
+          expiringCoverageCount: 0,
+          lowStockCount: 0,
+          outOfPlaceItems: [],
+          externalLoans: [],
+          dueMaintenanceSchedules: [],
+          expiringCoverages: [],
+          lowStockItems: [],
+        }),
+      ),
+    };
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
@@ -349,6 +375,7 @@ describe('DashboardComponent', () => {
         { provide: CategoryService, useValue: mockCategoryService },
         { provide: ItemService, useValue: mockItemService },
         { provide: LifecycleService, useValue: mockLifecycleService },
+        { provide: ActionCenterService, useValue: mockActionCenterService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: CheckoutLoadoutService, useValue: mockCheckoutLoadoutService },
         { provide: MatDialog, useValue: mockDialog },
@@ -701,5 +728,24 @@ describe('DashboardComponent', () => {
         data: expect.objectContaining({ availableLocations: mockNodes }),
       }),
     );
+  });
+
+  it('should open action center dialog and refresh if closed', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(true),
+    });
+
+    component.openActionCenterDialog('loans', 'alerts');
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      ActionCenterDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          initialFilter: 'loans',
+          initialTab: 'alerts',
+        }),
+      }),
+    );
+    expect(mockActionCenterService.getOverview).toHaveBeenCalled();
   });
 });
