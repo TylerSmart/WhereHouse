@@ -24,7 +24,9 @@ public sealed record ItemAttachmentDto(
     bool IsPrimaryPhoto,
     Guid UploadedByUserId,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt
+    DateTimeOffset ModifiedAt,
+    bool HasExtractedText = false,
+    string? ExtractedText = null
 );
 
 public sealed record AttachmentContentResult(
@@ -37,11 +39,13 @@ public sealed record AttachmentContentResult(
 public sealed record UploadItemAttachmentRequest(
     AttachmentType AttachmentType = AttachmentType.Photo,
     [MaxLength(500)] string? Notes = null,
-    bool IsPrimaryPhoto = false
+    bool IsPrimaryPhoto = false,
+    [MaxLength(32000)] string? ExtractedTextOverride = null
 );
 
 public sealed record UpdateItemAttachmentRequest(
     AttachmentType AttachmentType,
     [MaxLength(500)] string? Notes = null,
-    bool IsPrimaryPhoto = false
+    bool IsPrimaryPhoto = false,
+    [MaxLength(32000)] string? ExtractedTextOverride = null
 );

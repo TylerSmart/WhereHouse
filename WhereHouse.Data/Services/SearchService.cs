@@ -311,6 +311,11 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
                 || itm.Attachments.Any(a =>
                     a.FileName.Contains(t, StringComparison.OrdinalIgnoreCase)
                     || (a.Notes != null && a.Notes.Contains(t, StringComparison.OrdinalIgnoreCase))
+                    || (
+                        searchQuery.IncludeAttachmentText
+                        && a.ExtractedText != null
+                        && a.ExtractedText.Contains(t, StringComparison.OrdinalIgnoreCase)
+                    )
                 )
                 || (
                     itm.DispositionNote != null

@@ -47,6 +47,12 @@ export class SearchService {
     if (params.includeArchived !== undefined) {
       httpParams = httpParams.set('includeArchived', params.includeArchived ? 'true' : 'false');
     }
+    if (params.includeAttachmentText !== undefined) {
+      httpParams = httpParams.set(
+        'includeAttachmentText',
+        params.includeAttachmentText ? 'true' : 'false',
+      );
+    }
 
     return this.http.get<SmartSearchResponseDto>(apiUrl('/search'), { params: httpParams });
   }

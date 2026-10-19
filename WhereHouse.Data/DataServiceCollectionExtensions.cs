@@ -5,11 +5,13 @@ using WhereHouse.Core.Attachments;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Categories;
 using WhereHouse.Core.Checkouts;
+using WhereHouse.Core.Insurance;
 using WhereHouse.Core.Intake;
 using WhereHouse.Core.Items;
 using WhereHouse.Core.Lifecycle;
 using WhereHouse.Core.Loadouts;
 using WhereHouse.Core.Locations;
+using WhereHouse.Core.Maintenance;
 using WhereHouse.Core.Portability;
 using WhereHouse.Core.QrCodes;
 using WhereHouse.Core.Search;
@@ -43,6 +45,8 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<ICheckoutService, CheckoutService>();
         services.AddScoped<ILoadoutService, LoadoutService>();
         services.AddScoped<ILifecycleService, LifecycleService>();
+        services.AddScoped<IMaintenanceService, MaintenanceService>();
+        services.AddScoped<IInsuranceExportService, InsuranceExportService>();
 
         if (
             string.Equals(

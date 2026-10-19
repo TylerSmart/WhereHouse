@@ -63,11 +63,26 @@ public sealed class AttachmentService(
             return null;
         }
 
+        using var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream, cancellationToken);
+        var fileBytes = memoryStream.ToArray();
+        memoryStream.Position = 0;
+
         var stored = await fileStorageService.SaveFileAsync(
-            fileStream,
+            memoryStream,
             originalFileName,
             cancellationToken
         );
+
+        string? extractedText = null;
+        if (!string.IsNullOrWhiteSpace(request.ExtractedTextOverride))
+        {
+            extractedText = request.ExtractedTextOverride.Trim();
+        }
+        else
+        {
+            extractedText = PdfTextExtractor.ExtractText(fileBytes, contentType, originalFileName);
+        }
 
         var existingAttachments = await dbContext
             .ItemAttachments.Where(a => a.ItemId == itemId)
@@ -99,6 +114,7 @@ public sealed class AttachmentService(
             FileSizeBytes = stored.FileSizeBytes,
             StorageRelativePath = stored.StorageRelativePath,
             Notes = request.Notes?.Trim(),
+            ExtractedText = extractedText,
             IsPrimaryPhoto = shouldBePrimary,
             UploadedByUserId = userId,
         };
@@ -194,6 +210,12 @@ public sealed class AttachmentService(
         attachment.AttachmentType = request.AttachmentType;
         attachment.Notes = request.Notes?.Trim();
         attachment.IsPrimaryPhoto = request.IsPrimaryPhoto;
+        if (request.ExtractedTextOverride != null)
+        {
+            attachment.ExtractedText = string.IsNullOrWhiteSpace(request.ExtractedTextOverride)
+                ? null
+                : request.ExtractedTextOverride.Trim();
+        }
         item.LastTouchedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -293,6 +315,8 @@ public sealed class AttachmentService(
             a.IsPrimaryPhoto,
             a.UploadedByUserId,
             a.CreatedAt,
-            a.ModifiedAt
+            a.ModifiedAt,
+            !string.IsNullOrWhiteSpace(a.ExtractedText),
+            a.ExtractedText
         );
 }

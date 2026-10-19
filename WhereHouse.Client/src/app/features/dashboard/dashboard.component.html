@@ -169,6 +169,30 @@
         <span class="desktop-only">Declutter</span>
       </button>
 
+      <!-- Maintenance -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="maintenance-btn"
+        (click)="openMaintenanceDialog()"
+        matTooltip="Maintenance Schedules, Due Dates &amp; Upkeep Logs"
+      >
+        <mat-icon>build_circle</mat-icon>
+        <span class="desktop-only">Maintenance</span>
+      </button>
+
+      <!-- Insurance Claim -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="insurance-btn"
+        (click)="openInsuranceExportDialog()"
+        matTooltip="Home Insurance &amp; Loss Claim Package Export (.ZIP)"
+      >
+        <mat-icon>verified_user</mat-icon>
+        <span class="desktop-only">Insurance Claim</span>
+      </button>
+
       <!-- Theme Switcher -->
       <button
         mat-icon-button
@@ -785,6 +809,10 @@
                               <span
                                 >Attachments &amp; Manuals ({{ item.attachmentCount ?? 0 }})</span
                               >
+                            </button>
+                            <button mat-menu-item (click)="openMaintenanceDialog(item)">
+                              <mat-icon>build_circle</mat-icon>
+                              <span>Maintenance Schedules...</span>
                             </button>
                             <button mat-menu-item (click)="openCloneItemDialog(item)">
                               <mat-icon>edit_note</mat-icon>

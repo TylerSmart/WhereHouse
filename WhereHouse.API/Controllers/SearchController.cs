@@ -35,6 +35,7 @@ public sealed class SearchController(ISearchService searchService) : ControllerB
         [FromQuery] decimal? attributeMinNumber = null,
         [FromQuery] decimal? attributeMaxNumber = null,
         [FromQuery] bool includeArchived = true,
+        [FromQuery] bool includeAttachmentText = true,
         CancellationToken cancellationToken = default
     )
     {
@@ -50,7 +51,8 @@ public sealed class SearchController(ISearchService searchService) : ControllerB
             attributeValue,
             attributeMinNumber,
             attributeMaxNumber,
-            includeArchived
+            includeArchived,
+            includeAttachmentText
         );
 
         var result = await searchService.SearchAsync(CurrentUserId, query, cancellationToken);

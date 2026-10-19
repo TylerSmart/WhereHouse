@@ -14,6 +14,7 @@ export interface SmartSearchParams {
   attributeMinNumber?: number | null;
   attributeMaxNumber?: number | null;
   includeArchived?: boolean;
+  includeAttachmentText?: boolean;
 }
 
 export interface LocationSearchHitDto {

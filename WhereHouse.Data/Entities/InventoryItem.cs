@@ -99,6 +99,9 @@ public sealed class InventoryItem : IAuditable
 
     public ICollection<LoadoutItem> LoadoutMemberships { get; set; } = new List<LoadoutItem>();
 
+    public ICollection<MaintenanceSchedule> MaintenanceSchedules { get; set; } =
+        new List<MaintenanceSchedule>();
+
     public decimal? StagingTargetPrice { get; set; }
 
     public string? StagingListingNotes { get; set; }
