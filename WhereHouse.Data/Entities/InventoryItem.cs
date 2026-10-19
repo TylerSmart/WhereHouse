@@ -77,6 +77,28 @@ public sealed class InventoryItem : IAuditable
 
     public ICollection<QrCode> BoundQrCodes { get; set; } = new List<QrCode>();
 
+    public Guid? CheckedOutByUserId { get; set; }
+
+    public string? CheckedOutByUsername { get; set; }
+
+    public string? CheckedOutToBorrower { get; set; }
+
+    public string? CheckedOutBorrowerContact { get; set; }
+
+    public string? CheckoutNote { get; set; }
+
+    public DateTimeOffset? CheckedOutAt { get; set; }
+
+    public DateTimeOffset? CheckoutDueAt { get; set; }
+
+    public Guid? ActiveLoadoutId { get; set; }
+
+    public string? ActiveLoadoutName { get; set; }
+
+    public ICollection<CheckoutLog> CheckoutLogs { get; set; } = new List<CheckoutLog>();
+
+    public ICollection<LoadoutItem> LoadoutMemberships { get; set; } = new List<LoadoutItem>();
+
     public DateTimeOffset LastTouchedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

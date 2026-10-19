@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -61,6 +61,9 @@ import {
 } from './smart-search-dialog/smart-search-dialog.component';
 import { RapidIntakeDialogComponent } from './rapid-intake-dialog/rapid-intake-dialog.component';
 import { ImportExportDialogComponent } from './import-export-dialog/import-export-dialog.component';
+import { CheckoutLoadoutService } from '../../core/services/checkout-loadout/checkout-loadout.service';
+import { CheckoutReturnDialogComponent } from './checkout-return-dialog/checkout-return-dialog.component';
+import { LoadoutsDialogComponent } from './loadouts-dialog/loadouts-dialog.component';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -79,6 +82,7 @@ const THEME_LABELS: Record<ThemeMode, string> = {
     '(window:keydown)': 'onGlobalKeydown($event)',
   },
   imports: [
+    DatePipe,
     NgTemplateOutlet,
     MatCardModule,
     MatButtonModule,
@@ -104,6 +108,9 @@ export class DashboardComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
+  protected readonly checkoutLoadoutService = inject(CheckoutLoadoutService);
+
+  readonly cartCount = computed(() => this.checkoutLoadoutService.cartItems().length);
 
   protected readonly LocationNodeTypes = LocationNodeTypes;
   protected readonly ItemTypes = ItemTypes;
@@ -693,6 +700,67 @@ export class DashboardComponent implements OnInit {
       default:
         return 'Unique';
     }
+  }
+
+  openCheckoutReturnDialog(item: ItemDto, event?: MouseEvent): void {
+    event?.stopPropagation();
+    const ref = this.dialog.open(CheckoutReturnDialogComponent, {
+      data: { item },
+      width: '540px',
+      maxWidth: '96vw',
+    });
+
+    ref.afterClosed().subscribe((updated) => {
+      if (updated) {
+        this.items.update((list) => list.map((i) => (i.id === updated.id ? updated : i)));
+      }
+    });
+  }
+
+  openLoadoutsDialog(initialTab: 'loadouts' | 'cart' | 'loans' = 'loadouts'): void {
+    const ref = this.dialog.open(LoadoutsDialogComponent, {
+      data: {
+        initialTab,
+        availableItems: this.items(),
+      },
+      width: '840px',
+      maxWidth: '96vw',
+    });
+
+    ref.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
+  }
+
+  addToCart(item: ItemDto, event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.checkoutLoadoutService.addToCart(item);
+    this.snackBar.open(`Added "${item.name}" to Project Cart`, 'OK', {
+      duration: 2500,
+    });
+  }
+
+  quickReturnItem(item: ItemDto, event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.checkoutLoadoutService
+      .returnItem(item.id, {
+        returnNote: 'Returned to home bin from dashboard',
+      })
+      .subscribe({
+        next: (updated) => {
+          this.items.update((list) => list.map((i) => (i.id === updated.id ? updated : i)));
+          this.snackBar.open(
+            `Returned "${updated.name}" to ${updated.homeLocationName || 'home bin'}`,
+            'OK',
+            { duration: 3000 },
+          );
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to return item', 'OK', {
+            duration: 4000,
+          });
+        },
+      });
   }
 
   onGlobalKeydown(event: KeyboardEvent): void {

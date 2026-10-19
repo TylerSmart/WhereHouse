@@ -97,7 +97,17 @@ public sealed record ItemDto(
     DateTimeOffset ModifiedAt,
     int AttachmentCount = 0,
     Guid? PrimaryPhotoAttachmentId = null,
-    string? BarcodeNumber = null
+    string? BarcodeNumber = null,
+    Guid? CheckedOutByUserId = null,
+    string? CheckedOutByUsername = null,
+    string? CheckedOutToBorrower = null,
+    string? CheckedOutBorrowerContact = null,
+    string? CheckoutNote = null,
+    DateTimeOffset? CheckedOutAt = null,
+    DateTimeOffset? CheckoutDueAt = null,
+    bool IsOverdueLoan = false,
+    Guid? ActiveLoadoutId = null,
+    string? ActiveLoadoutName = null
 );
 
 public sealed record UpsertItemAttributeValueRequest(

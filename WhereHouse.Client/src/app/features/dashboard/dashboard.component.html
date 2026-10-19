@@ -130,6 +130,33 @@
         <span class="desktop-only">Categories</span>
       </button>
 
+      <!-- Reusable Loadouts -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="loadouts-btn"
+        (click)="openLoadoutsDialog('loadouts')"
+        matTooltip="Reusable Loadouts, Pick Lists &amp; Loans"
+      >
+        <mat-icon>backpack</mat-icon>
+        <span class="desktop-only">Loadouts</span>
+      </button>
+
+      <!-- Project Cart -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="project-cart-btn"
+        (click)="openLoadoutsDialog('cart')"
+        matTooltip="Ad-Hoc Project Cart"
+      >
+        <mat-icon>shopping_cart</mat-icon>
+        <span class="desktop-only">Cart</span>
+        @if (cartCount() > 0) {
+          <span class="cart-pill-badge">{{ cartCount() }}</span>
+        }
+      </button>
+
       <!-- Theme Switcher -->
       <button
         mat-icon-button
@@ -655,6 +682,9 @@
                     class="item-card"
                     [class.kit-item-card]="item.itemType === ItemTypes.Kit"
                     [class.kit-warning-card]="item.isIncompleteKit"
+                    [class.item-dimmed-checked-out]="
+                      item.status === ItemStatuses.InUse || item.status === ItemStatuses.LoanedOut
+                    "
                   >
                     <mat-card-content>
                       <!-- Card Header -->
@@ -700,6 +730,40 @@
                             <mat-icon>more_vert</mat-icon>
                           </button>
                           <mat-menu #itemMenu="matMenu">
+                            @if (item.status === ItemStatuses.InPlace) {
+                              <button
+                                mat-menu-item
+                                (click)="openCheckoutReturnDialog(item, $event)"
+                              >
+                                <mat-icon>outbox</mat-icon>
+                                <span>Check Out / Loan...</span>
+                              </button>
+                            } @else {
+                              <button mat-menu-item (click)="quickReturnItem(item, $event)">
+                                <mat-icon>move_to_inbox</mat-icon>
+                                <span>Return to Home Bin</span>
+                              </button>
+                              <button
+                                mat-menu-item
+                                (click)="openCheckoutReturnDialog(item, $event)"
+                              >
+                                <mat-icon>outbox</mat-icon>
+                                <span>Loan / Return Details...</span>
+                              </button>
+                            }
+                            <button mat-menu-item (click)="addToCart(item, $event)">
+                              <mat-icon>{{
+                                checkoutLoadoutService.isInCart(item.id)
+                                  ? 'remove_shopping_cart'
+                                  : 'add_shopping_cart'
+                              }}</mat-icon>
+                              <span>{{
+                                checkoutLoadoutService.isInCart(item.id)
+                                  ? 'In Project Cart'
+                                  : 'Add to Project Cart'
+                              }}</span>
+                            </button>
+                            <mat-divider></mat-divider>
                             <button mat-menu-item (click)="openEditItemDialog(item)">
                               <mat-icon>edit</mat-icon>
                               <span>Edit</span>
@@ -730,6 +794,45 @@
                           </mat-menu>
                         </div>
                       </div>
+
+                      <!-- Checkout / Loan Status Banner -->
+                      @if (
+                        item.status === ItemStatuses.InUse || item.status === ItemStatuses.LoanedOut
+                      ) {
+                        <div class="checkout-status-banner" [class.overdue]="item.isOverdueLoan">
+                          <mat-icon class="checkout-icon">{{
+                            item.status === ItemStatuses.LoanedOut
+                              ? 'person_search'
+                              : 'construction'
+                          }}</mat-icon>
+                          <div class="checkout-banner-text">
+                            <span class="checkout-title">
+                              {{
+                                item.status === ItemStatuses.LoanedOut
+                                  ? 'Loaned to ' + (item.checkedOutToBorrower || 'Borrower')
+                                  : 'In Use by ' + (item.checkedOutByUsername || 'User')
+                              }}
+                            </span>
+                            @if (item.checkoutNote || item.activeLoadoutName) {
+                              <span class="checkout-sub">
+                                {{
+                                  item.activeLoadoutName
+                                    ? 'Loadout: ' + item.activeLoadoutName
+                                    : item.checkoutNote
+                                }}
+                              </span>
+                            }
+                            @if (item.checkoutDueAt) {
+                              <span class="checkout-due"
+                                >Due: {{ item.checkoutDueAt | date: 'shortDate' }}</span
+                              >
+                            }
+                          </div>
+                          @if (item.isOverdueLoan) {
+                            <span class="overdue-chip">OVERDUE</span>
+                          }
+                        </div>
+                      }
 
                       <!-- Incomplete Kit Warning Alert -->
                       @if (item.isIncompleteKit) {
@@ -837,8 +940,46 @@
                           <mat-icon>place</mat-icon>
                           <span>{{ item.homeLocationFullPath || 'Unassigned' }}</span>
                         </span>
-                        <div class="status-condition-group">
-                          <span class="condition-badge">{{ item.condition }}</span>
+                        <div class="footer-actions-group">
+                          @if (item.status === ItemStatuses.InPlace) {
+                            <button
+                              mat-icon-button
+                              class="mini-action-btn"
+                              matTooltip="Check Out / Loan..."
+                              (click)="openCheckoutReturnDialog(item, $event)"
+                            >
+                              <mat-icon>outbox</mat-icon>
+                            </button>
+                          } @else {
+                            <button
+                              mat-icon-button
+                              class="mini-action-btn return-btn"
+                              matTooltip="Return to Home Bin"
+                              (click)="quickReturnItem(item, $event)"
+                            >
+                              <mat-icon>move_to_inbox</mat-icon>
+                            </button>
+                          }
+                          <button
+                            mat-icon-button
+                            class="mini-action-btn"
+                            [matTooltip]="
+                              checkoutLoadoutService.isInCart(item.id)
+                                ? 'In Project Cart'
+                                : 'Add to Project Cart'
+                            "
+                            (click)="addToCart(item, $event)"
+                          >
+                            <mat-icon
+                              [class.in-cart-icon]="checkoutLoadoutService.isInCart(item.id)"
+                            >
+                              {{
+                                checkoutLoadoutService.isInCart(item.id)
+                                  ? 'shopping_cart'
+                                  : 'add_shopping_cart'
+                              }}
+                            </mat-icon>
+                          </button>
                         </div>
                       </div>
                     </mat-card-content>

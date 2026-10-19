@@ -650,6 +650,11 @@ public sealed class ItemService(
             qr.BoundByUserId = null;
         }
 
+        var loadoutItems = await dbContext
+            .LoadoutItems.Where(li => li.ItemId == id)
+            .ToListAsync(cancellationToken);
+        dbContext.LoadoutItems.RemoveRange(loadoutItems);
+
         dbContext.InventoryItems.Remove(item);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -873,6 +878,11 @@ public sealed class ItemService(
                 a.AttachmentType == Core.Attachments.AttachmentType.Photo
             )?.Id;
 
+        var isOverdueLoan =
+            item.Status == ItemStatus.LoanedOut
+            && item.CheckoutDueAt.HasValue
+            && item.CheckoutDueAt.Value < DateTimeOffset.UtcNow;
+
         return new ItemDto(
             item.Id,
             item.ShortCode,
@@ -916,7 +926,17 @@ public sealed class ItemService(
             item.ModifiedAt,
             item.Attachments.Count,
             primaryPhoto,
-            item.BarcodeNumber
+            item.BarcodeNumber,
+            item.CheckedOutByUserId,
+            item.CheckedOutByUsername,
+            item.CheckedOutToBorrower,
+            item.CheckedOutBorrowerContact,
+            item.CheckoutNote,
+            item.CheckedOutAt,
+            item.CheckoutDueAt,
+            isOverdueLoan,
+            item.ActiveLoadoutId,
+            item.ActiveLoadoutName
         );
     }
 }

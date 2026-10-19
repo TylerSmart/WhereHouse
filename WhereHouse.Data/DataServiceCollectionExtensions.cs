@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using WhereHouse.Core.Attachments;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Categories;
+using WhereHouse.Core.Checkouts;
 using WhereHouse.Core.Intake;
 using WhereHouse.Core.Items;
+using WhereHouse.Core.Loadouts;
 using WhereHouse.Core.Locations;
 using WhereHouse.Core.Portability;
 using WhereHouse.Core.QrCodes;
@@ -37,6 +39,8 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<IBarcodeLookupService, BarcodeLookupService>();
         services.AddScoped<IRapidIntakeService, RapidIntakeService>();
         services.AddScoped<IDataPortabilityService, DataPortabilityService>();
+        services.AddScoped<ICheckoutService, CheckoutService>();
+        services.AddScoped<ILoadoutService, LoadoutService>();
 
         if (
             string.Equals(

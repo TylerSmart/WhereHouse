@@ -10,6 +10,7 @@ import {
   ScanResolutionTypes,
 } from '../../../core/models/qrcode.models';
 import { QrCodeService } from '../../../core/services/qrcode/qrcode.service';
+import { CheckoutLoadoutService } from '../../../core/services/checkout-loadout/checkout-loadout.service';
 import { ScannerDialogComponent, ScannerDialogData } from './scanner-dialog.component';
 
 describe('ScannerDialogComponent', () => {
@@ -20,6 +21,11 @@ describe('ScannerDialogComponent', () => {
     resolveScan: vi.fn(),
     bindQrCode: vi.fn(),
     bulkMoveAudit: vi.fn(),
+  };
+
+  const mockCheckoutLoadoutService = {
+    checkoutItem: vi.fn(),
+    returnItem: vi.fn(),
   };
 
   const mockDialogRef = {
@@ -114,6 +120,7 @@ describe('ScannerDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: mockData },
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: QrCodeService, useValue: mockQrCodeService },
+        { provide: CheckoutLoadoutService, useValue: mockCheckoutLoadoutService },
       ],
     });
 

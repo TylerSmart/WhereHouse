@@ -932,6 +932,113 @@
   gap: 0.5rem;
 }
 
+.loadouts-btn,
+.project-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.cart-pill-badge {
+  background: var(--mat-sys-primary, #1976d2);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 2px;
+}
+
+.item-card.item-dimmed-checked-out {
+  opacity: 0.88;
+  background-color: var(--mat-sys-surface-container-low, #f8fafc);
+  border-left: 4px solid var(--mat-sys-outline, #94a3b8);
+}
+
+.checkout-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff3e0;
+  color: #b23c17;
+  font-size: 0.82rem;
+
+  .checkout-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #e65100;
+  }
+
+  .checkout-banner-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    line-height: 1.25;
+
+    .checkout-title {
+      font-weight: 600;
+    }
+
+    .checkout-sub {
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .checkout-due {
+      font-size: 0.72rem;
+      color: #666;
+    }
+  }
+
+  &.overdue {
+    background: #ffebee;
+    color: #c62828;
+    border-left: 3px solid #d32f2f;
+  }
+
+  .overdue-chip {
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: #d32f2f;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+}
+
+.footer-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  .mini-action-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    line-height: 28px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &.return-btn {
+      color: var(--mat-sys-primary, #1976d2);
+    }
+
+    .in-cart-icon {
+      color: #e65100;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .location-tree-sidebar {
     display: none;

@@ -97,6 +97,16 @@ export interface ItemDto {
   attachmentCount?: number;
   primaryPhotoAttachmentId?: string | null;
   barcodeNumber?: string | null;
+  checkedOutByUserId?: string | null;
+  checkedOutByUsername?: string | null;
+  checkedOutToBorrower?: string | null;
+  checkedOutBorrowerContact?: string | null;
+  checkoutNote?: string | null;
+  checkedOutAt?: string | null;
+  checkoutDueAt?: string | null;
+  isOverdueLoan?: boolean;
+  activeLoadoutId?: string | null;
+  activeLoadoutName?: string | null;
 }
 
 export interface UpsertItemAttributeValueRequest {
