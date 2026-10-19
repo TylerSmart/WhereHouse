@@ -36,4 +36,6 @@ public sealed class User : IAuditable
     public ICollection<QrCode> CreatedQrCodes { get; set; } = new List<QrCode>();
 
     public ICollection<QrCode> BoundQrCodes { get; set; } = new List<QrCode>();
+
+    public ICollection<Loadout> OwnedLoadouts { get; set; } = new List<Loadout>();
 }

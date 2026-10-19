@@ -21,6 +21,7 @@ import { LabelGeneratorDialogComponent } from './label-generator-dialog/label-ge
 import { ScannerDialogComponent } from './scanner-dialog/scanner-dialog.component';
 import { RapidIntakeDialogComponent } from './rapid-intake-dialog/rapid-intake-dialog.component';
 import { ImportExportDialogComponent } from './import-export-dialog/import-export-dialog.component';
+import { CheckoutLoadoutService } from '../../core/services/checkout-loadout/checkout-loadout.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -266,6 +267,15 @@ describe('DashboardComponent', () => {
     open: ReturnType<typeof vi.fn>;
   };
 
+  let mockCheckoutLoadoutService: {
+    cartItems: ReturnType<typeof vi.fn>;
+    addToCart: ReturnType<typeof vi.fn>;
+    removeFromCart: ReturnType<typeof vi.fn>;
+    clearCart: ReturnType<typeof vi.fn>;
+    isInCart: ReturnType<typeof vi.fn>;
+    returnItem: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
     mockLocationService = {
       getTree: vi.fn().mockReturnValue(of(mockTree)),
@@ -310,6 +320,15 @@ describe('DashboardComponent', () => {
       open: vi.fn(),
     };
 
+    mockCheckoutLoadoutService = {
+      cartItems: vi.fn().mockReturnValue([]),
+      addToCart: vi.fn(),
+      removeFromCart: vi.fn(),
+      clearCart: vi.fn(),
+      isInCart: vi.fn().mockReturnValue(false),
+      returnItem: vi.fn().mockReturnValue(of(mockItems[0])),
+    };
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
@@ -317,6 +336,7 @@ describe('DashboardComponent', () => {
         { provide: CategoryService, useValue: mockCategoryService },
         { provide: ItemService, useValue: mockItemService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: CheckoutLoadoutService, useValue: mockCheckoutLoadoutService },
         { provide: MatDialog, useValue: mockDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
         {

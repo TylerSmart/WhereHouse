@@ -23,6 +23,12 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 
     public DbSet<QrCode> QrCodes => Set<QrCode>();
 
+    public DbSet<CheckoutLog> CheckoutLogs => Set<CheckoutLog>();
+
+    public DbSet<Loadout> Loadouts => Set<Loadout>();
+
+    public DbSet<LoadoutItem> LoadoutItems => Set<LoadoutItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(WhereHouseDbContext).Assembly);

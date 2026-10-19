@@ -35,6 +35,7 @@ import {
   ScanResolutionTypes,
 } from '../../../core/models/qrcode.models';
 import { QrCodeService } from '../../../core/services/qrcode/qrcode.service';
+import { CheckoutLoadoutService } from '../../../core/services/checkout-loadout/checkout-loadout.service';
 
 export interface ScannerDialogData {
   initialCode?: string | null;
@@ -219,12 +220,20 @@ export type ScannerDialogAction =
                           ) {
                             <div class="xray-items-list">
                               @for (itm of resolution()!.locationItems!; track itm.id) {
-                                <div class="xray-item-row">
+                                <div
+                                  class="xray-item-row"
+                                  [class.item-dimmed-out]="itm.status === 1 || itm.status === 2"
+                                >
                                   <div class="item-info">
                                     <span class="item-code">{{ itm.shortCode }}</span>
                                     <span class="item-name">{{ itm.name }}</span>
                                     @if (itm.brand) {
                                       <span class="item-brand">{{ itm.brand }}</span>
+                                    }
+                                    @if (itm.status === 1) {
+                                      <span class="xray-badge in-use">In Use</span>
+                                    } @else if (itm.status === 2) {
+                                      <span class="xray-badge loan">Loaned Out</span>
                                     }
                                   </div>
                                   <div class="item-meta">
@@ -234,6 +243,23 @@ export type ScannerDialogAction =
                                         {{ itm.unit }}
                                       }
                                     </span>
+                                    @if (itm.status === 0) {
+                                      <button
+                                        mat-icon-button
+                                        matTooltip="Grab Item (In Use)"
+                                        (click)="quickGrabItem(itm)"
+                                      >
+                                        <mat-icon>outbox</mat-icon>
+                                      </button>
+                                    } @else {
+                                      <button
+                                        mat-icon-button
+                                        matTooltip="Return to Home Bin"
+                                        (click)="quickReturnItem(itm)"
+                                      >
+                                        <mat-icon>move_to_inbox</mat-icon>
+                                      </button>
+                                    }
                                     <button
                                       mat-icon-button
                                       matTooltip="Edit Item"
@@ -278,6 +304,21 @@ export type ScannerDialogAction =
                             </div>
                           </div>
                           <div class="card-actions">
+                            @if (itm.status === 0) {
+                              <button mat-stroked-button (click)="quickGrabItem(itm)">
+                                <mat-icon>outbox</mat-icon>
+                                Grab (Check Out)
+                              </button>
+                            } @else {
+                              <button
+                                mat-stroked-button
+                                color="accent"
+                                (click)="quickReturnItem(itm)"
+                              >
+                                <mat-icon>move_to_inbox</mat-icon>
+                                Return to Home Bin
+                              </button>
+                            }
                             <button mat-stroked-button (click)="printItemLabel(itm)">
                               <mat-icon>print</mat-icon>
                               Print Label
@@ -306,6 +347,25 @@ export type ScannerDialogAction =
                             <span class="label">Status</span>
                             <span class="value">{{ getStatusText(itm.status) }}</span>
                           </div>
+                          @if (itm.status === 1) {
+                            <div class="detail-cell">
+                              <span class="label">In Use By</span>
+                              <span class="value"
+                                >{{ itm.checkedOutByUsername || 'User' }}
+                                {{ itm.checkoutNote ? '(' + itm.checkoutNote + ')' : '' }}</span
+                              >
+                            </div>
+                          } @else if (itm.status === 2) {
+                            <div class="detail-cell">
+                              <span class="label">Loaned Out To</span>
+                              <span class="value"
+                                >{{ itm.checkedOutToBorrower || 'Borrower' }}
+                                {{
+                                  itm.checkoutDueAt ? '(Due: ' + itm.checkoutDueAt + ')' : ''
+                                }}</span
+                              >
+                            </div>
+                          }
                           <div class="detail-cell">
                             <span class="label">Condition</span>
                             <span class="value">{{ getConditionText(itm.condition) }}</span>
@@ -870,6 +930,26 @@ export type ScannerDialogAction =
               font-size: 0.8rem;
               color: var(--mat-sys-on-surface-variant, #64748b);
             }
+
+            .xray-badge {
+              font-size: 0.72rem;
+              font-weight: 600;
+              padding: 1px 6px;
+              border-radius: 4px;
+              &.in-use {
+                background: #fff3e0;
+                color: #e65100;
+              }
+              &.loan {
+                background: #f3e5f5;
+                color: #7b1fa2;
+              }
+            }
+          }
+
+          &.item-dimmed-out {
+            opacity: 0.85;
+            background: var(--mat-sys-surface-container, #f8fafc) !important;
           }
 
           .item-meta {
@@ -1099,6 +1179,7 @@ export class ScannerDialogComponent implements OnInit, OnDestroy {
   readonly data = inject<ScannerDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<ScannerDialogComponent>);
   private readonly qrcodeService = inject(QrCodeService);
+  private readonly checkoutLoadoutService = inject(CheckoutLoadoutService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly ResolutionTypes = ScanResolutionTypes;
@@ -1445,6 +1526,53 @@ export class ScannerDialogComponent implements OnInit, OnDestroy {
         return 'Broken';
       default:
         return 'Unknown';
+    }
+  }
+
+  quickGrabItem(itm: ItemDto): void {
+    this.checkoutLoadoutService
+      .checkoutItem(itm.id, {
+        isExternalLoan: false,
+        projectOrNote: 'Grabbed via QR Scanner',
+      })
+      .subscribe({
+        next: (updated) => {
+          this.snackBar.open(`Checked out "${updated.name}" (In Use)`, 'OK', { duration: 3000 });
+          this.updateItemInView(updated);
+        },
+        error: (err) => {
+          this.snackBar.open(err.error?.detail || 'Failed to grab item', 'OK', { duration: 3000 });
+        },
+      });
+  }
+
+  quickReturnItem(itm: ItemDto): void {
+    this.checkoutLoadoutService
+      .returnItem(itm.id, {
+        returnNote: 'Returned via QR Scanner',
+      })
+      .subscribe({
+        next: (updated) => {
+          this.snackBar.open(`Returned "${updated.name}" to home bin`, 'OK', { duration: 3000 });
+          this.updateItemInView(updated);
+        },
+        error: (err) => {
+          this.snackBar.open(err.error?.detail || 'Failed to return item', 'OK', {
+            duration: 3000,
+          });
+        },
+      });
+  }
+
+  private updateItemInView(updated: ItemDto): void {
+    const cur = this.resolution();
+    if (!cur) return;
+    if (cur.item?.id === updated.id) {
+      this.resolution.set({ ...cur, item: updated });
+    }
+    if (cur.locationItems) {
+      const updatedList = cur.locationItems.map((i) => (i.id === updated.id ? updated : i));
+      this.resolution.set({ ...cur, locationItems: updatedList });
     }
   }
 }

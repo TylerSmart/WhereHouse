@@ -565,7 +565,19 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
             item.ModifiedAt,
             item.Attachments.Count,
             primaryPhoto,
-            item.BarcodeNumber
+            item.BarcodeNumber,
+            item.CheckedOutByUserId,
+            item.CheckedOutByUsername,
+            item.CheckedOutToBorrower,
+            item.CheckedOutBorrowerContact,
+            item.CheckoutNote,
+            item.CheckedOutAt,
+            item.CheckoutDueAt,
+            item.Status == ItemStatus.LoanedOut
+                && item.CheckoutDueAt.HasValue
+                && item.CheckoutDueAt.Value < DateTimeOffset.UtcNow,
+            item.ActiveLoadoutId,
+            item.ActiveLoadoutName
         );
     }
 

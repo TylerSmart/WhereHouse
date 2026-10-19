@@ -1,7 +1,7 @@
 # Phase 06: Check-In / Check-Out State Machine, External Loans, Reusable Loadouts & Project Cart
 
 > **Branch:** `feature/phase-06-checkouts-loadouts-and-project-cart`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** [x] Completed
 > **PRD Reference:** `docs/prd.md` — Sections 4.2.1 #3 (`Kit Business Logic`), 4.3.4 #3 (`Scan-to-Checkout / Return`), 4.5.1 (`Permanent Home Location vs. Current Status`), 4.5.2 (`Reusable "Loadouts" & Consumable Reconciliation`), 4.5.3 (`Ad-Hoc "Project Cart"`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -609,7 +609,7 @@ This phase initiates **Milestone 3 (Movement & Projects)** by delivering the com
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
   - Update `WhereHouse.Core/Items/ItemModels.cs` (`ItemDto`) with optional active checkout fields.
   - Create `WhereHouse.Core/Checkouts/CheckoutModels.cs` and `WhereHouse.Core/Checkouts/ICheckoutService.cs`.
   - Create `WhereHouse.Core/Loadouts/LoadoutModels.cs` and `WhereHouse.Core/Loadouts/ILoadoutService.cs`.
@@ -630,7 +630,7 @@ This phase initiates **Milestone 3 (Movement & Projects)** by delivering the com
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Create `WhereHouse.API/Controllers/CheckoutsController.cs` and `WhereHouse.API/Controllers/LoadoutsController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/checkouts"` and `"/loadouts"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/CheckoutsAndLoadoutsIntegrationTests.cs` covering:
@@ -644,7 +644,7 @@ This phase initiates **Milestone 3 (Movement & Projects)** by delivering the com
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Update `src/app/core/models/item.models.ts` and create `src/app/core/models/checkout-loadout.models.ts`.
   - Create `CheckoutLoadoutService` (`src/app/core/services/checkout-loadout/checkout-loadout.service.ts` & `.spec.ts`).
   - Create `CheckoutReturnDialogComponent` (`src/app/features/dashboard/checkout-return-dialog/checkout-return-dialog.component.ts` & `.spec.ts`).
@@ -658,7 +658,7 @@ This phase initiates **Milestone 3 (Movement & Projects)** by delivering the com
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

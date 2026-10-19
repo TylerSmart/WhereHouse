@@ -36,6 +36,16 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.Property(i => i.WarrantyNotes).HasMaxLength(1000);
 
+        builder.Property(i => i.CheckedOutByUsername).HasMaxLength(150);
+
+        builder.Property(i => i.CheckedOutToBorrower).HasMaxLength(150);
+
+        builder.Property(i => i.CheckedOutBorrowerContact).HasMaxLength(200);
+
+        builder.Property(i => i.CheckoutNote).HasMaxLength(500);
+
+        builder.Property(i => i.ActiveLoadoutName).HasMaxLength(150);
+
         builder.Property(i => i.CreatedBy).IsRequired().HasMaxLength(256);
 
         builder.Property(i => i.ModifiedBy).IsRequired().HasMaxLength(256);
@@ -57,6 +67,8 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
         builder.HasIndex(i => i.ParentItemId);
 
         builder.HasIndex(i => i.OwnerId);
+
+        builder.HasIndex(i => i.ActiveLoadoutId);
 
         builder.HasIndex(i => i.Status);
 

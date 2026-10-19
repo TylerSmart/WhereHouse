@@ -128,11 +128,103 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("CategoryAttributeTemplates", (string)null);
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.CheckoutLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BorrowerContact")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("BorrowerName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset?>("ExpectedReturnAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LoadoutId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LoadoutName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("PerformedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PerformedByUsername")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("ProjectOrNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("QuantityAffected")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("QuantityConsumed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("ReturnedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("LoadoutId");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.ToTable("CheckoutLogs", (string)null);
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.InventoryItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ActiveLoadoutId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActiveLoadoutName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Aliases")
                         .HasMaxLength(500)
@@ -148,6 +240,31 @@ namespace WhereHouse.Data.Migrations
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CheckedOutAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CheckedOutBorrowerContact")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("CheckedOutByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CheckedOutByUsername")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("CheckedOutToBorrower")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset?>("CheckoutDueAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CheckoutNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Condition")
                         .HasColumnType("int");
@@ -253,6 +370,8 @@ namespace WhereHouse.Data.Migrations
                         .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ActiveLoadoutId");
 
                     b.HasIndex("BarcodeNumber");
 
@@ -375,6 +494,139 @@ namespace WhereHouse.Data.Migrations
                     b.HasIndex("ItemId");
 
                     b.ToTable("ItemAttributeValues", (string)null);
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.Loadout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActiveCheckoutNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LastCheckedOutAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("LastReturnedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Loadouts", (string)null);
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.LoadoutItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CheckedOutAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsConsumable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsCurrentlyCheckedOut")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("LoadoutId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal>("QuantityCheckedOut")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityReturned")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("QuantityUsed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("RequiredQuantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("ReturnedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("LoadoutId");
+
+                    b.HasIndex("LoadoutId", "ItemId");
+
+                    b.ToTable("LoadoutItems", (string)null);
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
@@ -618,6 +870,17 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.CheckoutLog", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
+                        .WithMany("CheckoutLogs")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.InventoryItem", b =>
                 {
                     b.HasOne("WhereHouse.Data.Entities.Category", "Category")
@@ -678,6 +941,36 @@ namespace WhereHouse.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.Loadout", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.User", "Owner")
+                        .WithMany("OwnedLoadouts")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.LoadoutItem", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
+                        .WithMany("LoadoutMemberships")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WhereHouse.Data.Entities.Loadout", "Loadout")
+                        .WithMany("Items")
+                        .HasForeignKey("LoadoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Loadout");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
@@ -747,7 +1040,16 @@ namespace WhereHouse.Data.Migrations
 
                     b.Navigation("BoundQrCodes");
 
+                    b.Navigation("CheckoutLogs");
+
                     b.Navigation("ChildItems");
+
+                    b.Navigation("LoadoutMemberships");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.Loadout", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
@@ -766,6 +1068,8 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("CreatedQrCodes");
 
                     b.Navigation("OwnedItems");
+
+                    b.Navigation("OwnedLoadouts");
 
                     b.Navigation("OwnedLocations");
 
