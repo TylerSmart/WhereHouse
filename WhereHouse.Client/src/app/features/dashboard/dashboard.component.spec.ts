@@ -2,40 +2,126 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
-import { TodoItemDto } from '../../core/models/todo.models';
+import {
+  LocationNodeDto,
+  LocationNodeTypes,
+  LocationTreeNodeDto,
+} from '../../core/models/location.models';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { LocationService } from '../../core/services/location/location.service';
 import { ThemeService } from '../../core/services/theme/theme.service';
-import { TodoService } from '../../core/services/todo/todo.service';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
 
-  const mockTodos: TodoItemDto[] = [
+  const mockNodes: LocationNodeDto[] = [
     {
-      id: 't-1',
-      title: 'Configure Database',
-      description: 'Set up SQL Server connection string',
-      isCompleted: false,
+      id: 'loc-1',
+      parentId: null,
+      name: 'Garage',
+      description: 'Main Garage',
+      nodeType: LocationNodeTypes.FixedLocation,
+      shortCode: 'LOC-001',
+      icon: 'garage',
+      containerStyle: null,
+      primaryColor: null,
+      accentColor: null,
+      colorLabel: null,
+      isPrivate: false,
+      ownerId: 'u-1',
+      fullPath: 'Garage',
+      breadcrumbs: [
+        {
+          id: 'loc-1',
+          name: 'Garage',
+          shortCode: 'LOC-001',
+          nodeType: LocationNodeTypes.FixedLocation,
+        },
+      ],
+      childCount: 1,
       createdAt: '2026-10-18T00:00:00Z',
       modifiedAt: '2026-10-18T00:00:00Z',
     },
     {
-      id: 't-2',
-      title: 'Deploy Container',
-      description: 'Push Docker image to GHCR',
-      isCompleted: true,
+      id: 'loc-2',
+      parentId: 'loc-1',
+      name: 'Winter Camping Bin',
+      description: 'Yellow lid tote',
+      nodeType: LocationNodeTypes.MovableContainer,
+      shortCode: 'BIN-001',
+      icon: 'inventory_2',
+      containerStyle: '27-Gal Heavy Duty Tote',
+      primaryColor: '#1f2937',
+      accentColor: '#eab308',
+      colorLabel: 'Black Base / Yellow Lid',
+      isPrivate: false,
+      ownerId: 'u-1',
+      fullPath: 'Garage > Winter Camping Bin',
+      breadcrumbs: [
+        {
+          id: 'loc-1',
+          name: 'Garage',
+          shortCode: 'LOC-001',
+          nodeType: LocationNodeTypes.FixedLocation,
+        },
+        {
+          id: 'loc-2',
+          name: 'Winter Camping Bin',
+          shortCode: 'BIN-001',
+          nodeType: LocationNodeTypes.MovableContainer,
+        },
+      ],
+      childCount: 0,
       createdAt: '2026-10-18T00:00:00Z',
       modifiedAt: '2026-10-18T00:00:00Z',
     },
   ];
 
-  let mockTodoService: {
-    getTodos: ReturnType<typeof vi.fn>;
-    createTodo: ReturnType<typeof vi.fn>;
-    updateTodo: ReturnType<typeof vi.fn>;
-    deleteTodo: ReturnType<typeof vi.fn>;
+  const mockTree: LocationTreeNodeDto[] = [
+    {
+      id: 'loc-1',
+      parentId: null,
+      name: 'Garage',
+      nodeType: LocationNodeTypes.FixedLocation,
+      shortCode: 'LOC-001',
+      icon: 'garage',
+      containerStyle: null,
+      primaryColor: null,
+      accentColor: null,
+      colorLabel: null,
+      isPrivate: false,
+      ownerId: 'u-1',
+      fullPath: 'Garage',
+      children: [
+        {
+          id: 'loc-2',
+          parentId: 'loc-1',
+          name: 'Winter Camping Bin',
+          nodeType: LocationNodeTypes.MovableContainer,
+          shortCode: 'BIN-001',
+          icon: 'inventory_2',
+          containerStyle: '27-Gal Heavy Duty Tote',
+          primaryColor: '#1f2937',
+          accentColor: '#eab308',
+          colorLabel: 'Black Base / Yellow Lid',
+          isPrivate: false,
+          ownerId: 'u-1',
+          fullPath: 'Garage > Winter Camping Bin',
+          children: [],
+        },
+      ],
+    },
+  ];
+
+  let mockLocationService: {
+    getTree: ReturnType<typeof vi.fn>;
+    getLocations: ReturnType<typeof vi.fn>;
+    createLocation: ReturnType<typeof vi.fn>;
+    updateLocation: ReturnType<typeof vi.fn>;
+    moveLocation: ReturnType<typeof vi.fn>;
+    deleteLocation: ReturnType<typeof vi.fn>;
   };
 
   let mockAuthService: {
@@ -52,25 +138,13 @@ describe('DashboardComponent', () => {
   };
 
   beforeEach(async () => {
-    mockTodoService = {
-      getTodos: vi.fn().mockReturnValue(of(mockTodos)),
-      createTodo: vi.fn().mockReturnValue(
-        of({
-          id: 't-new',
-          title: 'Brand New Task',
-          description: null,
-          isCompleted: false,
-          createdAt: '2026-10-18T00:00:00Z',
-          modifiedAt: '2026-10-18T00:00:00Z',
-        }),
-      ),
-      updateTodo: vi.fn().mockReturnValue(
-        of({
-          ...mockTodos[0],
-          isCompleted: true,
-        }),
-      ),
-      deleteTodo: vi.fn().mockReturnValue(of(undefined)),
+    mockLocationService = {
+      getTree: vi.fn().mockReturnValue(of(mockTree)),
+      getLocations: vi.fn().mockReturnValue(of(mockNodes)),
+      createLocation: vi.fn(),
+      updateLocation: vi.fn(),
+      moveLocation: vi.fn(),
+      deleteLocation: vi.fn().mockReturnValue(of(undefined)),
     };
 
     mockAuthService = {
@@ -93,7 +167,7 @@ describe('DashboardComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
-        { provide: TodoService, useValue: mockTodoService },
+        { provide: LocationService, useValue: mockLocationService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: MatDialog, useValue: mockDialog },
         { provide: MatSnackBar, useValue: mockSnackBar },
@@ -106,48 +180,56 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create the component and load tasks', () => {
+  it('should create the component and load tree and locations', () => {
     expect(component).toBeTruthy();
-    expect(mockTodoService.getTodos).toHaveBeenCalled();
-    expect(component['todos']().length).toBe(2);
+    expect(mockLocationService.getTree).toHaveBeenCalled();
+    expect(mockLocationService.getLocations).toHaveBeenCalled();
+    expect(component['allNodes']().length).toBe(2);
+    expect(component['treeNodes']().length).toBe(1);
   });
 
-  it('should filter tasks based on search query', () => {
-    component['searchQuery'].set('Database');
-    expect(component['filteredTodos']().length).toBe(1);
-    expect(component['filteredTodos']()[0].title).toBe('Configure Database');
+  it('should display root nodes when no parent is selected', () => {
+    expect(component['selectedNodeId']()).toBeNull();
+    expect(component['displayedNodes']().length).toBe(1);
+    expect(component['displayedNodes']()[0].name).toBe('Garage');
+  });
 
-    component['searchQuery'].set('GHCR');
-    expect(component['filteredTodos']().length).toBe(1);
-    expect(component['filteredTodos']()[0].title).toBe('Deploy Container');
+  it('should filter nodes based on search query across all depths', () => {
+    component['searchQuery'].set('Yellow Lid');
+    expect(component['displayedNodes']().length).toBe(1);
+    expect(component['displayedNodes']()[0].name).toBe('Winter Camping Bin');
 
     component['searchQuery'].set('nonexistent');
-    expect(component['filteredTodos']().length).toBe(0);
+    expect(component['displayedNodes']().length).toBe(0);
   });
 
-  it('should toggle task completion status', () => {
-    component.toggleTodoCompletion(mockTodos[0]);
-    expect(mockTodoService.updateTodo).toHaveBeenCalledWith('t-1', {
-      title: 'Configure Database',
-      description: 'Set up SQL Server connection string',
-      isCompleted: true,
-    });
+  it('should filter nodes by node type', () => {
+    component['searchQuery'].set('a'); // Matches both Garage and Winter Camping Bin
+    component.setFilterType('fixed');
+    expect(component['displayedNodes']().length).toBe(1);
+    expect(component['displayedNodes']()[0].name).toBe('Garage');
+
+    component.setFilterType('container');
+    expect(component['displayedNodes']().length).toBe(1);
+    expect(component['displayedNodes']()[0].name).toBe('Winter Camping Bin');
   });
 
-  it('should call logout on AuthService', () => {
-    component.onLogout();
-    expect(mockAuthService.logout).toHaveBeenCalled();
+  it('should navigate hierarchy when a node is selected', () => {
+    component.selectNode('loc-1');
+    expect(component['selectedNodeId']()).toBe('loc-1');
+    expect(component['selectedNode']()?.name).toBe('Garage');
+    expect(component['displayedNodes']().length).toBe(1);
+    expect(component['displayedNodes']()[0].name).toBe('Winter Camping Bin');
   });
 
-  it('should delete task when confirmed', () => {
+  it('should delete location when confirmed', () => {
     mockDialog.open.mockReturnValue({
       afterClosed: () => of(true),
     });
 
-    component.deleteTodo(mockTodos[0]);
+    component.deleteNode(mockNodes[0]);
 
-    expect(mockTodoService.deleteTodo).toHaveBeenCalledWith('t-1');
-    expect(component['todos']().length).toBe(1);
+    expect(mockLocationService.deleteLocation).toHaveBeenCalledWith('loc-1');
     expect(mockSnackBar.open).toHaveBeenCalled();
   });
 });

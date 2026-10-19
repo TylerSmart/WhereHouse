@@ -22,11 +22,23 @@ namespace WhereHouse.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WhereHouse.Data.Entities.TodoItem", b =>
+            modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccentColor")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ColorLabel")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContainerStyle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -40,7 +52,11 @@ namespace WhereHouse.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<bool>("IsCompleted")
+                    b.Property<string>("Icon")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset>("ModifiedAt")
@@ -51,19 +67,39 @@ namespace WhereHouse.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("NodeType")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Title")
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ShortCode")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("TodoItems", (string)null);
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("ShortCode")
+                        .IsUnique();
+
+                    b.ToTable("LocationNodes", (string)null);
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>
@@ -133,20 +169,32 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("WhereHouse.Data.Entities.TodoItem", b =>
+            modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
                 {
                     b.HasOne("WhereHouse.Data.Entities.User", "Owner")
-                        .WithMany("TodoItems")
+                        .WithMany("OwnedLocations")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("WhereHouse.Data.Entities.LocationNode", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Owner");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.LocationNode", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>
                 {
-                    b.Navigation("TodoItems");
+                    b.Navigation("OwnedLocations");
                 });
 #pragma warning restore 612, 618
         }

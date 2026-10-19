@@ -8,7 +8,7 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 {
     public DbSet<User> Users => Set<User>();
 
-    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+    public DbSet<LocationNode> LocationNodes => Set<LocationNode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
