@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   type AttributeFieldType,
@@ -35,9 +36,11 @@ import {
   UpsertItemAttributeValueRequest,
 } from '../../../core/models/item.models';
 import { LocationNodeDto } from '../../../core/models/location.models';
+import { IntakePortabilityService } from '../../../core/services/intake-portability/intake-portability.service';
 
 export interface ItemDialogData {
   item?: ItemDto;
+  cloneFromItem?: ItemDto;
   homeLocationId?: string | null;
   availableLocations: LocationNodeDto[];
   availableCategories: CategoryDto[];
@@ -68,7 +71,7 @@ export type ItemDialogResult =
   template: `
     <h2 mat-dialog-title class="dialog-title">
       <mat-icon>{{ getItemTypeIcon() }}</mat-icon>
-      <span>{{ isEditMode ? 'Edit Item' : 'Add Item' }}</span>
+      <span>{{ isEditMode ? 'Edit Item' : isCloneMode ? 'Clone Item' : 'Add Item' }}</span>
     </h2>
 
     <mat-dialog-content>
@@ -269,6 +272,31 @@ export type ItemDialogResult =
           }
         </div>
 
+        <!-- Retail Barcode (UPC / EAN) with Lookup Button -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Retail Barcode (UPC / EAN / GTIN)</mat-label>
+            <input
+              matInput
+              formControlName="barcodeNumber"
+              placeholder="e.g. 0885911362757"
+              maxlength="64"
+              (keydown.enter)="$event.preventDefault(); onLookupBarcode()"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              [disabled]="isLookingUpBarcode() || !form.get('barcodeNumber')?.value"
+              (click)="onLookupBarcode()"
+              matTooltip="Lookup product info by UPC/EAN"
+            >
+              <mat-icon>manage_search</mat-icon>
+            </button>
+            <mat-hint>Scanned retail barcode for auto-fill &amp; scanner lookup</mat-hint>
+          </mat-form-field>
+        </div>
+
         <!-- Brand, Model, Serial # -->
         <div class="form-row">
           <mat-form-field appearance="outline" class="third-width">
@@ -461,7 +489,7 @@ export type ItemDialogResult =
     <mat-dialog-actions align="end">
       <button mat-button (click)="dialogRef.close()">Cancel</button>
       <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="onSubmit()">
-        {{ isEditMode ? 'Save Changes' : 'Create Item' }}
+        {{ isEditMode ? 'Save Changes' : isCloneMode ? 'Create Cloned Item' : 'Create Item' }}
       </button>
     </mat-dialog-actions>
   `,
@@ -580,6 +608,8 @@ export class ItemDialogComponent implements OnInit {
   protected readonly dialogRef =
     inject<MatDialogRef<ItemDialogComponent, ItemDialogResult>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly intakeService = inject(IntakePortabilityService);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly ItemTypes = ItemTypes;
   protected readonly ItemStatuses = ItemStatuses;
@@ -587,6 +617,8 @@ export class ItemDialogComponent implements OnInit {
   protected readonly AttributeFieldTypes = AttributeFieldTypes;
 
   protected readonly isEditMode = !!this.data.item;
+  protected readonly isCloneMode = !this.data.item && !!this.data.cloneFromItem;
+  protected readonly isLookingUpBarcode = signal(false);
 
   protected form!: FormGroup;
 
@@ -598,45 +630,53 @@ export class ItemDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const itm = this.data.item;
-    const initialCategory = itm?.categoryId
-      ? (this.data.availableCategories.find((c) => c.id === itm.categoryId) ?? null)
+    const src = this.data.item ?? this.data.cloneFromItem;
+    const initialCategory = src?.categoryId
+      ? (this.data.availableCategories.find((c) => c.id === src.categoryId) ?? null)
       : null;
 
     this.selectedCategory.set(initialCategory);
     this.selectedCategoryTemplates.set(initialCategory?.attributeTemplates ?? []);
 
+    const initialName = this.isCloneMode
+      ? `${this.data.cloneFromItem?.name ?? ''} (Copy)`
+      : (src?.name ?? '');
+
     this.form = this.fb.group({
-      name: [itm?.name ?? '', [Validators.required, Validators.maxLength(200)]],
-      itemType: [itm?.itemType ?? ItemTypes.Unique, [Validators.required]],
-      shortCode: [itm?.shortCode ?? '', [Validators.maxLength(32)]],
-      homeLocationId: [itm?.homeLocationId ?? this.data.homeLocationId ?? null],
-      categoryId: [itm?.categoryId ?? null],
-      parentItemId: [itm?.parentItemId ?? null],
-      condition: [itm?.condition ?? ItemConditions.Good],
-      status: [itm?.status ?? ItemStatuses.InPlace],
-      currentQuantity: [itm?.currentQuantity ?? 1, [Validators.min(0)]],
-      unit: [itm?.unit ?? '', [Validators.maxLength(32)]],
-      minQuantity: [itm?.minQuantity ?? null],
-      brand: [itm?.brand ?? '', [Validators.maxLength(100)]],
-      modelNumber: [itm?.modelNumber ?? '', [Validators.maxLength(100)]],
-      serialNumber: [itm?.serialNumber ?? '', [Validators.maxLength(100)]],
-      description: [itm?.description ?? '', [Validators.maxLength(2000)]],
-      aliasesString: [itm?.aliases ? itm.aliases.join(', ') : ''],
-      tagsString: [itm?.tags ? itm.tags.join(', ') : ''],
-      purchaseDate: [itm?.purchaseDate ? itm.purchaseDate.substring(0, 10) : null],
-      retailer: [itm?.retailer ?? '', [Validators.maxLength(150)]],
-      purchasePrice: [itm?.purchasePrice ?? null],
-      estimatedReplacementValue: [itm?.estimatedReplacementValue ?? null],
-      warrantyExpirationDate: [
-        itm?.warrantyExpirationDate ? itm.warrantyExpirationDate.substring(0, 10) : null,
+      name: [initialName, [Validators.required, Validators.maxLength(200)]],
+      itemType: [src?.itemType ?? ItemTypes.Unique, [Validators.required]],
+      shortCode: [this.isCloneMode ? '' : (src?.shortCode ?? ''), [Validators.maxLength(32)]],
+      homeLocationId: [src?.homeLocationId ?? this.data.homeLocationId ?? null],
+      categoryId: [src?.categoryId ?? null],
+      parentItemId: [src?.parentItemId ?? null],
+      condition: [src?.condition ?? ItemConditions.Good],
+      status: [src?.status ?? ItemStatuses.InPlace],
+      currentQuantity: [src?.currentQuantity ?? 1, [Validators.min(0)]],
+      unit: [src?.unit ?? '', [Validators.maxLength(32)]],
+      minQuantity: [src?.minQuantity ?? null],
+      barcodeNumber: [src?.barcodeNumber ?? '', [Validators.maxLength(64)]],
+      brand: [src?.brand ?? '', [Validators.maxLength(100)]],
+      modelNumber: [src?.modelNumber ?? '', [Validators.maxLength(100)]],
+      serialNumber: [
+        this.isCloneMode ? '' : (src?.serialNumber ?? ''),
+        [Validators.maxLength(100)],
       ],
-      warrantyNotes: [itm?.warrantyNotes ?? '', [Validators.maxLength(1000)]],
-      isPrivate: [itm?.isPrivate ?? false],
+      description: [src?.description ?? '', [Validators.maxLength(2000)]],
+      aliasesString: [src?.aliases ? src.aliases.join(', ') : ''],
+      tagsString: [src?.tags ? src.tags.join(', ') : ''],
+      purchaseDate: [src?.purchaseDate ? src.purchaseDate.substring(0, 10) : null],
+      retailer: [src?.retailer ?? '', [Validators.maxLength(150)]],
+      purchasePrice: [src?.purchasePrice ?? null],
+      estimatedReplacementValue: [src?.estimatedReplacementValue ?? null],
+      warrantyExpirationDate: [
+        src?.warrantyExpirationDate ? src.warrantyExpirationDate.substring(0, 10) : null,
+      ],
+      warrantyNotes: [src?.warrantyNotes ?? '', [Validators.maxLength(1000)]],
+      isPrivate: [src?.isPrivate ?? false],
       attributeValues: this.fb.array([]),
     });
 
-    this.syncAttributeValuesControls(initialCategory, itm?.attributeValues);
+    this.syncAttributeValuesControls(initialCategory, src?.attributeValues);
 
     this.form.controls['categoryId'].valueChanges.subscribe((catId: string | null) => {
       const cat = catId
@@ -687,6 +727,52 @@ export class ItemDialogComponent implements OnInit {
   getOptionsForField(tmplId: string): string[] {
     const tmpl = this.selectedCategoryTemplates().find((t) => t.id === tmplId);
     return tmpl?.options ?? [];
+  }
+
+  onLookupBarcode(): void {
+    const rawBarcode = this.form.get('barcodeNumber')?.value?.trim();
+    if (!rawBarcode) {
+      return;
+    }
+
+    this.isLookingUpBarcode.set(true);
+    this.intakeService.lookupBarcode(rawBarcode).subscribe({
+      next: (lookup) => {
+        this.isLookingUpBarcode.set(false);
+        if (lookup.found) {
+          if (!this.form.get('name')?.value && lookup.name) {
+            this.form.patchValue({ name: lookup.name });
+          }
+          if (!this.form.get('brand')?.value && lookup.brand) {
+            this.form.patchValue({ brand: lookup.brand });
+          }
+          if (!this.form.get('modelNumber')?.value && lookup.modelNumber) {
+            this.form.patchValue({ modelNumber: lookup.modelNumber });
+          }
+          if (!this.form.get('description')?.value && lookup.description) {
+            this.form.patchValue({ description: lookup.description });
+          }
+          if (!this.form.get('unit')?.value && lookup.suggestedUnit) {
+            this.form.patchValue({ unit: lookup.suggestedUnit });
+          }
+          if (lookup.matchedCategoryId && !this.form.get('categoryId')?.value) {
+            this.form.patchValue({ categoryId: lookup.matchedCategoryId });
+          }
+          if (lookup.suggestedItemType !== undefined && lookup.suggestedItemType !== null) {
+            this.form.patchValue({ itemType: lookup.suggestedItemType });
+          }
+          this.snackBar.open(`Found: ${lookup.name} (${lookup.source})`, 'OK', { duration: 3000 });
+        } else {
+          this.snackBar.open('Barcode not found in catalog or household.', 'OK', {
+            duration: 3000,
+          });
+        }
+      },
+      error: () => {
+        this.isLookingUpBarcode.set(false);
+        this.snackBar.open('Failed to lookup barcode.', 'Dismiss', { duration: 3000 });
+      },
+    });
   }
 
   private syncAttributeValuesControls(
@@ -770,6 +856,7 @@ export class ItemDialogComponent implements OnInit {
         brand: val.brand?.trim() || null,
         modelNumber: val.modelNumber?.trim() || null,
         serialNumber: val.serialNumber?.trim() || null,
+        barcodeNumber: val.barcodeNumber?.trim() || null,
         currentQuantity: val.currentQuantity ?? 1,
         unit: val.unit?.trim() || null,
         minQuantity: val.minQuantity !== null ? val.minQuantity : null,
@@ -802,6 +889,7 @@ export class ItemDialogComponent implements OnInit {
         brand: val.brand?.trim() || null,
         modelNumber: val.modelNumber?.trim() || null,
         serialNumber: val.serialNumber?.trim() || null,
+        barcodeNumber: val.barcodeNumber?.trim() || null,
         currentQuantity: val.currentQuantity ?? 1,
         unit: val.unit?.trim() || null,
         minQuantity: val.minQuantity !== null ? val.minQuantity : null,

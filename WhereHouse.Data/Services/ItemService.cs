@@ -108,6 +108,7 @@ public sealed class ItemService(
                     || (i.Brand?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (i.ModelNumber?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (i.SerialNumber?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (i.BarcodeNumber?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (i.Aliases?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (i.Tags?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                 )
@@ -263,6 +264,9 @@ public sealed class ItemService(
             SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber)
                 ? null
                 : request.SerialNumber.Trim(),
+            BarcodeNumber = string.IsNullOrWhiteSpace(request.BarcodeNumber)
+                ? null
+                : request.BarcodeNumber.Trim(),
             CurrentQuantity = request.CurrentQuantity,
             Unit = string.IsNullOrWhiteSpace(request.Unit) ? null : request.Unit.Trim(),
             MinQuantity = request.MinQuantity,
@@ -415,6 +419,9 @@ public sealed class ItemService(
         item.SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber)
             ? null
             : request.SerialNumber.Trim();
+        item.BarcodeNumber = string.IsNullOrWhiteSpace(request.BarcodeNumber)
+            ? null
+            : request.BarcodeNumber.Trim();
         item.CurrentQuantity = request.CurrentQuantity;
         item.Unit = string.IsNullOrWhiteSpace(request.Unit) ? null : request.Unit.Trim();
         item.MinQuantity = request.MinQuantity;
@@ -549,6 +556,7 @@ public sealed class ItemService(
             Brand = source.Brand,
             ModelNumber = source.ModelNumber,
             SerialNumber = null, // 1-of-1 serial numbers are cleared
+            BarcodeNumber = source.BarcodeNumber,
             CurrentQuantity = source.CurrentQuantity,
             Unit = source.Unit,
             MinQuantity = source.MinQuantity,
@@ -907,7 +915,8 @@ public sealed class ItemService(
             item.CreatedAt,
             item.ModifiedAt,
             item.Attachments.Count,
-            primaryPhoto
+            primaryPhoto,
+            item.BarcodeNumber
         );
     }
 }

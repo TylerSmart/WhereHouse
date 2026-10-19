@@ -28,6 +28,8 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
 
         builder.Property(i => i.SerialNumber).HasMaxLength(100);
 
+        builder.Property(i => i.BarcodeNumber).HasMaxLength(64);
+
         builder.Property(i => i.Unit).HasMaxLength(32);
 
         builder.Property(i => i.Retailer).HasMaxLength(150);
@@ -59,6 +61,7 @@ public sealed class InventoryItemConfiguration : IEntityTypeConfiguration<Invent
         builder.HasIndex(i => i.Status);
 
         builder.HasIndex(i => i.ItemType);
+        builder.HasIndex(i => i.BarcodeNumber);
 
         builder
             .HasOne(i => i.HomeLocation)

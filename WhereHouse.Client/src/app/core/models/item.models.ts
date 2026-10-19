@@ -96,6 +96,7 @@ export interface ItemDto {
   modifiedAt: string;
   attachmentCount?: number;
   primaryPhotoAttachmentId?: string | null;
+  barcodeNumber?: string | null;
 }
 
 export interface UpsertItemAttributeValueRequest {
@@ -120,6 +121,7 @@ export interface CreateItemRequest {
   brand?: string | null;
   modelNumber?: string | null;
   serialNumber?: string | null;
+  barcodeNumber?: string | null;
   currentQuantity?: number;
   unit?: string | null;
   minQuantity?: number | null;
@@ -148,6 +150,7 @@ export interface UpdateItemRequest {
   brand?: string | null;
   modelNumber?: string | null;
   serialNumber?: string | null;
+  barcodeNumber?: string | null;
   currentQuantity?: number;
   unit?: string | null;
   minQuantity?: number | null;

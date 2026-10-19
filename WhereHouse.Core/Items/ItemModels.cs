@@ -96,7 +96,8 @@ public sealed record ItemDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset ModifiedAt,
     int AttachmentCount = 0,
-    Guid? PrimaryPhotoAttachmentId = null
+    Guid? PrimaryPhotoAttachmentId = null,
+    string? BarcodeNumber = null
 );
 
 public sealed record UpsertItemAttributeValueRequest(
@@ -132,7 +133,8 @@ public sealed record CreateItemRequest(
     DateTimeOffset? WarrantyExpirationDate = null,
     [MaxLength(1000)] string? WarrantyNotes = null,
     bool IsPrivate = false,
-    IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null
+    IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null,
+    [MaxLength(64)] string? BarcodeNumber = null
 );
 
 public sealed record UpdateItemRequest(
@@ -160,7 +162,8 @@ public sealed record UpdateItemRequest(
     DateTimeOffset? WarrantyExpirationDate = null,
     [MaxLength(1000)] string? WarrantyNotes = null,
     bool IsPrivate = false,
-    IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null
+    IReadOnlyList<UpsertItemAttributeValueRequest>? AttributeValues = null,
+    [MaxLength(64)] string? BarcodeNumber = null
 );
 
 public sealed record AdjustItemQuantityRequest(
