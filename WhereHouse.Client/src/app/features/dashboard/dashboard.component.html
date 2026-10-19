@@ -56,6 +56,10 @@
           <mat-icon>category</mat-icon>
           <span>Inventory Item</span>
         </button>
+        <button mat-menu-item (click)="openRapidIntakeDialog()">
+          <mat-icon>bolt</mat-icon>
+          <span>Rapid Intake Mode</span>
+        </button>
         <mat-divider></mat-divider>
         <button mat-menu-item (click)="openCreateDialog(LocationNodeTypes.FixedLocation)">
           <mat-icon>location_on</mat-icon>
@@ -66,6 +70,30 @@
           <span>Movable Container (Bin, Tote, Box)</span>
         </button>
       </mat-menu>
+
+      <!-- Rapid Intake -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="rapid-intake-btn"
+        (click)="openRapidIntakeDialog()"
+        matTooltip="Rapid-Fire Batch Intake Mode"
+      >
+        <mat-icon>bolt</mat-icon>
+        <span class="desktop-only">Rapid Intake</span>
+      </button>
+
+      <!-- Import / Export -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="import-export-btn"
+        (click)="openImportExportDialog()"
+        matTooltip="Bulk Import / Export (CSV &amp; JSON)"
+      >
+        <mat-icon>import_export</mat-icon>
+        <span class="desktop-only">Import / Export</span>
+      </button>
 
       <!-- QR Scanner -->
       <button
@@ -268,6 +296,14 @@
                 >
                   <mat-icon>add</mat-icon>
                   <span>Add Item</span>
+                </button>
+                <button
+                  mat-stroked-button
+                  (click)="openRapidIntakeDialog(active.id)"
+                  matTooltip="Rapid intake into this location"
+                >
+                  <mat-icon>bolt</mat-icon>
+                  <span>Rapid Intake</span>
                 </button>
                 <button
                   mat-button
@@ -674,9 +710,13 @@
                                 >Attachments &amp; Manuals ({{ item.attachmentCount ?? 0 }})</span
                               >
                             </button>
+                            <button mat-menu-item (click)="openCloneItemDialog(item)">
+                              <mat-icon>edit_note</mat-icon>
+                              <span>Clone &amp; Edit...</span>
+                            </button>
                             <button mat-menu-item (click)="openDuplicateItemDialog(item)">
                               <mat-icon>content_copy</mat-icon>
-                              <span>Duplicate / Clone</span>
+                              <span>Quick Duplicate</span>
                             </button>
                             <button mat-menu-item (click)="printItemLabel(item)">
                               <mat-icon>print</mat-icon>

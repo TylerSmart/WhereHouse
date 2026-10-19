@@ -59,6 +59,8 @@ import {
   SmartSearchDialogComponent,
   SmartSearchResultAction,
 } from './smart-search-dialog/smart-search-dialog.component';
+import { RapidIntakeDialogComponent } from './rapid-intake-dialog/rapid-intake-dialog.component';
+import { ImportExportDialogComponent } from './import-export-dialog/import-export-dialog.component';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -524,6 +526,42 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  openCloneItemDialog(item: ItemDto): void {
+    const dialogRef = this.dialog.open<ItemDialogComponent, ItemDialogData, ItemDialogResult>(
+      ItemDialogComponent,
+      {
+        width: '720px',
+        data: {
+          cloneFromItem: item,
+          availableLocations: this.allNodes(),
+          availableCategories: this.categories(),
+          availableParentItems: this.items().filter((i) => i.id !== item.id),
+          homeLocationId: item.homeLocationId,
+        },
+      },
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || result.mode !== 'create') {
+        return;
+      }
+
+      this.itemService.createItem(result.request).subscribe({
+        next: (created) => {
+          this.snackBar.open(`Item "${created.name}" (${created.shortCode}) created`, 'Close', {
+            duration: 3000,
+          });
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to create item', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+    });
+  }
+
   openDuplicateItemDialog(item: ItemDto): void {
     this.itemService.duplicateItem(item.id).subscribe({
       next: (cloned) => {
@@ -537,6 +575,37 @@ export class DashboardComponent implements OnInit {
           duration: 4000,
         });
       },
+    });
+  }
+
+  openRapidIntakeDialog(locationId?: string | null): void {
+    const dialogRef = this.dialog.open(RapidIntakeDialogComponent, {
+      width: '780px',
+      maxWidth: '96vw',
+      data: {
+        initialLocationId: locationId !== undefined ? locationId : this.selectedNodeId(),
+        availableLocations: this.allNodes(),
+        availableCategories: this.categories(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res && res.createdCount > 0) {
+        this.refreshAll();
+      }
+    });
+  }
+
+  openImportExportDialog(): void {
+    const dialogRef = this.dialog.open(ImportExportDialogComponent, {
+      width: '820px',
+      maxWidth: '96vw',
+    });
+
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res?.imported) {
+        this.refreshAll();
+      }
     });
   }
 

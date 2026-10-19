@@ -142,7 +142,7 @@ public sealed class ScanService(
         else
         {
             item = await dbContext.InventoryItems.FirstOrDefaultAsync(
-                i => i.ShortCode == code,
+                i => i.ShortCode == code || i.BarcodeNumber == code,
                 cancellationToken
             );
         }
@@ -428,7 +428,7 @@ public sealed class ScanService(
             else
             {
                 item = await dbContext.InventoryItems.FirstOrDefaultAsync(
-                    i => i.ShortCode == code,
+                    i => i.ShortCode == code || i.BarcodeNumber == code,
                     cancellationToken
                 );
             }

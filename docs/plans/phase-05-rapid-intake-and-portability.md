@@ -1,7 +1,7 @@
 # Phase 05: Rapid-Fire Batch Intake, Retail UPC Barcode Lookup & CSV/JSON Bulk Import/Export
 
 > **Branch:** `feature/phase-05-rapid-intake-and-portability`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/prd.md` — Sections 4.3.4 #4 (`UPC / Retail Barcode Lookup`), 4.4.1 (`"Rapid-Fire" Batch Intake Mode`), 4.4.2 (`Quick-Clone / Duplicate Item`), 4.4.3 (`CSV & JSON Bulk Import / Export`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -513,7 +513,7 @@ Create `WhereHouse.Client/src/app/core/services/intake-portability/intake-portab
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
   - Update `WhereHouse.Data/Entities/InventoryItem.cs` and `WhereHouse.Data/Configurations/InventoryItemConfiguration.cs` with `BarcodeNumber` (`MaxLength(64)`, indexed).
   - Update `WhereHouse.Core/Items/ItemModels.cs` (`ItemDto`, `CreateItemRequest`, `UpdateItemRequest`) with optional `BarcodeNumber = null`.
   - Update `ItemService.cs`, `SearchService.cs`, and `ScanService.cs` to persist, copy, search, map, and scan-resolve `BarcodeNumber`.
@@ -532,7 +532,7 @@ Create `WhereHouse.Client/src/app/core/services/intake-portability/intake-portab
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Create `WhereHouse.API/Controllers/IntakeController.cs` and `WhereHouse.API/Controllers/PortabilityController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/intake"` and `"/portability"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/IntakeAndPortabilityIntegrationTests.cs` covering:
@@ -546,7 +546,7 @@ Create `WhereHouse.Client/src/app/core/services/intake-portability/intake-portab
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Update `src/app/core/models/item.models.ts` (`barcodeNumber`) and create `src/app/core/models/intake-portability.models.ts`.
   - Create `IntakePortabilityService` (`src/app/core/services/intake-portability/intake-portability.service.ts` & `.spec.ts`).
   - Update `ItemDialogComponent` (`item-dialog.component.ts` & `.spec.ts`) with `barcodeNumber` field, inline UPC lookup button, and `cloneFromItem` draft initialization.
@@ -560,7 +560,7 @@ Create `WhereHouse.Client/src/app/core/services/intake-portability/intake-portab
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

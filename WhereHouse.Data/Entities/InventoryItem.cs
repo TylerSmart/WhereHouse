@@ -42,6 +42,8 @@ public sealed class InventoryItem : IAuditable
 
     public string? SerialNumber { get; set; }
 
+    public string? BarcodeNumber { get; set; }
+
     public decimal CurrentQuantity { get; set; } = 1m;
 
     public string? Unit { get; set; }

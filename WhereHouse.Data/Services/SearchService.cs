@@ -296,6 +296,10 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
                     && itm.SerialNumber.Contains(t, StringComparison.OrdinalIgnoreCase)
                 )
                 || (
+                    itm.BarcodeNumber != null
+                    && itm.BarcodeNumber.Contains(t, StringComparison.OrdinalIgnoreCase)
+                )
+                || (
                     itm.Category != null
                     && itm.Category.Name.Contains(t, StringComparison.OrdinalIgnoreCase)
                 )
@@ -560,7 +564,8 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
             item.CreatedAt,
             item.ModifiedAt,
             item.Attachments.Count,
-            primaryPhoto
+            primaryPhoto,
+            item.BarcodeNumber
         );
     }
 

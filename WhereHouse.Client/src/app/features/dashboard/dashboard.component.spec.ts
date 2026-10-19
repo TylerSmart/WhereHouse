@@ -19,6 +19,8 @@ import { CategoryManagerDialogComponent } from './category-manager-dialog/catego
 import { DashboardComponent } from './dashboard.component';
 import { LabelGeneratorDialogComponent } from './label-generator-dialog/label-generator-dialog.component';
 import { ScannerDialogComponent } from './scanner-dialog/scanner-dialog.component';
+import { RapidIntakeDialogComponent } from './rapid-intake-dialog/rapid-intake-dialog.component';
+import { ImportExportDialogComponent } from './import-export-dialog/import-export-dialog.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -549,6 +551,50 @@ describe('DashboardComponent', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           preselectedLabels: [expect.objectContaining({ code: 'ITM-001' })],
+        }),
+      }),
+    );
+  });
+
+  it('should open rapid intake dialog and refresh if items created', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of({ createdCount: 2, items: [] }),
+    });
+
+    component.openRapidIntakeDialog('loc-1');
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      RapidIntakeDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          initialLocationId: 'loc-1',
+        }),
+      }),
+    );
+  });
+
+  it('should open import export dialog and refresh if imported', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of({ imported: true }),
+    });
+
+    component.openImportExportDialog();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(ImportExportDialogComponent, expect.any(Object));
+  });
+
+  it('should open clone item dialog with cloneFromItem data', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openCloneItemDialog(mockItems[0]);
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        data: expect.objectContaining({
+          cloneFromItem: mockItems[0],
         }),
       }),
     );
