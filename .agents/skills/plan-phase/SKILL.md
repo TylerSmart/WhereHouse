@@ -22,13 +22,13 @@ This skill is designed to be run by a **high-reasoning model** during the **Plan
    - If there are uncommitted changes or an unmerged phase in progress, alert the user before switching branches.
 
 ### 2. Assess Current Progress (Minimal Token Scan)
-1. Read [`docs/PRD.md`](../../../docs/PRD.md) (specifically Section 6 Roadmap and the relevant functional sections).
+1. Read [`docs/prd.md`](../../../docs/prd.md) (specifically Section 6 Roadmap and the relevant functional sections).
 2. Check existing plans in `docs/plans/` (if any) and list the current entities in `WhereHouse.Data/Entities/` and features in `WhereHouse.Client/src/app/features/` to determine what has already been built on `main`.
 3. If the user did not specify which phase or slice to plan, identify the **next unbuilt vertical slice** in the current Milestone and choose a concise phase number and kebab-case slug (e.g., `01-location-hierarchy`).
    - *Sizing Rule:* Keep a single phase scoped to **1–3 closely related vertical slices** (e.g., *"Phase 01: Location & Movable Container Hierarchy + Sample Todo Cleanup"* or *"Phase 02: Categories, Attribute Templates & Core Items"*). If a Milestone is huge, break it into 2–3 digestible phases so the execution model's context window stays clean.
 
 ### 3. Clarify Only Unresolved Product Decisions
-- Do **not** ask questions that are already answered in [`docs/PRD.md`](../../../docs/PRD.md) or [`.agents/rules/`](../../rules/).
+- Do **not** ask questions that are already answered in [`docs/prd.md`](../../../docs/prd.md) or [`.agents/rules/`](../../rules/).
 - If there is a genuine UX or business-logic ambiguity not covered by the PRD, use `ask_question` to resolve it with the user before writing the plan.
 
 ### 4. Create the Phase Branch & Draft the Blueprint (`docs/plans/phase-<NN>-<slug>.md`)

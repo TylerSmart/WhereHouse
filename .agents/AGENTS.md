@@ -18,7 +18,7 @@
 
 | Path | Responsibility |
 | :--- | :--- |
-| `docs/PRD.md` | **Source of Truth** for product requirements, domain entities, and Milestones 1–4. |
+| `docs/prd.md` | **Source of Truth** for product requirements, domain entities, and Milestones 1–4. |
 | `WhereHouse.Core/` | Domain interfaces (`I*Service`, `IUserContext`), immutable `record` DTOs/Requests, and `DomainExceptions`. **Zero EF Core or HTTP dependencies.** |
 | `WhereHouse.Data/` | `WhereHouseDbContext`, EF entities (`Entities/`), fluent configs (`Configurations/`), `AuditSaveChangesInterceptor`, and data-backed services (`Services/`). |
 | `WhereHouse.Infrastructure/` | Auth token generation (`JwtTokenService`), external OIDC (`OidcService`), file/external integrations. |
@@ -39,5 +39,5 @@
 
 ## 4. Two-Phase Development Skills (`.agents/skills/`)
 
-- **`/plan-phase`** ([`.agents/skills/plan-phase/SKILL.md`](skills/plan-phase/SKILL.md)): Run with a **high-thinking model** to design the next vertical slice/phase from `docs/PRD.md` and output a zero-ambiguity blueprint in `docs/plans/phase-<NN>-<slug>.md`.
+- **`/plan-phase`** ([`.agents/skills/plan-phase/SKILL.md`](skills/plan-phase/SKILL.md)): Run with a **high-thinking model** to design the next vertical slice/phase from `docs/prd.md` and output a zero-ambiguity blueprint in `docs/plans/phase-<NN>-<slug>.md`.
 - **`/execute-phase`** ([`.agents/skills/execute-phase/SKILL.md`](skills/execute-phase/SKILL.md)): Run with a **regular/fast implementation model** to execute the latest blueprint in `docs/plans/` step-by-step (including automatic EF Core migrations and the mandatory test-and-fix loop).

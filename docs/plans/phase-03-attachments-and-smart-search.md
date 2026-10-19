@@ -2,7 +2,7 @@
 
 > **Branch:** `feature/phase-03-attachments-and-smart-search`
 > **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
-> **PRD Reference:** `docs/PRD.md` — Sections 4.6.1 (`Multi-File Attachment Vault`), 4.7.1 (`Graveyard Search Behavior`), 4.8.1 (`Smart Search & Deep Filtering`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
+> **PRD Reference:** `docs/prd.md` — Sections 4.6.1 (`Multi-File Attachment Vault`), 4.7.1 (`Graveyard Search Behavior`), 4.8.1 (`Smart Search & Deep Filtering`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
 ---

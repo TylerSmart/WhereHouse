@@ -7,7 +7,7 @@
 
 Organize everything you own across houses, rooms, shelves, and movable bins; print and scan QR labels with your phone camera for "X-Ray" bin inspection; check out tools and reusable project loadouts without losing track of their permanent home location; and store manuals, receipts, and warranty schedules in one place.
 
-- **[Product Requirements Document (PRD)](docs/PRD.md)** — Full domain model, user workflows, and milestone roadmap.
+- **[Product Requirements Document (PRD)](docs/prd.md)** — Full domain model, user workflows, and milestone roadmap.
 - **[TrueNAS Scale Deployment Guide](docs/deployment/truenas-scale.md)** — Dataset setup, Docker Compose, and Nginx Proxy Manager configuration.
 - **[Contributing & Local Development Guide](docs/contributing.md)** — Local Docker SQL Server setup, EF migrations, and testing commands.
 

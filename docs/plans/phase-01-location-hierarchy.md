@@ -2,7 +2,7 @@
 
 > **Branch:** `feature/phase-01-location-hierarchy`
 > **Status:** Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
-> **PRD Reference:** `docs/PRD.md` — Sections 4.1 (`Spatial Hierarchy & Movable Containers`), 4.3.1 (`Identifiers & QR Encoding`), 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`), and 5 (`UX & Responsive Design Principles`)
+> **PRD Reference:** `docs/prd.md` — Sections 4.1 (`Spatial Hierarchy & Movable Containers`), 4.3.1 (`Identifiers & QR Encoding`), 4.8.2 (`Household User Accounts & "Secret / Gift Mode"`), and 5 (`UX & Responsive Design Principles`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
 ---
