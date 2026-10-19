@@ -99,6 +99,24 @@ public sealed class InventoryItem : IAuditable
 
     public ICollection<LoadoutItem> LoadoutMemberships { get; set; } = new List<LoadoutItem>();
 
+    public decimal? StagingTargetPrice { get; set; }
+
+    public string? StagingListingNotes { get; set; }
+
+    public DateTimeOffset? StagedAt { get; set; }
+
+    public DispositionReason? DispositionReason { get; set; }
+
+    public string? DispositionNote { get; set; }
+
+    public decimal? SalePrice { get; set; }
+
+    public DateTimeOffset? ArchivedAt { get; set; }
+
+    public Guid? ArchivedByUserId { get; set; }
+
+    public string? ArchivedByUsername { get; set; }
+
     public DateTimeOffset LastTouchedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

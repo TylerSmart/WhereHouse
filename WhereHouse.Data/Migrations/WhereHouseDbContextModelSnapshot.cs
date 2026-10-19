@@ -230,6 +230,16 @@ namespace WhereHouse.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ArchivedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArchivedByUsername")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<string>("BarcodeNumber")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -284,6 +294,13 @@ namespace WhereHouse.Data.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("DispositionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("DispositionReason")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("EstimatedReplacementValue")
                         .HasPrecision(18, 2)
@@ -342,6 +359,10 @@ namespace WhereHouse.Data.Migrations
                     b.Property<DateTimeOffset?>("ReturnWindowEndDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<decimal?>("SalePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -350,6 +371,17 @@ namespace WhereHouse.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTimeOffset?>("StagedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("StagingListingNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("StagingTargetPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -377,9 +409,13 @@ namespace WhereHouse.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("DispositionReason");
+
                     b.HasIndex("HomeLocationId");
 
                     b.HasIndex("ItemType");
+
+                    b.HasIndex("LastTouchedAt");
 
                     b.HasIndex("OwnerId");
 

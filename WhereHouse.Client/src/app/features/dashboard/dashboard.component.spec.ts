@@ -22,6 +22,9 @@ import { ScannerDialogComponent } from './scanner-dialog/scanner-dialog.componen
 import { RapidIntakeDialogComponent } from './rapid-intake-dialog/rapid-intake-dialog.component';
 import { ImportExportDialogComponent } from './import-export-dialog/import-export-dialog.component';
 import { CheckoutLoadoutService } from '../../core/services/checkout-loadout/checkout-loadout.service';
+import { LifecycleService } from '../../core/services/lifecycle/lifecycle.service';
+import { DeclutterGraveyardDialogComponent } from './declutter-graveyard-dialog/declutter-graveyard-dialog.component';
+import { StageArchiveDialogComponent } from './stage-archive-dialog/stage-archive-dialog.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -276,6 +279,10 @@ describe('DashboardComponent', () => {
     returnItem: ReturnType<typeof vi.fn>;
   };
 
+  let mockLifecycleService: {
+    unstageItem: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
     mockLocationService = {
       getTree: vi.fn().mockReturnValue(of(mockTree)),
@@ -329,12 +336,17 @@ describe('DashboardComponent', () => {
       returnItem: vi.fn().mockReturnValue(of(mockItems[0])),
     };
 
+    mockLifecycleService = {
+      unstageItem: vi.fn().mockReturnValue(of(mockItems[0])),
+    };
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         { provide: LocationService, useValue: mockLocationService },
         { provide: CategoryService, useValue: mockCategoryService },
         { provide: ItemService, useValue: mockItemService },
+        { provide: LifecycleService, useValue: mockLifecycleService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: CheckoutLoadoutService, useValue: mockCheckoutLoadoutService },
         { provide: MatDialog, useValue: mockDialog },
@@ -618,5 +630,47 @@ describe('DashboardComponent', () => {
         }),
       }),
     );
+  });
+
+  it('should open declutter graveyard dialog and refresh on close', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(undefined),
+    });
+
+    component.openDeclutterGraveyardDialog('staged');
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      DeclutterGraveyardDialogComponent,
+      expect.objectContaining({
+        data: { initialTab: 'staged' },
+      }),
+    );
+    expect(mockItemService.getItems).toHaveBeenCalled();
+  });
+
+  it('should open stage archive dialog and refresh if changed', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(true),
+    });
+
+    component.openStageArchiveDialog(mockItems[0], 'stage');
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      StageArchiveDialogComponent,
+      expect.objectContaining({
+        data: { item: mockItems[0], initialMode: 'stage' },
+      }),
+    );
+    expect(mockItemService.getItems).toHaveBeenCalled();
+  });
+
+  it('should unstage item and refresh', () => {
+    component.unstageItem(mockItems[0]);
+
+    expect(mockLifecycleService.unstageItem).toHaveBeenCalledWith(mockItems[0].id);
+    expect(mockSnackBar.open).toHaveBeenCalledWith(`Unstaged "${mockItems[0].name}"`, 'Close', {
+      duration: 3000,
+    });
+    expect(mockItemService.getItems).toHaveBeenCalled();
   });
 });

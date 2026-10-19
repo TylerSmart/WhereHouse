@@ -157,6 +157,18 @@
         }
       </button>
 
+      <!-- Declutter & Graveyard -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="declutter-btn"
+        (click)="openDeclutterGraveyardDialog()"
+        matTooltip="Declutter Staging, Dust Collectors &amp; Graveyard"
+      >
+        <mat-icon>recycling</mat-icon>
+        <span class="desktop-only">Declutter</span>
+      </button>
+
       <!-- Theme Switcher -->
       <button
         mat-icon-button
@@ -787,6 +799,24 @@
                               <span>Print QR Label</span>
                             </button>
                             <mat-divider></mat-divider>
+                            <button mat-menu-item (click)="openStageArchiveDialog(item, 'stage')">
+                              <mat-icon>sell</mat-icon>
+                              <span>Stage to Sell / Donate...</span>
+                            </button>
+                            @if (
+                              item.status === ItemStatuses.StagedToSell ||
+                              item.status === ItemStatuses.StagedToDonate
+                            ) {
+                              <button mat-menu-item (click)="unstageItem(item)">
+                                <mat-icon>undo</mat-icon>
+                                <span>Unstage (Keep)</span>
+                              </button>
+                            }
+                            <button mat-menu-item (click)="openStageArchiveDialog(item, 'archive')">
+                              <mat-icon>inventory_2</mat-icon>
+                              <span>Archive to Graveyard...</span>
+                            </button>
+                            <mat-divider></mat-divider>
                             <button mat-menu-item (click)="deleteItem(item)">
                               <mat-icon color="warn">delete</mat-icon>
                               <span>Delete</span>
@@ -843,6 +873,41 @@
                               item.incompleteKitWarnings.length === 1 ? '' : 's'
                             }})</span
                           >
+                        </div>
+                      }
+
+                      <!-- Declutter Staged Banner -->
+                      @if (
+                        item.status === ItemStatuses.StagedToSell ||
+                        item.status === ItemStatuses.StagedToDonate
+                      ) {
+                        <div
+                          class="staged-status-banner"
+                          [class.donate]="item.status === ItemStatuses.StagedToDonate"
+                        >
+                          <mat-icon class="staged-icon">{{
+                            item.status === ItemStatuses.StagedToSell
+                              ? 'sell'
+                              : 'volunteer_activism'
+                          }}</mat-icon>
+                          <div class="staged-banner-text">
+                            <span class="staged-title">
+                              {{
+                                item.status === ItemStatuses.StagedToSell
+                                  ? 'Staged to Sell'
+                                  : 'Staged to Donate'
+                              }}
+                              @if (
+                                item.stagingTargetPrice !== null &&
+                                item.stagingTargetPrice !== undefined
+                              ) {
+                                &bull; {{ item.stagingTargetPrice | currency }}
+                              }
+                            </span>
+                            @if (item.stagingListingNotes) {
+                              <span class="staged-sub">{{ item.stagingListingNotes }}</span>
+                            }
+                          </div>
                         </div>
                       }
 

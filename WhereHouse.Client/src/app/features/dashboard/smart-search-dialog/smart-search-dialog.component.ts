@@ -10,11 +10,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CategoryAttributeTemplateDto, CategoryDto } from '../../../core/models/category.models';
-import { ItemDto } from '../../../core/models/item.models';
+import { DISPOSITION_REASON_LABELS, ItemDto } from '../../../core/models/item.models';
 import { LocationNodeDto } from '../../../core/models/location.models';
 import { SmartSearchParams, SmartSearchResponseDto } from '../../../core/models/search.models';
+import { LifecycleService } from '../../../core/services/lifecycle/lifecycle.service';
 import { SearchService } from '../../../core/services/search/search.service';
 
 export interface SmartSearchDialogData {
@@ -326,19 +328,45 @@ export type SmartSearchResultAction =
                         <div class="item-title-line">
                           <span class="item-code">{{ arch.shortCode }}</span>
                           <span class="item-name">{{ arch.name }}</span>
-                          <span class="archived-badge">Archived</span>
+                          <span class="archived-badge">
+                            {{
+                              arch.dispositionReason !== null &&
+                              arch.dispositionReason !== undefined
+                                ? dispositionReasonLabels[arch.dispositionReason]
+                                : 'Archived'
+                            }}
+                          </span>
+                          @if (arch.archivedAt) {
+                            <span class="archived-date">{{
+                              arch.archivedAt | date: 'mediumDate'
+                            }}</span>
+                          }
+                          @if (arch.salePrice !== null && arch.salePrice !== undefined) {
+                            <span class="archived-price">{{ arch.salePrice | currency }}</span>
+                          }
                         </div>
                         <div class="item-sub-line">
-                          @if (arch.homeLocationFullPath) {
-                            <span>Last known location: {{ arch.homeLocationFullPath }}</span>
+                          <span>Previously in {{ arch.homeLocationFullPath || 'Unassigned' }}</span>
+                          @if (arch.dispositionNote) {
+                            <span class="archived-note">&bull; {{ arch.dispositionNote }}</span>
                           }
                         </div>
                       </div>
                       <div class="item-actions-col">
                         <button
                           mat-icon-button
+                          color="primary"
+                          (click)="restoreItem(arch)"
+                          matTooltip="Restore to Home Bin"
+                          aria-label="Restore to Home Bin"
+                        >
+                          <mat-icon>restore_from_trash</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
                           (click)="openAttachments(arch)"
                           matTooltip="Attachments Vault"
+                          aria-label="Attachments Vault"
                         >
                           <mat-icon>attach_file</mat-icon>
                         </button>
@@ -346,6 +374,7 @@ export type SmartSearchResultAction =
                           mat-icon-button
                           (click)="editItem(arch)"
                           matTooltip="View / Edit Item"
+                          aria-label="View / Edit Item"
                         >
                           <mat-icon>edit</mat-icon>
                         </button>
@@ -702,6 +731,15 @@ export type SmartSearchResultAction =
       border-radius: 4px;
       font-weight: 600;
     }
+    .archived-date,
+    .archived-price {
+      font-size: 0.75rem;
+      color: var(--mat-sys-outline);
+    }
+    .archived-note {
+      font-style: italic;
+      color: var(--mat-sys-on-surface-variant);
+    }
     .dialog-footer {
       display: flex;
       align-items: center;
@@ -727,7 +765,10 @@ export class SmartSearchDialogComponent implements OnInit {
   protected readonly data = inject<SmartSearchDialogData>(MAT_DIALOG_DATA);
   protected readonly dialogRef = inject(MatDialogRef<SmartSearchDialogComponent>);
   private readonly searchService = inject(SearchService);
+  private readonly lifecycleService = inject(LifecycleService);
+  private readonly snackBar = inject(MatSnackBar);
 
+  protected readonly dispositionReasonLabels = DISPOSITION_REASON_LABELS;
   protected readonly query = signal<string>(this.data.initialQuery ?? '');
   protected readonly filtersOpen = signal<boolean>(false);
   protected readonly locationId = signal<string | null>(null);
@@ -841,5 +882,21 @@ export class SmartSearchDialogComponent implements OnInit {
 
   openAttachments(item: ItemDto): void {
     this.dialogRef.close({ action: 'openAttachments', item } as SmartSearchResultAction);
+  }
+
+  restoreItem(item: ItemDto): void {
+    this.loading.set(true);
+    this.lifecycleService.restoreArchivedItem(item.id).subscribe({
+      next: (restored) => {
+        this.snackBar.open(`Restored ${restored.name} to Home Bin!`, 'Close', { duration: 3000 });
+        this.executeSearch();
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.snackBar.open(err?.error?.detail || 'Failed to restore item.', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
   }
 }

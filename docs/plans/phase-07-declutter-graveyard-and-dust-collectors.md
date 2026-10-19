@@ -1,7 +1,7 @@
 # Phase 07: Declutter Staging, The "Graveyard" Archive & Dust Collector Insights
 
 > **Branch:** `feature/phase-07-declutter-graveyard-and-dust-collectors`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** [x] Completed
 > **PRD Reference:** `docs/prd.md` — Sections 4.5 (`Lifecycle State Transitions`), 4.7.1 (`The "Graveyard / Archive" System`), 4.7.2 (`"Staging to Sell / Donate" Workflow`), 4.7.3 (`"Dust Collector" Insights`), 4.8.1 (`Smart Search Graveyard Section`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -526,7 +526,7 @@ This phase completes **Milestone 3 (Movement & Projects)** by delivering the com
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
   - Update `WhereHouse.Core/Items/ItemModels.cs` with `DispositionReason` enum and optional staging/archive fields on `ItemDto`.
   - Create `WhereHouse.Core/Lifecycle/LifecycleModels.cs` and `WhereHouse.Core/Lifecycle/ILifecycleService.cs`.
   - Update `WhereHouse.Data/Entities/InventoryItem.cs` and `WhereHouse.Data/Configurations/InventoryItemConfiguration.cs` with staging and archive columns/indexes.
@@ -544,7 +544,7 @@ This phase completes **Milestone 3 (Movement & Projects)** by delivering the com
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controller & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controller & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Create `WhereHouse.API/Controllers/LifecycleController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/lifecycle"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/LifecycleIntegrationTests.cs` covering:
@@ -558,7 +558,7 @@ This phase completes **Milestone 3 (Movement & Projects)** by delivering the com
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Update `src/app/core/models/item.models.ts` and create `src/app/core/models/lifecycle.models.ts`.
   - Create `LifecycleService` (`src/app/core/services/lifecycle/lifecycle.service.ts` & `.spec.ts`).
   - Create `StageArchiveDialogComponent` (`src/app/features/dashboard/stage-archive-dialog/stage-archive-dialog.component.ts` & `.spec.ts`).
@@ -572,7 +572,7 @@ This phase completes **Milestone 3 (Movement & Projects)** by delivering the com
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

@@ -31,6 +31,15 @@ public enum ItemCondition
     Broken = 4,
 }
 
+public enum DispositionReason
+{
+    Sold = 0,
+    Donated = 1,
+    Recycled = 2,
+    BrokenTrashed = 3,
+    Consumed = 4,
+}
+
 public sealed record ItemAttributeValueDto(
     Guid Id,
     Guid? AttributeTemplateId,
@@ -107,7 +116,16 @@ public sealed record ItemDto(
     DateTimeOffset? CheckoutDueAt = null,
     bool IsOverdueLoan = false,
     Guid? ActiveLoadoutId = null,
-    string? ActiveLoadoutName = null
+    string? ActiveLoadoutName = null,
+    decimal? StagingTargetPrice = null,
+    string? StagingListingNotes = null,
+    DateTimeOffset? StagedAt = null,
+    DispositionReason? DispositionReason = null,
+    string? DispositionNote = null,
+    decimal? SalePrice = null,
+    DateTimeOffset? ArchivedAt = null,
+    Guid? ArchivedByUserId = null,
+    string? ArchivedByUsername = null
 );
 
 public sealed record UpsertItemAttributeValueRequest(

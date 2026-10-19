@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WhereHouse.Core.Exceptions;
+using WhereHouse.Core.Items;
 using WhereHouse.Core.Locations;
 using WhereHouse.Core.QrCodes;
 using WhereHouse.Data.Entities;
@@ -97,6 +98,7 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
                 i.HomeLocationId,
                 i.IsPrivate,
                 i.OwnerId,
+                i.Status,
             })
             .ToListAsync(cancellationToken);
 
@@ -106,6 +108,7 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
                 i.HomeLocationId.HasValue
                 && accessibleLocationIds.Contains(i.HomeLocationId.Value)
                 && (!i.IsPrivate || i.OwnerId == userId)
+                && i.Status != ItemStatus.Archived
             )
             .GroupBy(i => i.HomeLocationId!.Value)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -203,7 +206,10 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             n.ParentId == id && IsAccessible(n, userId, allNodes)
         );
         var itemCount = await dbContext.InventoryItems.CountAsync(
-            i => i.HomeLocationId == id && (!i.IsPrivate || i.OwnerId == userId),
+            i =>
+                i.HomeLocationId == id
+                && (!i.IsPrivate || i.OwnerId == userId)
+                && i.Status != ItemStatus.Archived,
             cancellationToken
         );
 

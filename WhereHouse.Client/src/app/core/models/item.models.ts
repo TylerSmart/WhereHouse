@@ -30,6 +30,24 @@ export const ItemConditions = {
   Broken: 4 as ItemCondition,
 } as const;
 
+export type DispositionReason = 0 | 1 | 2 | 3 | 4;
+
+export const DispositionReasons = {
+  Sold: 0 as DispositionReason,
+  Donated: 1 as DispositionReason,
+  Recycled: 2 as DispositionReason,
+  BrokenTrashed: 3 as DispositionReason,
+  Consumed: 4 as DispositionReason,
+} as const;
+
+export const DISPOSITION_REASON_LABELS: Record<DispositionReason, string> = {
+  0: 'Sold',
+  1: 'Donated',
+  2: 'Recycled / Scrapped',
+  3: 'Broken / Trashed',
+  4: 'Consumed / Depleted',
+};
+
 export interface ItemAttributeValueDto {
   id: string;
   attributeTemplateId: string | null;
@@ -107,6 +125,15 @@ export interface ItemDto {
   isOverdueLoan?: boolean;
   activeLoadoutId?: string | null;
   activeLoadoutName?: string | null;
+  stagingTargetPrice?: number | null;
+  stagingListingNotes?: string | null;
+  stagedAt?: string | null;
+  dispositionReason?: DispositionReason | null;
+  dispositionNote?: string | null;
+  salePrice?: number | null;
+  archivedAt?: string | null;
+  archivedByUserId?: string | null;
+  archivedByUsername?: string | null;
 }
 
 export interface UpsertItemAttributeValueRequest {

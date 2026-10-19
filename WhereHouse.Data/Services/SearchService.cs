@@ -312,6 +312,14 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
                     a.FileName.Contains(t, StringComparison.OrdinalIgnoreCase)
                     || (a.Notes != null && a.Notes.Contains(t, StringComparison.OrdinalIgnoreCase))
                 )
+                || (
+                    itm.DispositionNote != null
+                    && itm.DispositionNote.Contains(t, StringComparison.OrdinalIgnoreCase)
+                )
+                || (
+                    itm.StagingListingNotes != null
+                    && itm.StagingListingNotes.Contains(t, StringComparison.OrdinalIgnoreCase)
+                )
             );
 
             if (matchesAllTokens)
@@ -577,7 +585,16 @@ public sealed class SearchService(WhereHouseDbContext dbContext) : ISearchServic
                 && item.CheckoutDueAt.HasValue
                 && item.CheckoutDueAt.Value < DateTimeOffset.UtcNow,
             item.ActiveLoadoutId,
-            item.ActiveLoadoutName
+            item.ActiveLoadoutName,
+            item.StagingTargetPrice,
+            item.StagingListingNotes,
+            item.StagedAt,
+            item.DispositionReason,
+            item.DispositionNote,
+            item.SalePrice,
+            item.ArchivedAt,
+            item.ArchivedByUserId,
+            item.ArchivedByUsername
         );
     }
 
