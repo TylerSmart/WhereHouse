@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WhereHouse.Core.ActionCenter;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Storage;
 using WhereHouse.Infrastructure.Authentication;
+using WhereHouse.Infrastructure.Notifications;
 using WhereHouse.Infrastructure.Storage;
 
 namespace WhereHouse.Infrastructure;
@@ -27,6 +29,8 @@ public static class InfrastructureServiceCollectionExtensions
             configuration.GetSection(FileStorageOptions.SectionName)
         );
         services.AddSingleton<IFileStorageService, LocalDiskFileStorageService>();
+
+        services.AddHttpClient<INotificationDispatcher, NotificationDispatcher>();
 
         return services;
     }

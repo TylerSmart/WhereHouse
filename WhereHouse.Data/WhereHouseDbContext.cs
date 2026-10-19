@@ -33,6 +33,11 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 
     public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
 
+    public DbSet<NotificationChannel> NotificationChannels => Set<NotificationChannel>();
+
+    public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs =>
+        Set<NotificationDeliveryLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(WhereHouseDbContext).Assembly);

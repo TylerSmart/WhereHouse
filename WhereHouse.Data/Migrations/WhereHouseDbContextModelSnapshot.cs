@@ -874,6 +874,184 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("MaintenanceSchedules", (string)null);
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.NotificationChannel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccessTokenOrKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ChannelType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("DigestDayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DigestHourUtc")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("EnableWeeklyDigest")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("EndpointUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSharedHouseholdChannel")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastDeliveryStatus")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("LastTriggeredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("NotifyOnExpiringWarranties")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("NotifyOnLowStock")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("NotifyOnMaintenanceDue")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("NotifyOnOverdueLoans")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RecipientOrUserKey")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SmtpFromAddress")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SmtpHost")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("SmtpPort")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("SmtpUseSsl")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SmtpUsername")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsEnabled");
+
+                    b.HasIndex("IsSharedHouseholdChannel");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("NotificationChannels", (string)null);
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.NotificationDeliveryLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ChannelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChannelName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("ChannelType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("DeliveredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MessageBody")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ResponseSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelId");
+
+                    b.HasIndex("DeliveredAt");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("NotificationDeliveryLogs", (string)null);
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1178,6 +1356,28 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.NotificationChannel", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.NotificationDeliveryLog", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.NotificationChannel", "Channel")
+                        .WithMany("DeliveryLogs")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
                 {
                     b.HasOne("WhereHouse.Data.Entities.User", "BoundByUser")
@@ -1253,6 +1453,11 @@ namespace WhereHouse.Data.Migrations
             modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceSchedule", b =>
                 {
                     b.Navigation("Logs");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.NotificationChannel", b =>
+                {
+                    b.Navigation("DeliveryLogs");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>

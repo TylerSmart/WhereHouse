@@ -81,6 +81,12 @@ import {
   InsuranceExportDialogComponent,
   InsuranceExportDialogData,
 } from './insurance-export-dialog/insurance-export-dialog.component';
+import {
+  ActionCenterDialogComponent,
+  ActionCenterDialogData,
+} from './action-center-dialog/action-center-dialog.component';
+import { ActionCenterOverviewDto } from '../../core/models/action-center.models';
+import { ActionCenterService } from '../../core/services/action-center/action-center.service';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -128,8 +134,13 @@ export class DashboardComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
   protected readonly checkoutLoadoutService = inject(CheckoutLoadoutService);
+  private readonly actionCenterService = inject(ActionCenterService);
 
   readonly cartCount = computed(() => this.checkoutLoadoutService.cartItems().length);
+  readonly actionCenterOverview = signal<ActionCenterOverviewDto | null>(null);
+  readonly actionCenterAlertCount = computed(
+    () => this.actionCenterOverview()?.totalAlertsCount ?? 0,
+  );
 
   protected readonly LocationNodeTypes = LocationNodeTypes;
   protected readonly ItemTypes = ItemTypes;
@@ -300,6 +311,19 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage.set(err?.error?.detail || err?.error?.title || 'Failed to load items.');
+      },
+    });
+
+    this.loadActionCenterOverview();
+  }
+
+  loadActionCenterOverview(): void {
+    this.actionCenterService.getOverview().subscribe({
+      next: (overview) => {
+        this.actionCenterOverview.set(overview);
+      },
+      error: () => {
+        // Silently handle overview load error
       },
     });
   }
@@ -992,6 +1016,28 @@ export class DashboardComponent implements OnInit {
         maxWidth: '96vw',
       },
     );
+  }
+
+  openActionCenterDialog(
+    initialFilter:
+      'all' | 'out-of-place' | 'loans' | 'maintenance' | 'warranties' | 'low-stock' = 'all',
+    initialTab: 'alerts' | 'channels' | 'history' = 'alerts',
+  ): void {
+    const ref = this.dialog.open<ActionCenterDialogComponent, ActionCenterDialogData>(
+      ActionCenterDialogComponent,
+      {
+        data: {
+          initialFilter,
+          initialTab,
+        },
+        width: '960px',
+        maxWidth: '96vw',
+      },
+    );
+
+    ref.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
   }
 
   onLogout(): void {

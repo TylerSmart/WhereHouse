@@ -193,6 +193,21 @@
         <span class="desktop-only">Insurance Claim</span>
       </button>
 
+      <!-- Action Center -->
+      <button
+        type="button"
+        mat-stroked-button
+        class="action-center-btn"
+        (click)="openActionCenterDialog()"
+        matTooltip="Household Action Center: Out of Place, Overdue Loans, Maintenance, Warranties &amp; Low Stock"
+      >
+        <mat-icon>notifications_active</mat-icon>
+        <span class="desktop-only">Action Center</span>
+        @if (actionCenterAlertCount() > 0) {
+          <span class="alert-pill-badge">{{ actionCenterAlertCount() }}</span>
+        }
+      </button>
+
       <!-- Theme Switcher -->
       <button
         mat-icon-button
@@ -432,6 +447,114 @@
             }
           </div>
         </mat-card>
+      }
+
+      <!-- Action Center Summary Strip (Root view when alerts present) -->
+      @if (!selectedNode() && !searchQuery() && actionCenterAlertCount() > 0) {
+        <div class="action-center-strip">
+          <div class="strip-header">
+            <div class="strip-title">
+              <mat-icon class="strip-icon">notifications_active</mat-icon>
+              <h4>Household Action Center</h4>
+              <span class="strip-badge">{{ actionCenterAlertCount() }} Active</span>
+            </div>
+            <button
+              mat-button
+              color="primary"
+              (click)="openActionCenterDialog('all')"
+              class="view-all-btn"
+            >
+              <span>View All Alerts &amp; Manage Channels</span>
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+
+          <div class="strip-cards-row">
+            @if ((actionCenterOverview()?.outOfPlaceCount ?? 0) > 0) {
+              <button
+                type="button"
+                class="strip-card out-of-place"
+                (click)="openActionCenterDialog('out-of-place')"
+              >
+                <div class="card-icon"><mat-icon>assignment_return</mat-icon></div>
+                <div class="card-details">
+                  <span class="count">{{ actionCenterOverview()?.outOfPlaceCount }}</span>
+                  <span class="label">Out of Place</span>
+                </div>
+              </button>
+            }
+
+            @if ((actionCenterOverview()?.activeLoansCount ?? 0) > 0) {
+              <button
+                type="button"
+                class="strip-card loans"
+                [class.has-overdue]="(actionCenterOverview()?.overdueLoansCount ?? 0) > 0"
+                (click)="openActionCenterDialog('loans')"
+              >
+                <div class="card-icon"><mat-icon>person_search</mat-icon></div>
+                <div class="card-details">
+                  <span class="count">{{ actionCenterOverview()?.activeLoansCount }}</span>
+                  <span class="label">
+                    Loans
+                    @if ((actionCenterOverview()?.overdueLoansCount ?? 0) > 0) {
+                      <strong>({{ actionCenterOverview()?.overdueLoansCount }} overdue)</strong>
+                    }
+                  </span>
+                </div>
+              </button>
+            }
+
+            @if ((actionCenterOverview()?.maintenanceDueCount ?? 0) > 0) {
+              <button
+                type="button"
+                class="strip-card maintenance"
+                [class.has-overdue]="(actionCenterOverview()?.maintenanceOverdueCount ?? 0) > 0"
+                (click)="openActionCenterDialog('maintenance')"
+              >
+                <div class="card-icon"><mat-icon>build_circle</mat-icon></div>
+                <div class="card-details">
+                  <span class="count">{{ actionCenterOverview()?.maintenanceDueCount }}</span>
+                  <span class="label">
+                    Maintenance
+                    @if ((actionCenterOverview()?.maintenanceOverdueCount ?? 0) > 0) {
+                      <strong
+                        >({{ actionCenterOverview()?.maintenanceOverdueCount }} overdue)</strong
+                      >
+                    }
+                  </span>
+                </div>
+              </button>
+            }
+
+            @if ((actionCenterOverview()?.expiringCoverageCount ?? 0) > 0) {
+              <button
+                type="button"
+                class="strip-card warranties"
+                (click)="openActionCenterDialog('warranties')"
+              >
+                <div class="card-icon"><mat-icon>verified</mat-icon></div>
+                <div class="card-details">
+                  <span class="count">{{ actionCenterOverview()?.expiringCoverageCount }}</span>
+                  <span class="label">Expiring Coverages</span>
+                </div>
+              </button>
+            }
+
+            @if ((actionCenterOverview()?.lowStockCount ?? 0) > 0) {
+              <button
+                type="button"
+                class="strip-card low-stock"
+                (click)="openActionCenterDialog('low-stock')"
+              >
+                <div class="card-icon"><mat-icon>production_quantity_limits</mat-icon></div>
+                <div class="card-details">
+                  <span class="count">{{ actionCenterOverview()?.lowStockCount }}</span>
+                  <span class="label">Low Stock</span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
       }
 
       <!-- Filter Controls & Header -->

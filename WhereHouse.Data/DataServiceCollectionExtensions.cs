@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WhereHouse.Core.ActionCenter;
 using WhereHouse.Core.Attachments;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Categories;
@@ -47,6 +48,7 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<ILifecycleService, LifecycleService>();
         services.AddScoped<IMaintenanceService, MaintenanceService>();
         services.AddScoped<IInsuranceExportService, InsuranceExportService>();
+        services.AddScoped<IActionCenterService, ActionCenterService>();
 
         if (
             string.Equals(

@@ -1,7 +1,7 @@
 # Phase 09: Action Center Dashboard & Outbound Webhook/Push Notification Engine
 
 > **Branch:** `feature/phase-09-action-center-and-webhook-notifications`
-> **Status:** [ ] Not Started
+> **Status:** [x] Completed
 > **PRD Reference:** `docs/prd.md` — Sections 4.2.1 (`Low-Stock Threshold`), 4.5.1 (`Out of Place & External Loans`), 4.6.2 (`Return Window & Warranty Lifecycle`), 4.6.3 (`Recurring Maintenance Due`), 4.8.2 (`"Secret / Gift Mode" Privacy`), and 4.8.3 (`Action Center Dashboard & Outbound Notifications`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -654,7 +654,7 @@ This phase completes **Milestone 4 (Advanced Vault & Automation)**—and the ful
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core, Infrastructure & Data Layer (`WhereHouse.Core`, `WhereHouse.Infrastructure`, `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core, Infrastructure & Data Layer (`WhereHouse.Core`, `WhereHouse.Infrastructure`, `WhereHouse.Data`)**
   - Create `WhereHouse.Core/ActionCenter/ActionCenterModels.cs`, `WhereHouse.Core/ActionCenter/INotificationDispatcher.cs`, and `WhereHouse.Core/ActionCenter/IActionCenterService.cs`.
   - Create `WhereHouse.Infrastructure/Notifications/NotificationDispatcher.cs` and register `services.AddHttpClient<INotificationDispatcher, NotificationDispatcher>();` in `WhereHouse.Infrastructure/InfrastructureServiceCollectionExtensions.cs`.
   - Create `WhereHouse.Data/Entities/NotificationChannel.cs`, `WhereHouse.Data/Entities/NotificationDeliveryLog.cs`, `WhereHouse.Data/Configurations/NotificationChannelConfiguration.cs`, and `WhereHouse.Data/Configurations/NotificationDeliveryLogConfiguration.cs`.
@@ -673,7 +673,7 @@ This phase completes **Milestone 4 (Advanced Vault & Automation)**—and the ful
     dotnet test --project Tests/WhereHouse.Infrastructure.UnitTests/WhereHouse.Infrastructure.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controller & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controller & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Create `WhereHouse.API/Controllers/ActionCenterController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/action-center"`.
   - Create `Tests/WhereHouse.API.IntegrationTests/Phase09ActionCenterAndNotificationsIntegrationTests.cs` covering:
@@ -686,7 +686,7 @@ This phase completes **Milestone 4 (Advanced Vault & Automation)**—and the ful
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Create `src/app/core/models/action-center.models.ts`.
   - Create `src/app/core/services/action-center/action-center.service.ts` (& `.spec.ts`).
   - Create `ActionCenterDialogComponent` (`src/app/features/dashboard/action-center-dialog/action-center-dialog.component.ts` & `.spec.ts`).
@@ -698,7 +698,7 @@ This phase completes **Milestone 4 (Advanced Vault & Automation)**—and the ful
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
