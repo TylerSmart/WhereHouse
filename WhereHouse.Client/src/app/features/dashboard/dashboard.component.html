@@ -17,13 +17,13 @@
     <div class="top-search-area">
       <mat-form-field appearance="outline" class="global-search-field" subscriptSizing="dynamic">
         <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-        <mat-label>Search locations, containers &amp; short codes</mat-label>
+        <mat-label>Search locations, containers, items &amp; short codes</mat-label>
         <input
           matInput
           type="search"
           [value]="searchQuery()"
           (input)="onSearchChange($event)"
-          placeholder="e.g. Garage, BIN-001, Yellow Lid..."
+          placeholder="e.g. Garage, BIN-001, Makita Drill, ITM-001..."
         />
         @if (searchQuery()) {
           <button mat-icon-button matSuffix (click)="searchQuery.set('')" aria-label="Clear search">
@@ -40,6 +40,11 @@
         <span class="desktop-only">Add</span>
       </button>
       <mat-menu #addMenu="matMenu">
+        <button mat-menu-item (click)="openCreateItemDialog()">
+          <mat-icon>category</mat-icon>
+          <span>Inventory Item</span>
+        </button>
+        <mat-divider></mat-divider>
         <button mat-menu-item (click)="openCreateDialog(LocationNodeTypes.FixedLocation)">
           <mat-icon>location_on</mat-icon>
           <span>Fixed Location (Room, Rack, Shelf)</span>
@@ -49,6 +54,17 @@
           <span>Movable Container (Bin, Tote, Box)</span>
         </button>
       </mat-menu>
+
+      <!-- Manage Categories -->
+      <button
+        mat-stroked-button
+        class="categories-btn"
+        (click)="openCategoryManagerDialog()"
+        matTooltip="Manage Categories &amp; Custom Attributes"
+      >
+        <mat-icon>folder_special</mat-icon>
+        <span class="desktop-only">Categories</span>
+      </button>
 
       <!-- Theme Switcher -->
       <button
@@ -93,6 +109,11 @@
           <span class="user-menu-name">{{ authService.currentUser()?.username }}</span>
           <span class="user-menu-email">{{ authService.currentUser()?.email }}</span>
         </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="openCategoryManagerDialog()">
+          <mat-icon>folder_special</mat-icon>
+          <span>Manage Categories</span>
+        </button>
         <mat-divider></mat-divider>
         <button mat-menu-item (click)="onLogout()">
           <mat-icon>logout</mat-icon>
@@ -180,6 +201,14 @@
                   <div class="title-with-shortcode">
                     <h2>{{ active.name }}</h2>
                     <span class="shortcode-badge">{{ active.shortCode }}</span>
+                    @if (active.itemCount) {
+                      <span class="item-count-badge" matTooltip="Total items stored here">
+                        <mat-icon>inventory</mat-icon>
+                        <span
+                          >{{ active.itemCount }} item{{ active.itemCount === 1 ? '' : 's' }}</span
+                        >
+                      </span>
+                    }
                     @if (active.isPrivate) {
                       <span
                         class="private-badge"
@@ -195,6 +224,15 @@
               </div>
 
               <div class="banner-actions">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  (click)="openCreateItemDialog(active.id)"
+                  matTooltip="Add item into this location"
+                >
+                  <mat-icon>add</mat-icon>
+                  <span>Add Item</span>
+                </button>
                 <button
                   mat-button
                   (click)="openMoveDialog(active)"
@@ -258,11 +296,11 @@
         <div class="toolbar-title-area">
           <h3>
             @if (searchQuery()) {
-              Search Results ({{ displayedNodes().length }})
+              Search Results
             } @else if (selectedNode()) {
-              Contents inside "{{ selectedNode()?.name }}" ({{ displayedNodes().length }})
+              Contents inside "{{ selectedNode()?.name }}"
             } @else {
-              Top-Level Locations ({{ displayedNodes().length }})
+              Top-Level Inventory &amp; Spaces
             }
           </h3>
         </div>
@@ -271,14 +309,14 @@
           <div class="type-filter-chips">
             <button
               class="filter-chip"
-              [class.active-chip]="filterNodeType() === 'all'"
+              [class.active-chip]="filterType() === 'all'"
               (click)="setFilterType('all')"
             >
               All
             </button>
             <button
               class="filter-chip"
-              [class.active-chip]="filterNodeType() === 'fixed'"
+              [class.active-chip]="filterType() === 'fixed'"
               (click)="setFilterType('fixed')"
             >
               <mat-icon>location_on</mat-icon>
@@ -286,23 +324,45 @@
             </button>
             <button
               class="filter-chip"
-              [class.active-chip]="filterNodeType() === 'container'"
+              [class.active-chip]="filterType() === 'container'"
               (click)="setFilterType('container')"
             >
               <mat-icon>inventory_2</mat-icon>
               <span>Containers</span>
+            </button>
+            <button
+              class="filter-chip"
+              [class.active-chip]="filterType() === 'items'"
+              (click)="setFilterType('items')"
+            >
+              <mat-icon>category</mat-icon>
+              <span>Items ({{ displayedItems().length }})</span>
             </button>
           </div>
 
           <button
             mat-flat-button
             color="primary"
-            (click)="openCreateDialog()"
+            [matMenuTriggerFor]="addInsideMenu"
             class="add-inside-btn"
           >
             <mat-icon>add</mat-icon>
             <span>Add Here</span>
           </button>
+          <mat-menu #addInsideMenu="matMenu">
+            <button mat-menu-item (click)="openCreateItemDialog(selectedNodeId())">
+              <mat-icon>category</mat-icon>
+              <span>Item Here</span>
+            </button>
+            <button mat-menu-item (click)="openCreateDialog(LocationNodeTypes.FixedLocation)">
+              <mat-icon>location_on</mat-icon>
+              <span>Sub-Location</span>
+            </button>
+            <button mat-menu-item (click)="openCreateDialog(LocationNodeTypes.MovableContainer)">
+              <mat-icon>inventory_2</mat-icon>
+              <span>Container</span>
+            </button>
+          </mat-menu>
         </div>
       </div>
 
@@ -324,26 +384,34 @@
           <span>Loading spatial inventory...</span>
         </div>
       } @else {
-        <!-- Empty State -->
-        @if (displayedNodes().length === 0) {
+        <!-- Completely Empty State -->
+        @if (displayedNodes().length === 0 && displayedItems().length === 0) {
           <div class="empty-state">
             <mat-icon aria-hidden="true">
               {{ searchQuery() ? 'search_off' : 'inventory_2' }}
             </mat-icon>
             @if (searchQuery()) {
-              <h2>No locations or containers found</h2>
+              <h2>No inventory or locations found</h2>
               <p>No results match "{{ searchQuery() }}".</p>
             } @else {
-              <h2>No sub-locations or containers here yet</h2>
-              <p>Add fixed shelves, drawers, or movable totes/bins to organize this space.</p>
+              <h2>No items or sub-locations here yet</h2>
+              <p>Organize this space by adding items, storage containers, or child locations.</p>
               <div class="empty-actions">
                 <button
                   mat-flat-button
                   color="primary"
+                  (click)="openCreateItemDialog(selectedNodeId())"
+                >
+                  <mat-icon>add</mat-icon>
+                  <span>Add Item</span>
+                </button>
+                <button
+                  mat-stroked-button
+                  color="primary"
                   (click)="openCreateDialog(LocationNodeTypes.FixedLocation)"
                 >
                   <mat-icon>location_on</mat-icon>
-                  <span>Add Fixed Location</span>
+                  <span>Add Sub-Location</span>
                 </button>
                 <button
                   mat-stroked-button
@@ -351,124 +419,322 @@
                   (click)="openCreateDialog(LocationNodeTypes.MovableContainer)"
                 >
                   <mat-icon>inventory_2</mat-icon>
-                  <span>Add Movable Container</span>
+                  <span>Add Container</span>
                 </button>
               </div>
             }
           </div>
         } @else {
-          <!-- Nodes Grid -->
-          <div class="nodes-grid">
-            @for (node of displayedNodes(); track node.id) {
-              <mat-card
-                class="node-card"
-                [class.container-card]="node.nodeType === LocationNodeTypes.MovableContainer"
-                (click)="selectNode(node.id)"
-              >
-                <mat-card-content>
-                  <div class="card-header-row">
-                    <div class="card-title-group">
-                      <mat-icon class="node-type-icon">
-                        {{
-                          node.icon ||
-                            (node.nodeType === LocationNodeTypes.MovableContainer
-                              ? 'inventory_2'
-                              : 'location_on')
-                        }}
-                      </mat-icon>
-                      <div>
-                        <h4 class="card-name">{{ node.name }}</h4>
-                        <span class="card-shortcode">{{ node.shortCode }}</span>
-                      </div>
-                    </div>
+          <!-- Locations & Containers Section -->
+          @if (displayedNodes().length > 0) {
+            <div class="section-group">
+              <h4 class="group-title">
+                <mat-icon>apartment</mat-icon>
+                <span>Locations &amp; Containers ({{ displayedNodes().length }})</span>
+              </h4>
+              <div class="nodes-grid">
+                @for (node of displayedNodes(); track node.id) {
+                  <mat-card
+                    class="node-card"
+                    [class.container-card]="node.nodeType === LocationNodeTypes.MovableContainer"
+                    (click)="selectNode(node.id)"
+                  >
+                    <mat-card-content>
+                      <div class="card-header-row">
+                        <div class="card-title-group">
+                          <mat-icon class="node-type-icon">
+                            {{
+                              node.icon ||
+                                (node.nodeType === LocationNodeTypes.MovableContainer
+                                  ? 'inventory_2'
+                                  : 'location_on')
+                            }}
+                          </mat-icon>
+                          <div>
+                            <h4 class="card-name">{{ node.name }}</h4>
+                            <span class="card-shortcode">{{ node.shortCode }}</span>
+                          </div>
+                        </div>
 
-                    <div class="card-badges">
-                      @if (node.isPrivate) {
-                        <mat-icon class="lock-icon" matTooltip="Private / Secret">lock</mat-icon>
+                        <div class="card-badges">
+                          @if (node.isPrivate) {
+                            <mat-icon class="lock-icon" matTooltip="Private / Secret"
+                              >lock</mat-icon
+                            >
+                          }
+                          <button
+                            mat-icon-button
+                            [matMenuTriggerFor]="cardMenu"
+                            (click)="$event.stopPropagation()"
+                            [attr.aria-label]="'Actions for ' + node.name"
+                          >
+                            <mat-icon>more_vert</mat-icon>
+                          </button>
+                          <mat-menu #cardMenu="matMenu">
+                            <button mat-menu-item (click)="selectNode(node.id)">
+                              <mat-icon>folder_open</mat-icon>
+                              <span>Open</span>
+                            </button>
+                            <button mat-menu-item (click)="openCreateItemDialog(node.id)">
+                              <mat-icon>add</mat-icon>
+                              <span>Add Item Here</span>
+                            </button>
+                            <button mat-menu-item (click)="openEditDialog(node)">
+                              <mat-icon>edit</mat-icon>
+                              <span>Edit</span>
+                            </button>
+                            <button mat-menu-item (click)="openMoveDialog(node)">
+                              <mat-icon>drive_file_move</mat-icon>
+                              <span>Move</span>
+                            </button>
+                            <mat-divider></mat-divider>
+                            <button mat-menu-item (click)="deleteNode(node)">
+                              <mat-icon color="warn">delete</mat-icon>
+                              <span>Delete</span>
+                            </button>
+                          </mat-menu>
+                        </div>
+                      </div>
+
+                      @if (searchQuery()) {
+                        <p class="search-path-hint">{{ node.fullPath }}</p>
                       }
-                      <button
-                        mat-icon-button
-                        [matMenuTriggerFor]="cardMenu"
-                        (click)="$event.stopPropagation()"
-                        [attr.aria-label]="'Actions for ' + node.name"
-                      >
-                        <mat-icon>more_vert</mat-icon>
-                      </button>
-                      <mat-menu #cardMenu="matMenu">
-                        <button mat-menu-item (click)="selectNode(node.id)">
-                          <mat-icon>folder_open</mat-icon>
-                          <span>Open</span>
-                        </button>
-                        <button mat-menu-item (click)="openEditDialog(node)">
-                          <mat-icon>edit</mat-icon>
-                          <span>Edit</span>
-                        </button>
-                        <button mat-menu-item (click)="openMoveDialog(node)">
-                          <mat-icon>drive_file_move</mat-icon>
-                          <span>Move</span>
-                        </button>
-                        <mat-divider></mat-divider>
-                        <button mat-menu-item (click)="deleteNode(node)">
-                          <mat-icon color="warn">delete</mat-icon>
-                          <span>Delete</span>
-                        </button>
-                      </mat-menu>
-                    </div>
-                  </div>
 
-                  @if (searchQuery()) {
-                    <p class="search-path-hint">{{ node.fullPath }}</p>
-                  }
+                      @if (node.description) {
+                        <p class="card-desc">{{ node.description }}</p>
+                      }
 
-                  @if (node.description) {
-                    <p class="card-desc">{{ node.description }}</p>
-                  }
+                      <!-- Movable Container Visual Badge -->
+                      @if (
+                        node.nodeType === LocationNodeTypes.MovableContainer &&
+                        (node.containerStyle || node.colorLabel || node.primaryColor)
+                      ) {
+                        <div class="card-appearance-badge">
+                          <div class="mini-swatch-combo">
+                            @if (node.primaryColor) {
+                              <span
+                                class="mini-swatch"
+                                [style.background-color]="node.primaryColor"
+                              ></span>
+                            }
+                            @if (node.accentColor) {
+                              <span
+                                class="mini-swatch"
+                                [style.background-color]="node.accentColor"
+                              ></span>
+                            }
+                          </div>
+                          <span class="card-style-text">{{
+                            node.colorLabel || node.containerStyle
+                          }}</span>
+                        </div>
+                      }
 
-                  <!-- Movable Container Visual Badge -->
-                  @if (
-                    node.nodeType === LocationNodeTypes.MovableContainer &&
-                    (node.containerStyle || node.colorLabel || node.primaryColor)
-                  ) {
-                    <div class="card-appearance-badge">
-                      <div class="mini-swatch-combo">
-                        @if (node.primaryColor) {
+                      <div class="card-footer">
+                        <span class="child-count-pill">
+                          <mat-icon>folder</mat-icon>
                           <span
-                            class="mini-swatch"
-                            [style.background-color]="node.primaryColor"
-                          ></span>
+                            >{{ node.childCount }} sub-location{{
+                              node.childCount === 1 ? '' : 's'
+                            }}</span
+                          >
+                        </span>
+                        @if (node.itemCount) {
+                          <span class="child-count-pill item-pill">
+                            <mat-icon>inventory</mat-icon>
+                            <span
+                              >{{ node.itemCount }} item{{ node.itemCount === 1 ? '' : 's' }}</span
+                            >
+                          </span>
                         }
-                        @if (node.accentColor) {
-                          <span
-                            class="mini-swatch"
-                            [style.background-color]="node.accentColor"
-                          ></span>
-                        }
+                        <span class="node-type-label">
+                          {{
+                            node.nodeType === LocationNodeTypes.MovableContainer
+                              ? 'Container'
+                              : 'Location'
+                          }}
+                        </span>
                       </div>
-                      <span class="card-style-text">{{
-                        node.colorLabel || node.containerStyle
-                      }}</span>
-                    </div>
-                  }
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+            </div>
+          }
 
-                  <div class="card-footer">
-                    <span class="child-count-pill">
-                      <mat-icon>folder</mat-icon>
-                      <span
-                        >{{ node.childCount }} sub-item{{ node.childCount === 1 ? '' : 's' }}</span
+          <!-- Items Section -->
+          @if (displayedItems().length > 0) {
+            <div class="section-group">
+              <h4 class="group-title">
+                <mat-icon>inventory_2</mat-icon>
+                <span>Items ({{ displayedItems().length }})</span>
+              </h4>
+              <div class="items-grid">
+                @for (item of displayedItems(); track item.id) {
+                  <mat-card
+                    class="item-card"
+                    [class.kit-item-card]="item.itemType === ItemTypes.Kit"
+                    [class.kit-warning-card]="item.isIncompleteKit"
+                  >
+                    <mat-card-content>
+                      <!-- Card Header -->
+                      <div class="card-header-row">
+                        <div class="card-title-group">
+                          <span class="archetype-pill archetype-{{ item.itemType }}">
+                            <mat-icon>{{ getItemTypeIcon(item.itemType) }}</mat-icon>
+                            <span>{{ getItemTypeName(item.itemType) }}</span>
+                          </span>
+                          <span class="item-shortcode-tag">{{ item.shortCode }}</span>
+                        </div>
+
+                        <div class="card-badges">
+                          @if (item.isPrivate) {
+                            <mat-icon class="lock-icon" matTooltip="Private / Secret"
+                              >lock</mat-icon
+                            >
+                          }
+                          <button
+                            mat-icon-button
+                            [matMenuTriggerFor]="itemMenu"
+                            (click)="$event.stopPropagation()"
+                            [attr.aria-label]="'Actions for ' + item.name"
+                          >
+                            <mat-icon>more_vert</mat-icon>
+                          </button>
+                          <mat-menu #itemMenu="matMenu">
+                            <button mat-menu-item (click)="openEditItemDialog(item)">
+                              <mat-icon>edit</mat-icon>
+                              <span>Edit</span>
+                            </button>
+                            <button mat-menu-item (click)="openDuplicateItemDialog(item)">
+                              <mat-icon>content_copy</mat-icon>
+                              <span>Duplicate / Clone</span>
+                            </button>
+                            <mat-divider></mat-divider>
+                            <button mat-menu-item (click)="deleteItem(item)">
+                              <mat-icon color="warn">delete</mat-icon>
+                              <span>Delete</span>
+                            </button>
+                          </mat-menu>
+                        </div>
+                      </div>
+
+                      <!-- Incomplete Kit Warning Alert -->
+                      @if (item.isIncompleteKit) {
+                        <div class="kit-alert-banner">
+                          <mat-icon>warning</mat-icon>
+                          <span
+                            >Incomplete Kit ({{ item.incompleteKitWarnings.length }} missing part{{
+                              item.incompleteKitWarnings.length === 1 ? '' : 's'
+                            }})</span
+                          >
+                        </div>
+                      }
+
+                      <!-- Item Name & Details -->
+                      <button
+                        type="button"
+                        class="item-name-btn"
+                        (click)="openEditItemDialog(item)"
                       >
-                    </span>
-                    <span class="node-type-label">
-                      {{
-                        node.nodeType === LocationNodeTypes.MovableContainer
-                          ? 'Container'
-                          : 'Location'
-                      }}
-                    </span>
-                  </div>
-                </mat-card-content>
-              </mat-card>
-            }
-          </div>
+                        {{ item.name }}
+                      </button>
+
+                      @if (item.brand || item.modelNumber) {
+                        <p class="item-brand-model">
+                          <strong>{{ item.brand }}</strong> {{ item.modelNumber }}
+                        </p>
+                      }
+
+                      @if (item.categoryName) {
+                        <div class="item-category-row">
+                          <span class="category-chip">
+                            <mat-icon>label</mat-icon>
+                            <span>{{ item.categoryName }}</span>
+                          </span>
+                        </div>
+                      }
+
+                      @if (item.description) {
+                        <p class="card-desc">{{ item.description }}</p>
+                      }
+
+                      <!-- Quantity Stepper Controls -->
+                      @if (item.itemType === ItemTypes.Quantity) {
+                        <div class="quantity-stepper-container">
+                          <span class="stepper-label">Quantity:</span>
+                          <div class="stepper-controls">
+                            <button
+                              mat-icon-button
+                              class="step-btn"
+                              (click)="adjustItemQuantity(item, -1, $event)"
+                              [disabled]="item.currentQuantity <= 0"
+                              aria-label="Decrease quantity"
+                            >
+                              <mat-icon>remove</mat-icon>
+                            </button>
+                            <span class="quantity-value">
+                              {{ item.currentQuantity }}
+                              <small>{{ item.unit || 'units' }}</small>
+                            </span>
+                            <button
+                              mat-icon-button
+                              class="step-btn"
+                              (click)="adjustItemQuantity(item, 1, $event)"
+                              aria-label="Increase quantity"
+                            >
+                              <mat-icon>add</mat-icon>
+                            </button>
+                          </div>
+                          @if (
+                            item.minQuantity !== null && item.currentQuantity <= item.minQuantity
+                          ) {
+                            <span
+                              class="low-stock-alert"
+                              matTooltip="Below minimum quantity threshold of {{
+                                item.minQuantity
+                              }}"
+                            >
+                              <mat-icon>error_outline</mat-icon>
+                              <span>Low Stock</span>
+                            </span>
+                          }
+                        </div>
+                      }
+
+                      <!-- Attributes Preview -->
+                      @if (item.attributeValues && item.attributeValues.length > 0) {
+                        <div class="attributes-preview-list">
+                          @for (attr of item.attributeValues.slice(0, 3); track attr.id) {
+                            <div class="attr-pill">
+                              <span class="attr-name">{{ attr.attributeName }}:</span>
+                              <span class="attr-val">{{ attr.value }} {{ attr.unit }}</span>
+                            </div>
+                          }
+                          @if (item.attributeValues.length > 3) {
+                            <span class="attr-more"
+                              >+{{ item.attributeValues.length - 3 }} more</span
+                            >
+                          }
+                        </div>
+                      }
+
+                      <!-- Card Footer -->
+                      <div class="card-footer">
+                        <span class="location-path-pill" matTooltip="Home Location">
+                          <mat-icon>place</mat-icon>
+                          <span>{{ item.homeLocationFullPath || 'Unassigned' }}</span>
+                        </span>
+                        <div class="status-condition-group">
+                          <span class="condition-badge">{{ item.condition }}</span>
+                        </div>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </div>
+            </div>
+          }
         }
       }
     </main>

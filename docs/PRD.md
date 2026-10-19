@@ -268,7 +268,7 @@ stateDiagram-v2
   - **Expiring Warranties & Return Windows:** Items within $N$ days of return deadline or warranty expiry.
   - **Low Stock Alerts:** Consumable/quantity items at or below their `minQuantity` threshold.
 - **Webhook & Push Notification Engine:**
-  - Configurable notification channels supporting **ntfy**, **Discord Webhooks**, **Pushover**, and **Email (SMTP)** (all easily self-hosted or integrated on TrueNAS).
+  - Configurable notification channels supporting **ntfy**, **Slack Webhooks**, **Pushover**, and **Email (SMTP)** (all easily self-hosted or integrated on TrueNAS).
   - Supports either real-time triggers (e.g., loan becomes overdue) or a scheduled **Weekly Household Digest** (e.g., Sunday morning summary of out-of-place tools, due maintenance, and expiring return windows).
 
 ---
@@ -297,4 +297,4 @@ flowchart LR
 - **Milestone 1 — Core Foundation & Day-1 Data Capture:** Household auth + "Secret/Gift Mode", Flexible Location/Container tree (with visual appearance badges), 4 Item types (Unique, Quantity, Kits, Nested), Category Attribute Templates, core file uploads (Photos, Receipts, Manuals) + Purchase/Warranty dates (so items cataloged on Day 1 never need to be revisited later), and Smart Search.
 - **Milestone 2 — Camera & Physical Labeling:** QR generation, Pre-printed Blank QR binding, PDF Label Sheet Generator (Avery + Thermal), Mobile Camera Scanner (X-Ray view, Bulk Move/Audit, UPC lookup), and Rapid-Fire Batch Intake.
 - **Milestone 3 — Movement & Projects:** Check-in/Check-out state machine, External Loans, Reusable Loadouts (with Room-by-Room Pick Lists, Return Checklists & Consumable reconciliation), Ad-hoc Project Cart, Declutter Staging, and the Graveyard Archive.
-- **Milestone 4 — Advanced Vault & Automation:** Full-text PDF manual indexing/search, Recurring Maintenance schedules, Action Center dashboard + 1-click Insurance Claim ZIP export, Dust Collector insights, and ntfy/Discord/Email webhook notifications.
+- **Milestone 4 — Advanced Vault & Automation:** Full-text PDF manual indexing/search, Recurring Maintenance schedules, Action Center dashboard + 1-click Insurance Claim ZIP export, Dust Collector insights, and ntfy/Slack/Email webhook notifications.

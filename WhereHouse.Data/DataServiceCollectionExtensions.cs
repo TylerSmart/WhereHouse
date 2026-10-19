@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WhereHouse.Core.Authentication;
+using WhereHouse.Core.Categories;
+using WhereHouse.Core.Items;
 using WhereHouse.Core.Locations;
 using WhereHouse.Data.Auditing;
 using WhereHouse.Data.Services;
@@ -21,6 +23,8 @@ public static class DataServiceCollectionExtensions
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILocationService, LocationService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IItemService, ItemService>();
 
         if (
             string.Equals(

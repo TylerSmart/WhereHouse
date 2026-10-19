@@ -34,6 +34,8 @@ public sealed class OpenApiIntegrationTests
         Assert.IsFalse(string.IsNullOrWhiteSpace(content));
         StringAssert.Contains(content, "WhereHouse");
         StringAssert.Contains(content, "/locations");
+        StringAssert.Contains(content, "/categories");
+        StringAssert.Contains(content, "/items");
         StringAssert.Contains(content, "/auth");
         StringAssert.Contains(content, "securitySchemes");
         StringAssert.Contains(content, "Bearer");

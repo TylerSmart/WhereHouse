@@ -88,6 +88,27 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             .GroupBy(n => n.ParentId!.Value)
             .ToDictionary(g => g.Key, g => g.Count());
 
+        var allItems = await dbContext
+            .InventoryItems.AsNoTracking()
+            .Select(i => new
+            {
+                i.Id,
+                i.HomeLocationId,
+                i.IsPrivate,
+                i.OwnerId,
+            })
+            .ToListAsync(cancellationToken);
+
+        var accessibleLocationIds = new HashSet<Guid>(accessibleNodes.Select(n => n.Id));
+        var itemCounts = allItems
+            .Where(i =>
+                i.HomeLocationId.HasValue
+                && accessibleLocationIds.Contains(i.HomeLocationId.Value)
+                && (!i.IsPrivate || i.OwnerId == userId)
+            )
+            .GroupBy(i => i.HomeLocationId!.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         IEnumerable<LocationNode> filtered = accessibleNodes;
 
         if (parentId.HasValue)
@@ -144,7 +165,8 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             }
 
             var count = childCounts.GetValueOrDefault(node.Id, 0);
-            resultList.Add(MapToDto(node, fullPath, breadcrumbs, count));
+            var itemsInside = itemCounts.GetValueOrDefault(node.Id, 0);
+            resultList.Add(MapToDto(node, fullPath, breadcrumbs, count, itemsInside));
         }
 
         return resultList
@@ -179,8 +201,12 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         var childCount = allNodesList.Count(n =>
             n.ParentId == id && IsAccessible(n, userId, allNodes)
         );
+        var itemCount = await dbContext.InventoryItems.CountAsync(
+            i => i.HomeLocationId == id && (!i.IsPrivate || i.OwnerId == userId),
+            cancellationToken
+        );
 
-        return MapToDto(node, fullPath, breadcrumbs, childCount);
+        return MapToDto(node, fullPath, breadcrumbs, childCount, itemCount);
     }
 
     public async Task<LocationNodeDto> CreateLocationNodeAsync(
@@ -278,7 +304,7 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         allNodes[node.Id] = node;
         var (fullPath, breadcrumbs) = ResolvePathAndBreadcrumbs(node, allNodes);
 
-        return MapToDto(node, fullPath, breadcrumbs, 0);
+        return MapToDto(node, fullPath, breadcrumbs, 0, 0);
     }
 
     public async Task<LocationNodeDto?> UpdateLocationNodeAsync(
@@ -352,8 +378,12 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         var childCount = allNodesList.Count(n =>
             n.ParentId == id && IsAccessible(n, userId, allNodes)
         );
+        var itemCount = await dbContext.InventoryItems.CountAsync(
+            i => i.HomeLocationId == id && (!i.IsPrivate || i.OwnerId == userId),
+            cancellationToken
+        );
 
-        return MapToDto(trackedNode, fullPath, breadcrumbs, childCount);
+        return MapToDto(trackedNode, fullPath, breadcrumbs, childCount, itemCount);
     }
 
     public async Task<LocationNodeDto?> MoveLocationNodeAsync(
@@ -436,8 +466,12 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         var childCount = allNodesList.Count(n =>
             n.ParentId == id && IsAccessible(n, userId, allNodes)
         );
+        var itemCount = await dbContext.InventoryItems.CountAsync(
+            i => i.HomeLocationId == id && (!i.IsPrivate || i.OwnerId == userId),
+            cancellationToken
+        );
 
-        return MapToDto(trackedNode, fullPath, breadcrumbs, childCount);
+        return MapToDto(trackedNode, fullPath, breadcrumbs, childCount, itemCount);
     }
 
     public async Task<bool> DeleteLocationNodeAsync(
@@ -467,6 +501,18 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             throw new ConflictException(
                 "Cannot delete a location or container that still contains nested locations or containers. Move or delete its contents first.",
                 "Location not empty"
+            );
+        }
+
+        var hasItems = await dbContext.InventoryItems.AnyAsync(
+            i => i.HomeLocationId == id,
+            cancellationToken
+        );
+        if (hasItems)
+        {
+            throw new ConflictException(
+                "Cannot delete a location or container that still contains cataloged items. Move or delete its items first.",
+                "Location contains items"
             );
         }
 
@@ -578,7 +624,8 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
         LocationNode node,
         string fullPath,
         IReadOnlyList<LocationBreadcrumbDto> breadcrumbs,
-        int childCount
+        int childCount,
+        int itemCount
     ) =>
         new(
             node.Id,
@@ -597,6 +644,7 @@ public sealed class LocationService(WhereHouseDbContext dbContext) : ILocationSe
             fullPath,
             breadcrumbs,
             childCount,
+            itemCount,
             node.CreatedAt,
             node.ModifiedAt
         );

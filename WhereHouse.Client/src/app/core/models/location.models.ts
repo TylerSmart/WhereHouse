@@ -29,6 +29,7 @@ export interface LocationNodeDto {
   fullPath: string;
   breadcrumbs: LocationBreadcrumbDto[];
   childCount: number;
+  itemCount?: number;
   createdAt: string;
   modifiedAt: string;
 }

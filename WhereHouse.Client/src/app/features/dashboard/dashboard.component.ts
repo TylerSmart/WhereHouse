@@ -12,6 +12,14 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { CategoryDto } from '../../core/models/category.models';
+import {
+  ItemConditions,
+  ItemDto,
+  ItemStatuses,
+  ItemType,
+  ItemTypes,
+} from '../../core/models/item.models';
 import {
   LocationNodeDto,
   LocationNodeType,
@@ -19,9 +27,17 @@ import {
   LocationTreeNodeDto,
 } from '../../core/models/location.models';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { CategoryService } from '../../core/services/category/category.service';
+import { ItemService } from '../../core/services/item/item.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { ThemeMode, ThemeService } from '../../core/services/theme/theme.service';
+import { CategoryManagerDialogComponent } from './category-manager-dialog/category-manager-dialog.component';
 import { ConfirmDialogComponent } from './confirm-delete-dialog/confirm-delete-dialog.component';
+import {
+  ItemDialogComponent,
+  ItemDialogData,
+  ItemDialogResult,
+} from './item-dialog/item-dialog.component';
 import {
   LocationDialogComponent,
   LocationDialogData,
@@ -66,17 +82,24 @@ export class DashboardComponent implements OnInit {
   protected readonly authService = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
   private readonly locationService = inject(LocationService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly itemService = inject(ItemService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly LocationNodeTypes = LocationNodeTypes;
+  protected readonly ItemTypes = ItemTypes;
+  protected readonly ItemStatuses = ItemStatuses;
+  protected readonly ItemConditions = ItemConditions;
 
   protected readonly treeNodes = signal<LocationTreeNodeDto[]>([]);
   protected readonly allNodes = signal<LocationNodeDto[]>([]);
+  protected readonly categories = signal<CategoryDto[]>([]);
+  protected readonly items = signal<ItemDto[]>([]);
   protected readonly selectedNodeId = signal<string | null>(null);
   protected readonly expandedIds = signal<Set<string>>(new Set());
   protected readonly searchQuery = signal<string>('');
-  protected readonly filterNodeType = signal<'all' | 'fixed' | 'container'>('all');
+  protected readonly filterType = signal<'all' | 'fixed' | 'container' | 'items'>('all');
   protected readonly sidebarOpen = signal<boolean>(true);
   protected readonly isLoading = signal<boolean>(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -95,9 +118,13 @@ export class DashboardComponent implements OnInit {
 
   protected readonly displayedNodes = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    const filterType = this.filterNodeType();
+    const filter = this.filterType();
     const all = this.allNodes();
     const parentId = this.selectedNodeId();
+
+    if (filter === 'items') {
+      return [];
+    }
 
     let list: LocationNodeDto[];
 
@@ -115,9 +142,9 @@ export class DashboardComponent implements OnInit {
       list = all.filter((n) => n.parentId === parentId);
     }
 
-    if (filterType === 'fixed') {
+    if (filter === 'fixed') {
       list = list.filter((n) => n.nodeType === LocationNodeTypes.FixedLocation);
-    } else if (filterType === 'container') {
+    } else if (filter === 'container') {
       list = list.filter((n) => n.nodeType === LocationNodeTypes.MovableContainer);
     }
 
@@ -129,14 +156,48 @@ export class DashboardComponent implements OnInit {
     });
   });
 
+  protected readonly displayedItems = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const filter = this.filterType();
+    const all = this.items();
+    const parentId = this.selectedNodeId();
+
+    if (filter === 'fixed' || filter === 'container') {
+      return [];
+    }
+
+    let list: ItemDto[];
+
+    if (query) {
+      list = all.filter(
+        (i) =>
+          i.name.toLowerCase().includes(query) ||
+          i.shortCode.toLowerCase().includes(query) ||
+          (i.brand && i.brand.toLowerCase().includes(query)) ||
+          (i.modelNumber && i.modelNumber.toLowerCase().includes(query)) ||
+          (i.serialNumber && i.serialNumber.toLowerCase().includes(query)) ||
+          (i.categoryName && i.categoryName.toLowerCase().includes(query)) ||
+          (i.description && i.description.toLowerCase().includes(query)) ||
+          (i.tags && i.tags.some((t) => t.toLowerCase().includes(query))) ||
+          (i.aliases && i.aliases.some((a) => a.toLowerCase().includes(query))),
+      );
+    } else {
+      list = all.filter((i) => i.homeLocationId === parentId);
+    }
+
+    return list.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  });
+
   protected readonly stats = computed(() => {
     const all = this.allNodes();
+    const allItms = this.items();
     const fixedCount = all.filter((n) => n.nodeType === LocationNodeTypes.FixedLocation).length;
     const containerCount = all.filter(
       (n) => n.nodeType === LocationNodeTypes.MovableContainer,
     ).length;
     const privateCount = all.filter((n) => n.isPrivate).length;
-    return { fixedCount, containerCount, privateCount, total: all.length };
+    const itemCount = allItms.length;
+    return { fixedCount, containerCount, privateCount, itemCount, total: all.length };
   });
 
   protected readonly themeIcon = computed(() => THEME_ICONS[this.themeService.mode()]);
@@ -171,6 +232,26 @@ export class DashboardComponent implements OnInit {
         this.errorMessage.set(
           err?.error?.detail || err?.error?.title || 'Failed to load locations.',
         );
+      },
+    });
+
+    this.categoryService.getCategories().subscribe({
+      next: (cats) => {
+        this.categories.set(cats);
+      },
+      error: (err) => {
+        this.errorMessage.set(
+          err?.error?.detail || err?.error?.title || 'Failed to load categories.',
+        );
+      },
+    });
+
+    this.itemService.getItems().subscribe({
+      next: (itms) => {
+        this.items.set(itms);
+      },
+      error: (err) => {
+        this.errorMessage.set(err?.error?.detail || err?.error?.title || 'Failed to load items.');
       },
     });
   }
@@ -212,8 +293,8 @@ export class DashboardComponent implements OnInit {
     this.searchQuery.set(target.value);
   }
 
-  setFilterType(type: 'all' | 'fixed' | 'container'): void {
-    this.filterNodeType.set(type);
+  setFilterType(type: 'all' | 'fixed' | 'container' | 'items'): void {
+    this.filterType.set(type);
   }
 
   openCreateDialog(nodeType?: LocationNodeType): void {
@@ -286,7 +367,6 @@ export class DashboardComponent implements OnInit {
 
   openMoveDialog(node: LocationNodeDto): void {
     const all = this.allNodes();
-    // Exclude the node itself and any of its descendants
     const availableTargets = all.filter((n) => {
       if (n.id === node.id) {
         return false;
@@ -353,6 +433,177 @@ export class DashboardComponent implements OnInit {
         },
       });
     });
+  }
+
+  openCreateItemDialog(homeLocationId?: string | null): void {
+    const dialogRef = this.dialog.open<ItemDialogComponent, ItemDialogData, ItemDialogResult>(
+      ItemDialogComponent,
+      {
+        width: '720px',
+        data: {
+          availableLocations: this.allNodes(),
+          availableCategories: this.categories(),
+          availableParentItems: this.items(),
+          homeLocationId: homeLocationId !== undefined ? homeLocationId : this.selectedNodeId(),
+        },
+      },
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || result.mode !== 'create') {
+        return;
+      }
+
+      this.itemService.createItem(result.request).subscribe({
+        next: (created) => {
+          this.snackBar.open(`Item "${created.name}" (${created.shortCode}) created`, 'Close', {
+            duration: 3000,
+          });
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to create item', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+    });
+  }
+
+  openEditItemDialog(item: ItemDto): void {
+    const dialogRef = this.dialog.open<ItemDialogComponent, ItemDialogData, ItemDialogResult>(
+      ItemDialogComponent,
+      {
+        width: '720px',
+        data: {
+          item,
+          availableLocations: this.allNodes(),
+          availableCategories: this.categories(),
+          availableParentItems: this.items().filter((i) => i.id !== item.id),
+          homeLocationId: item.homeLocationId,
+        },
+      },
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || result.mode !== 'update') {
+        return;
+      }
+
+      this.itemService.updateItem(item.id, result.request).subscribe({
+        next: (updated) => {
+          this.snackBar.open(`"${updated.name}" updated`, 'Close', { duration: 3000 });
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to update item', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+    });
+  }
+
+  openDuplicateItemDialog(item: ItemDto): void {
+    this.itemService.duplicateItem(item.id).subscribe({
+      next: (cloned) => {
+        this.snackBar.open(`Cloned "${cloned.name}" (${cloned.shortCode})`, 'Close', {
+          duration: 3500,
+        });
+        this.refreshAll();
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.detail || 'Failed to duplicate item', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
+  }
+
+  adjustItemQuantity(item: ItemDto, change: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.itemService.adjustQuantity(item.id, { delta: change }).subscribe({
+      next: (updated) => {
+        this.items.update((list) => list.map((i) => (i.id === updated.id ? updated : i)));
+        if (updated.minQuantity !== null && updated.currentQuantity <= updated.minQuantity) {
+          this.snackBar.open(
+            `Low stock warning: "${updated.name}" is at ${updated.currentQuantity} (min: ${updated.minQuantity})`,
+            'Close',
+            { duration: 4000 },
+          );
+        }
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.detail || 'Failed to adjust quantity', 'Close', {
+          duration: 4000,
+        });
+      },
+    });
+  }
+
+  deleteItem(item: ItemDto): void {
+    const confirmRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete Item',
+        message: `Are you sure you want to delete "${item.name}" (${item.shortCode})? This action cannot be undone.`,
+        confirmText: 'Delete',
+        isDestructive: true,
+      },
+    });
+
+    confirmRef.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.itemService.deleteItem(item.id).subscribe({
+        next: () => {
+          this.snackBar.open(`"${item.name}" deleted`, 'Close', { duration: 3000 });
+          this.refreshAll();
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail || 'Failed to delete item', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+    });
+  }
+
+  openCategoryManagerDialog(): void {
+    const ref = this.dialog.open(CategoryManagerDialogComponent, {
+      width: '720px',
+    });
+
+    ref.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
+  }
+
+  getItemTypeIcon(type: ItemType): string {
+    switch (type) {
+      case ItemTypes.Quantity:
+        return 'layers';
+      case ItemTypes.Kit:
+        return 'cases';
+      case ItemTypes.Nested:
+        return 'account_tree';
+      default:
+        return 'fingerprint';
+    }
+  }
+
+  getItemTypeName(type: ItemType): string {
+    switch (type) {
+      case ItemTypes.Quantity:
+        return 'Quantity';
+      case ItemTypes.Kit:
+        return 'Kit';
+      case ItemTypes.Nested:
+        return 'Nested';
+      default:
+        return 'Unique';
+    }
   }
 
   onLogout(): void {
