@@ -193,6 +193,20 @@ interface AttachmentTypeOption {
                       </mat-chip>
                     </mat-chip-set>
                   }
+                  @if (att.hasExtractedText) {
+                    <mat-chip-set class="indexed-chip">
+                      <mat-chip
+                        [matTooltip]="
+                          att.extractedText
+                            ? (att.extractedText | slice: 0 : 200) + '...'
+                            : 'PDF indexed for search'
+                        "
+                      >
+                        <mat-icon matChipAvatar>find_in_page</mat-icon>
+                        Indexed Text
+                      </mat-chip>
+                    </mat-chip-set>
+                  }
                 </div>
 
                 <div class="card-meta">

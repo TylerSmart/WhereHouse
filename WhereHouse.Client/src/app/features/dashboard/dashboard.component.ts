@@ -73,6 +73,14 @@ import {
   StageArchiveDialogComponent,
   StageArchiveDialogData,
 } from './stage-archive-dialog/stage-archive-dialog.component';
+import {
+  MaintenanceDialogComponent,
+  MaintenanceDialogData,
+} from './maintenance-dialog/maintenance-dialog.component';
+import {
+  InsuranceExportDialogComponent,
+  InsuranceExportDialogData,
+} from './insurance-export-dialog/insurance-export-dialog.component';
 
 const THEME_ICONS: Record<ThemeMode, string> = {
   light: 'light_mode',
@@ -952,6 +960,38 @@ export class DashboardComponent implements OnInit {
         });
       },
     });
+  }
+
+  openMaintenanceDialog(item?: ItemDto | null): void {
+    const ref = this.dialog.open<MaintenanceDialogComponent, MaintenanceDialogData>(
+      MaintenanceDialogComponent,
+      {
+        data: {
+          item,
+          availableItems: this.items(),
+        },
+        width: '840px',
+        maxWidth: '96vw',
+      },
+    );
+
+    ref.afterClosed().subscribe(() => {
+      this.refreshAll();
+    });
+  }
+
+  openInsuranceExportDialog(): void {
+    this.dialog.open<InsuranceExportDialogComponent, InsuranceExportDialogData>(
+      InsuranceExportDialogComponent,
+      {
+        data: {
+          availableLocations: this.allNodes(),
+          availableCategories: this.categories(),
+        },
+        width: '940px',
+        maxWidth: '96vw',
+      },
+    );
   }
 
   onLogout(): void {

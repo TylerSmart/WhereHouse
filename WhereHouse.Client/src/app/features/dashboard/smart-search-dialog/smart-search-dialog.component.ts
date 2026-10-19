@@ -175,6 +175,12 @@ export type SmartSearchResultAction =
               >
                 Include Graveyard (Archived)
               </mat-chip-option>
+              <mat-chip-option
+                [selected]="includeAttachmentText()"
+                (selectionChange)="includeAttachmentText.set($event.selected); executeSearch()"
+              >
+                Search PDF Manuals
+              </mat-chip-option>
             </mat-chip-set>
 
             @if (activeFilterCount() > 0) {
@@ -780,6 +786,7 @@ export class SmartSearchDialogComponent implements OnInit {
   protected readonly outOfPlaceOnly = signal<boolean>(false);
   protected readonly lowStockOnly = signal<boolean>(false);
   protected readonly includeArchived = signal<boolean>(true);
+  protected readonly includeAttachmentText = signal<boolean>(true);
   protected readonly graveyardExpanded = signal<boolean>(false);
 
   protected readonly loading = signal<boolean>(false);
@@ -807,6 +814,7 @@ export class SmartSearchDialogComponent implements OnInit {
     if (this.outOfPlaceOnly()) count++;
     if (this.lowStockOnly()) count++;
     if (!this.includeArchived()) count++;
+    if (!this.includeAttachmentText()) count++;
     return count;
   });
 
@@ -842,6 +850,7 @@ export class SmartSearchDialogComponent implements OnInit {
     this.outOfPlaceOnly.set(false);
     this.lowStockOnly.set(false);
     this.includeArchived.set(true);
+    this.includeAttachmentText.set(true);
     this.executeSearch();
   }
 
@@ -859,6 +868,7 @@ export class SmartSearchDialogComponent implements OnInit {
       attributeMinNumber: this.attributeMinNumber(),
       attributeMaxNumber: this.attributeMaxNumber(),
       includeArchived: this.includeArchived(),
+      includeAttachmentText: this.includeAttachmentText(),
     };
 
     this.searchService.search(params).subscribe({

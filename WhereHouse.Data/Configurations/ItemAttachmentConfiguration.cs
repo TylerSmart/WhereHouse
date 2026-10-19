@@ -20,6 +20,8 @@ public sealed class ItemAttachmentConfiguration : IEntityTypeConfiguration<ItemA
 
         builder.Property(x => x.Notes).HasMaxLength(500);
 
+        builder.Property(x => x.ExtractedText).HasMaxLength(32000);
+
         builder.Property(x => x.CreatedBy).IsRequired().HasMaxLength(256);
 
         builder.Property(x => x.ModifiedBy).IsRequired().HasMaxLength(256);

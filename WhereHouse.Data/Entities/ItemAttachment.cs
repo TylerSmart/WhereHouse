@@ -22,6 +22,8 @@ public sealed class ItemAttachment : IAuditable
 
     public string? Notes { get; set; }
 
+    public string? ExtractedText { get; set; }
+
     public bool IsPrimaryPhoto { get; set; }
 
     public Guid UploadedByUserId { get; set; }

@@ -22,10 +22,13 @@ export interface ItemAttachmentDto {
   uploadedByUserId: string;
   createdAt: string;
   modifiedAt: string;
+  hasExtractedText?: boolean;
+  extractedText?: string | null;
 }
 
 export interface UpdateItemAttachmentRequest {
   attachmentType: AttachmentType;
   notes?: string | null;
   isPrimaryPhoto?: boolean;
+  extractedTextOverride?: string | null;
 }

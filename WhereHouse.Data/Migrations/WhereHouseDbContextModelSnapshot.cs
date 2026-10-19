@@ -451,6 +451,10 @@ namespace WhereHouse.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("ExtractedText")
+                        .HasMaxLength(32000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -745,6 +749,131 @@ namespace WhereHouse.Data.Migrations
                     b.ToTable("LocationNodes", (string)null);
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("CompletedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompletedByUsername")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal?>("Cost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedAt");
+
+                    b.HasIndex("CompletedByUserId");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("MaintenanceLogs", (string)null);
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("IntervalUnit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IntervalValue")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("LastCompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTimeOffset>("NextDueAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("NextDueAt");
+
+                    b.ToTable("MaintenanceSchedules", (string)null);
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1027,6 +1156,28 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceLog", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.MaintenanceSchedule", "Schedule")
+                        .WithMany("Logs")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceSchedule", b =>
+                {
+                    b.HasOne("WhereHouse.Data.Entities.InventoryItem", "Item")
+                        .WithMany("MaintenanceSchedules")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("WhereHouse.Data.Entities.QrCode", b =>
                 {
                     b.HasOne("WhereHouse.Data.Entities.User", "BoundByUser")
@@ -1081,6 +1232,8 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("ChildItems");
 
                     b.Navigation("LoadoutMemberships");
+
+                    b.Navigation("MaintenanceSchedules");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.Loadout", b =>
@@ -1095,6 +1248,11 @@ namespace WhereHouse.Data.Migrations
                     b.Navigation("Children");
 
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("WhereHouse.Data.Entities.MaintenanceSchedule", b =>
+                {
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("WhereHouse.Data.Entities.User", b =>

@@ -1,7 +1,7 @@
 # Phase 08: PDF Manual Full-Text Indexing, Recurring Maintenance Schedules & Home Insurance Claim ZIP Export
 
 > **Branch:** `feature/phase-08-pdf-indexing-maintenance-and-insurance-export`
-> **Status:** [ ] Not Started
+> **Status:** [x] Completed
 > **PRD Reference:** `docs/prd.md` — Sections 4.6.1 (`Multi-File Attachment Vault & PDF Full-Text Search`), 4.6.3 (`Recurring Maintenance & Battery Schedules`), 4.6.4 (`Home Insurance / Loss Claim Export`), 4.8.1 (`Smart Search PDF Manual Scope`), and 4.8.2 (`"Secret / Gift Mode" Privacy`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -655,7 +655,7 @@ This phase begins **Milestone 4 (Advanced Vault & Automation)** by completing th
 
 ## 5. Step-by-Step Execution Checklist (For Implementation Agent)
 
-- [ ] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
+- [x] **Task 1: Backend Core & Data Layer (`WhereHouse.Core` & `WhereHouse.Data`)**
   - Update `WhereHouse.Core/Attachments/AttachmentModels.cs` and create `WhereHouse.Core/Attachments/PdfTextExtractor.cs`.
   - Update `WhereHouse.Core/Search/SearchModels.cs` with `IncludeAttachmentText = true`.
   - Create `WhereHouse.Core/Maintenance/MaintenanceModels.cs` and `WhereHouse.Core/Maintenance/IMaintenanceService.cs`.
@@ -677,7 +677,7 @@ This phase begins **Milestone 4 (Advanced Vault & Automation)** by completing th
     dotnet test --project Tests/WhereHouse.Core.UnitTests/WhereHouse.Core.UnitTests.csproj
     ```
 
-- [ ] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
+- [x] **Task 2: API Controllers & Integration Tests (`WhereHouse.API` & `Tests/WhereHouse.API.IntegrationTests`)**
   - Update `WhereHouse.API/Controllers/SearchController.cs` to accept `includeAttachmentText`.
   - Create `WhereHouse.API/Controllers/MaintenanceController.cs` and `WhereHouse.API/Controllers/InsuranceController.cs`.
   - Update `Tests/WhereHouse.API.IntegrationTests/OpenApiIntegrationTests.cs` to assert `"/maintenance"` and `"/insurance"`.
@@ -691,7 +691,7 @@ This phase begins **Milestone 4 (Advanced Vault & Automation)** by completing th
     dotnet test --project Tests/WhereHouse.API.IntegrationTests/WhereHouse.API.IntegrationTests.csproj
     ```
 
-- [ ] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
+- [x] **Task 3: Angular Client & Unit Tests (`WhereHouse.Client`)**
   - Update `src/app/core/models/attachment.models.ts`, `src/app/core/models/search.models.ts`, and `src/app/core/services/search/search.service.ts`.
   - Create `src/app/core/models/maintenance.models.ts` and `src/app/core/services/maintenance/maintenance.service.ts` (& `.spec.ts`).
   - Create `src/app/core/models/insurance.models.ts` and `src/app/core/services/insurance/insurance.service.ts` (& `.spec.ts`).
@@ -705,7 +705,7 @@ This phase begins **Milestone 4 (Advanced Vault & Automation)** by completing th
     npm test -- --watch=false
     ```
 
-- [ ] **Task 4: E2E Verification & Final Formatting**
+- [x] **Task 4: E2E Verification & Final Formatting**
   - Run E2E test suite to verify zero regressions:
     ```powershell
     dotnet test --project Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj

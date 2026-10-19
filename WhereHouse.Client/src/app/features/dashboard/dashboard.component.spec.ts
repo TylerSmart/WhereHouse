@@ -25,6 +25,8 @@ import { CheckoutLoadoutService } from '../../core/services/checkout-loadout/che
 import { LifecycleService } from '../../core/services/lifecycle/lifecycle.service';
 import { DeclutterGraveyardDialogComponent } from './declutter-graveyard-dialog/declutter-graveyard-dialog.component';
 import { StageArchiveDialogComponent } from './stage-archive-dialog/stage-archive-dialog.component';
+import { MaintenanceDialogComponent } from './maintenance-dialog/maintenance-dialog.component';
+import { InsuranceExportDialogComponent } from './insurance-export-dialog/insurance-export-dialog.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -672,5 +674,32 @@ describe('DashboardComponent', () => {
       duration: 3000,
     });
     expect(mockItemService.getItems).toHaveBeenCalled();
+  });
+
+  it('should open maintenance dialog and refresh if closed', () => {
+    mockDialog.open.mockReturnValue({
+      afterClosed: () => of(true),
+    });
+
+    component.openMaintenanceDialog(mockItems[0]);
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      MaintenanceDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({ item: mockItems[0] }),
+      }),
+    );
+    expect(mockItemService.getItems).toHaveBeenCalled();
+  });
+
+  it('should open insurance export dialog', () => {
+    component.openInsuranceExportDialog();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      InsuranceExportDialogComponent,
+      expect.objectContaining({
+        data: expect.objectContaining({ availableLocations: mockNodes }),
+      }),
+    );
   });
 });

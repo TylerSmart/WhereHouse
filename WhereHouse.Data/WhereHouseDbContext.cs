@@ -29,6 +29,10 @@ public sealed class WhereHouseDbContext(DbContextOptions<WhereHouseDbContext> op
 
     public DbSet<LoadoutItem> LoadoutItems => Set<LoadoutItem>();
 
+    public DbSet<MaintenanceSchedule> MaintenanceSchedules => Set<MaintenanceSchedule>();
+
+    public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(WhereHouseDbContext).Assembly);
