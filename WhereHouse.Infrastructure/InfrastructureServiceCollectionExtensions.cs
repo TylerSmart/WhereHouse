@@ -1,7 +1,7 @@
-using WhereHouse.Core.Authentication;
-using WhereHouse.Infrastructure.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WhereHouse.Core.Authentication;
+using WhereHouse.Infrastructure.Authentication;
 
 namespace WhereHouse.Infrastructure;
 

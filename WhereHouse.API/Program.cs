@@ -1,3 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Events;
 using WhereHouse.API.Authentication;
 using WhereHouse.API.Hosting;
 using WhereHouse.API.Http;
@@ -5,12 +11,6 @@ using WhereHouse.Core;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Data;
 using WhereHouse.Infrastructure;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
-using Scalar.AspNetCore;
-using Serilog;
-using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 

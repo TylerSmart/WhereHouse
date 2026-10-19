@@ -1,5 +1,5 @@
-using WhereHouse.Core.Authentication;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using WhereHouse.Core.Authentication;
 
 namespace WhereHouse.Core.UnitTests;
 

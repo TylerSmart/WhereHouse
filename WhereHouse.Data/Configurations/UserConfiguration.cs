@@ -1,6 +1,6 @@
-using WhereHouse.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data.Configurations;
 

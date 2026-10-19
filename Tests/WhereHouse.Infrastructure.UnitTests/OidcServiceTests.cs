@@ -1,10 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using WhereHouse.Core.Authentication;
-using WhereHouse.Infrastructure.Authentication;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using WhereHouse.Core.Authentication;
+using WhereHouse.Infrastructure.Authentication;
 
 namespace WhereHouse.Infrastructure.UnitTests;
 

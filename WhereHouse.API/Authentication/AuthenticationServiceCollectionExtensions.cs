@@ -1,7 +1,7 @@
-using WhereHouse.Core.Authentication;
-using WhereHouse.Core.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using WhereHouse.Core.Authentication;
+using WhereHouse.Core.Interfaces;
 
 namespace WhereHouse.API.Authentication;
 

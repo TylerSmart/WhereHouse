@@ -1,7 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Exceptions;
 using WhereHouse.Data.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace WhereHouse.Data.Services;
 

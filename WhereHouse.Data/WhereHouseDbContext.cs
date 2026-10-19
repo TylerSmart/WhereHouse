@@ -1,5 +1,5 @@
-using WhereHouse.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data;
 

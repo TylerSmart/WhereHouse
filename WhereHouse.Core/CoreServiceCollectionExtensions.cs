@@ -1,5 +1,5 @@
-using WhereHouse.Core.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using WhereHouse.Core.Authentication;
 
 namespace WhereHouse.Core;
 

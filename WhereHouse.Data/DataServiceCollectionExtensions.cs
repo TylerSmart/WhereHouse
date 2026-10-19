@@ -1,10 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using WhereHouse.Core.Authentication;
 using WhereHouse.Core.Todos;
 using WhereHouse.Data.Auditing;
 using WhereHouse.Data.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace WhereHouse.Data;
 
@@ -30,8 +30,7 @@ public static class DataServiceCollectionExtensions
             )
         )
         {
-            var inMemoryDbName =
-                configuration["InMemoryDatabaseName"] ?? "WhereHouse_Testing";
+            var inMemoryDbName = configuration["InMemoryDatabaseName"] ?? "WhereHouse_Testing";
             services.AddDbContext<WhereHouseDbContext>(
                 (provider, options) =>
                 {
@@ -66,10 +65,7 @@ public static class DataServiceCollectionExtensions
         services.AddDbContext<WhereHouseDbContext>(
             (provider, options) =>
             {
-                options.UseSqlServer(
-                    whereHouseConnectionString,
-                    sql => sql.EnableRetryOnFailure()
-                );
+                options.UseSqlServer(whereHouseConnectionString, sql => sql.EnableRetryOnFailure());
                 options.AddInterceptors(provider.GetRequiredService<AuditSaveChangesInterceptor>());
             }
         );

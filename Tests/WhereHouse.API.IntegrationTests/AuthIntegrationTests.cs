@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WhereHouse.API.Dtos;
 using WhereHouse.Core.Authentication;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace WhereHouse.API.IntegrationTests;
 

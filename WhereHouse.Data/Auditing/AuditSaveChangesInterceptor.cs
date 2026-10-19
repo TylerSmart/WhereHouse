@@ -1,7 +1,7 @@
-using WhereHouse.Core.Interfaces;
-using WhereHouse.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using WhereHouse.Core.Interfaces;
+using WhereHouse.Data.Entities;
 
 namespace WhereHouse.Data.Auditing;
 

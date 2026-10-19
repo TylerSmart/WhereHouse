@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using WhereHouse.Core.Authentication;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using WhereHouse.Core.Authentication;
 
 namespace WhereHouse.Infrastructure.Authentication;
 

@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using WhereHouse.Core.Exceptions;
-using WhereHouse.Core.Todos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereHouse.Core.Exceptions;
+using WhereHouse.Core.Todos;
 
 namespace WhereHouse.API.Controllers;
 

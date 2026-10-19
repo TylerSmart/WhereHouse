@@ -4,8 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace WhereHouse.Data;
 
-public sealed class WhereHouseDbContextFactory
-    : IDesignTimeDbContextFactory<WhereHouseDbContext>
+public sealed class WhereHouseDbContextFactory : IDesignTimeDbContextFactory<WhereHouseDbContext>
 {
     public WhereHouseDbContext CreateDbContext(string[] args)
     {

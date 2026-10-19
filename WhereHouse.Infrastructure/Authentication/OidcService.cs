@@ -3,9 +3,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using WhereHouse.Core.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using WhereHouse.Core.Authentication;
 
 namespace WhereHouse.Infrastructure.Authentication;
 

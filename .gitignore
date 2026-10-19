@@ -373,3 +373,6 @@ FodyWeavers.xsd
 logs/
 !WhereHouse.Client/src/app/features/admin/logs/
 !WhereHouse.Client/src/app/features/admin/logs/**
+
+# Local file uploads (development)
+App_Data/

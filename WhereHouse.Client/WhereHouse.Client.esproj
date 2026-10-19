@@ -5,6 +5,8 @@
     
     <!-- Prevents VS from trying to build the Angular app during standard solution builds -->
     <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <ShouldRunNpmAudit>false</ShouldRunNpmAudit>
+    <RunNpmAudit>false</RunNpmAudit>
     <BuildCommand></BuildCommand>
     <CleanCommand></CleanCommand>
   </PropertyGroup>

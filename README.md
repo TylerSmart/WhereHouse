@@ -1,34 +1,25 @@
-# WhereHouse (.NET 10 + Angular 22)
+# WhereHouse
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Publish Docker](https://github.com/TylerSmart/WhereHouse/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/TylerSmart/WhereHouse/actions/workflows/docker-publish.yml)
 
-**WhereHouse** is a production-ready, self-hostable full-stack starter template built with **ASP.NET Core 10**, **Entity Framework Core (SQL Server)**, and **Angular 22 (Material 3)**. It provides authentication (local JWT + external OIDC/SSO), automatic database migrations, entity auditing, customizable theming, multi-arch Docker packaging, and NAS/homelab deployment guides out of the box.
+**WhereHouse** is an open-source, self-hosted **home inventory, spatial item locator, and asset lifecycle vault** designed for **TrueNAS Scale** and homelab environments.
 
-> [!IMPORTANT]
-> **Starting a new project from this template?**
-> Follow the **[Template Usage & Project Rename Guide](docs/template-usage.md)** for a single PowerShell script and step-by-step instructions to rename `WhereHouse` (`where-house`, `wherehouse`) to your new project's name and automatically assign a **randomized external host port** so your deployed apps never collide on your NAS.
+Organize everything you own across houses, rooms, shelves, and movable bins; print and scan QR labels with your phone camera for "X-Ray" bin inspection; check out tools and reusable project loadouts without losing track of their permanent home location; and store manuals, receipts, and warranty schedules in one place.
+
+- **[Product Requirements Document (PRD)](docs/PRD.md)** — Full domain model, user workflows, and milestone roadmap.
+- **[TrueNAS Scale Deployment Guide](docs/deployment/truenas-scale.md)** — Dataset setup, Docker Compose, and Nginx Proxy Manager configuration.
+- **[Contributing & Local Development Guide](docs/contributing.md)** — Local Docker SQL Server setup, EF migrations, and testing commands.
 
 ---
 
-## What's Included ("The Bones")
+## Core Capabilities
 
-- **Authentication & Single Sign-On (SSO / OIDC)**:
-  - Local email/password registration & login with PBKDF2-SHA256 password hashing and JWT bearer tokens.
-  - External OIDC / OAuth 2.0 support (Google, Authentik, Keycloak, Microsoft Entra ID) with automatic account linking and user provisioning via `DualBearerAuthenticationHandler`.
-- **Clean Architecture & EF Core Data Layer**:
-  - Separated into `.API`, `.Core`, `.Data`, and `.Infrastructure` projects.
-  - Automatic startup database creation & schema migration (`db.Database.Migrate()`).
-  - Automatic `CreatedAt`/`CreatedBy`/`ModifiedAt`/`ModifiedBy` auditing via `IAuditable` and `AuditSaveChangesInterceptor`.
-- **Dynamic Material 3 Theming**:
-  - Light, Dark, and System theme modes with a live **Theme Customizer Dialog** supporting custom primary/secondary/tertiary color palettes and typography persisted in `localStorage`.
-- **Sample End-to-End CRUD Vertical Slice (`TodoItem`)**:
-  - Reference implementation spanning Entity, EF Core Configuration, Core Service Interface, Data Service with ownership checks, REST Controller (`TodosController`), OpenAPI/Scalar docs, Angular Service, Dashboard UI, and Unit/Integration Tests.
-- **Unified Single-Container Deployment**:
-  - Multi-stage `Dockerfile` that compiles the Angular SPA into the ASP.NET Core `wwwroot` directory and publishes multi-arch (`linux/amd64`, `linux/arm64`) images to GitHub Container Registry (GHCR).
-- **Developer Experience & Quality Gates**:
-  - Pre-commit hooks via Husky + `lint-staged` running ESLint, Prettier, and CSharpier automatically.
-  - Local SQL Server Docker container orchestration (`scripts/ensure-local-infra.ps1`).
+- **Spatial Hierarchy & Movable Containers:** Nested location tree (`House -> Room -> Rack -> Shelf -> Bin`) with visual container appearance badges (e.g., *27-Gal Black/Yellow Tote*). Moving a bin automatically relocates everything inside it.
+- **QR & Barcode Workflows:** Generate printable Avery/thermal QR label sheets, bind pre-printed blank QR stickers on the fly, scan bins for "X-Ray Vision" contents, bulk-audit shelves, and scan retail UPC barcodes.
+- **Check-In / Check-Out & Reusable Loadouts:** Track `In Place`, `In Use`, and external `Loaned Out` statuses without losing an item's permanent Home Location. Build reusable trip/project **Loadouts** with optimized room-by-room Pick Lists and Pack-Back return checklists.
+- **Document Vault, Warranties & Insurance Export:** Attach receipts and PDF manuals (with full-text search), track return windows and recurring maintenance schedules, and generate 1-click Home Insurance claim ZIP/PDF exports.
+- **Household Accounts & "Secret / Gift Mode":** Individual household profiles with private item/bin flags to keep gifts or sensitive items hidden from other household members.
 
 ---
 
@@ -37,16 +28,14 @@
 | Layer | Technology |
 |---|---|
 | **Frontend** | [Angular 22](https://angular.dev/), TypeScript, Angular Material 3, RxJS, Signals |
-| **Backend** | [ASP.NET Core 10](https://dotnet.microsoft.com/), [Scalar](https://scalar.com/) OpenAPI, Serilog |
+| **Backend** | [ASP.NET Core 10](https://dotnet.microsoft.com/), [Scalar](https://scalar.com/) OpenAPI (`/api/scalar`), Serilog |
 | **Data & ORM** | [Microsoft SQL Server 2022](https://www.microsoft.com/sql-server), Entity Framework Core 10 |
-| **Testing** | MSTest + `WebApplicationFactory` (In-Memory DB Integration Tests), Vitest (Angular Unit Tests), Playwright (E2E) |
+| **Testing** | MSTest (`Microsoft.Testing.Platform`) + `WebApplicationFactory` (InMemory DB), Vitest, Playwright (E2E) |
 | **Packaging** | Docker, Docker Compose, Multi-Arch Container Images via GitHub Actions |
 
 ---
 
-## Quick Start (Docker)
-
-You can launch the full stack in seconds using Docker Compose:
+## Quick Start (Docker Compose / TrueNAS Scale)
 
 ```yaml
 name: where-house-prod
@@ -57,14 +46,15 @@ services:
     container_name: where-house-api
     restart: unless-stopped
     ports:
-      # Randomized host port (51793 -> 8080) to avoid port collisions across multiple apps on your NAS/server.
-      # The template initialization script (docs/template-usage.md) automatically generates a unique random port per project.
       - "51793:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=WhereHouse;User Id=sa;Password=YourStrongPassword123!_MustIncludeCaps;TrustServerCertificate=True;"
       Authentication__Jwt__Secret: "ReplaceWithAStrongSecretKeyAtLeast32CharactersLong!"
+      Storage__UploadsPath: "/data/uploads"
+    volumes:
+      - /mnt/tank/wherehouse/uploads:/data/uploads
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -78,7 +68,7 @@ services:
       MSSQL_SA_PASSWORD: "YourStrongPassword123!_MustIncludeCaps"
       MSSQL_PID: "Developer"
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - /mnt/tank/wherehouse/db:/var/opt/mssql
     healthcheck:
       test:
         [
@@ -89,33 +79,22 @@ services:
       timeout: 5s
       retries: 24
       start_period: 20s
-
-volumes:
-  sqlserver_data:
 ```
-
-Run:
-
-```bash
-docker compose up -d
-```
-
-Open `http://localhost:51793` (or your project's randomized host port) in your web browser.
 
 ---
 
-## Documentation
+## Local Development
 
-All documentation is organized in the [`docs/`](docs/) directory using consistent `kebab-case` naming:
-
-- 🧩 **[Template Usage & Rename Guide](docs/template-usage.md)** — How to fork/use this template, rename `WhereHouse` to your new project name, and auto-assign a randomized host port.
-- 🐳 **[Production Docker Deployment Guide](docs/deployment/docker-deployment.md)** — Step-by-step production deployment with reverse proxies (Nginx, Caddy, Traefik, Cloudflare Tunnel), automated backups, and environment tuning.
-- 🚀 **[TrueNAS Scale Deployment Guide](docs/deployment/truenas-scale.md)** — Native Docker Compose setup for TrueNAS Scale (Electric Eel 24.10+) and Dragonfish (24.04), ZFS datasets, and automated snapshots.
-- 🔐 **[OIDC & SSO Authentication Guide](docs/deployment/oidc-authentication.md)** — Configure Single Sign-On with Google OAuth 2.0, Authentik, Keycloak, or Microsoft Entra ID.
-- 🛠️ **[Contributing & Development Guide](docs/contributing.md)** — Workstation setup (.NET 10 & Angular 22), database migrations (EF Core), code styling, and test execution.
-
----
-
-## License
-
-This template is free and open-source software licensed under the **[MIT License](LICENSE)**.
+1. **Start Local SQL Server (`localhost,14333`):**
+   ```powershell
+   .\scripts\ensure-local-infra.ps1
+   ```
+2. **Run Backend API (`http://localhost:5041`):**
+   ```powershell
+   dotnet run --project WhereHouse.API
+   ```
+3. **Run Angular Dev Server (`http://localhost:4200`):**
+   ```powershell
+   cd WhereHouse.Client
+   npm start
+   ```

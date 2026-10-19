@@ -50,9 +50,9 @@ Microsoft SQL Server runs inside its container as UID `10001`. To ensure the dat
    - **Name**: `wherehouse`
    - **Dataset Preset**: `Generic`
 4. Click **Save**.
-5. Select the newly created `wherehouse` dataset, click **Add Dataset**, and create a child dataset:
-   - **Name**: `db`
-   - **Path**: `/mnt/tank/wherehouse/db`
+5. Select the newly created `wherehouse` dataset, click **Add Dataset**, and create two child datasets:
+   - **Name**: `db` (`/mnt/tank/wherehouse/db`) — SQL Server database files
+   - **Name**: `uploads` (`/mnt/tank/wherehouse/uploads`) — Item photos, receipts, and PDF manuals
 6. Click **Save**.
 
 ### 2. Configure Permissions for SQL Server
@@ -97,6 +97,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=WhereHouse;User Id=sa;Password=YourStrongPassword123!_MustIncludeCaps;TrustServerCertificate=True;"
+      Storage__UploadsPath: "/data/uploads"
 
       # JWT Authentication Secret
       Authentication__Jwt__Secret: "ReplaceWithAStrongSecretKeyAtLeast32CharactersLong!"
@@ -114,6 +115,8 @@ services:
       # Authentication__Oidc__AuthorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
       # Authentication__Oidc__TokenEndpoint: "https://oauth2.googleapis.com/token"
       # Authentication__Oidc__UserInfoEndpoint: "https://openidconnect.googleapis.com/v1/userinfo"
+    volumes:
+      - /mnt/tank/wherehouse/uploads:/data/uploads
     depends_on:
       sqlserver:
         condition: service_healthy

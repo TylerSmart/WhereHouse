@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress transitive NuGet advisory warnings from Microsoft.Data.SqlClient / EF Core dependencies to keep build and test logs clean -->
+    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+  </PropertyGroup>
+</Project>
