@@ -213,12 +213,12 @@
   height: 13px;
 }
 .att-badge.photo {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
 }
 .att-badge.doc {
-  background: #ede7f6;
-  color: #512da8;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
 }
 .text-right {
   text-align: right;

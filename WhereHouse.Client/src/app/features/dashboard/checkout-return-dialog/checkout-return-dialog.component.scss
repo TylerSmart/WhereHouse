@@ -103,8 +103,8 @@
   gap: 10px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: #e8f4fd;
-  color: #0c5460;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
   font-size: 0.85rem;
   margin-top: 8px;
 }
@@ -170,20 +170,20 @@
   text-transform: uppercase;
 }
 .action-pill.in-use {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--app-warning-container);
+  color: var(--app-on-warning-container);
 }
 .action-pill.loan {
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
 }
 .action-pill.return {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--app-success-container);
+  color: var(--app-on-success-container);
 }
 .date {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--mat-sys-outline);
 }
 .actor {
   margin: 0;
@@ -197,16 +197,16 @@
   margin: 4px 0 0;
   font-size: 0.82rem;
   font-style: italic;
-  color: #555;
+  color: var(--mat-sys-on-surface-variant);
 }
 .consumed {
   margin: 4px 0 0;
   font-size: 0.8rem;
-  color: #c62828;
+  color: var(--mat-sys-on-error-container);
 }
 .empty-state {
   text-align: center;
   padding: 24px;
-  color: #888;
+  color: var(--mat-sys-outline);
   font-size: 0.9rem;
 }

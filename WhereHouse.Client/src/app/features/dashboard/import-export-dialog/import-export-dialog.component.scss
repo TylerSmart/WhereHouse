@@ -184,24 +184,24 @@
   border-radius: 12px;
 }
 .badge-info {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
 }
 .badge-success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--app-success-container);
+  color: var(--app-on-success-container);
 }
 .badge-primary {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
 }
 .badge-warn {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--app-warning-container);
+  color: var(--app-on-warning-container);
 }
 .badge-danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
 }
 .dry-run-status {
   font-size: 0.75rem;
@@ -247,20 +247,20 @@
   display: inline-block;
 }
 .action-create {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--app-success-container);
+  color: var(--app-on-success-container);
 }
 .action-update {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
 }
 .action-skip {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
 }
 .action-error {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
 }
 .error-row {
   background: rgba(186, 26, 26, 0.05);

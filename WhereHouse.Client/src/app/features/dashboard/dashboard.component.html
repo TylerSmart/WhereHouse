@@ -203,7 +203,8 @@
         [matMenuTriggerFor]="userMenu"
         aria-label="User profile and account options"
       >
-        <span>{{ authService.currentUser()?.username || 'User' }}</span>
+        <mat-icon>account_circle</mat-icon>
+        <span class="desktop-only">{{ authService.currentUser()?.username || 'User' }}</span>
       </button>
       <mat-menu #userMenu="matMenu">
         <div class="user-menu-header">
@@ -230,13 +231,19 @@
     @if (sidebarOpen()) {
       <div
         class="mobile-sidebar-backdrop"
+        animate.enter="backdrop-enter"
+        animate.leave="backdrop-leave"
         (click)="toggleSidebar()"
         (keyup.enter)="toggleSidebar()"
         tabindex="0"
         role="button"
         aria-label="Close location sidebar"
       ></div>
-      <aside class="location-tree-sidebar">
+      <aside
+        class="location-tree-sidebar"
+        animate.enter="sidebar-enter"
+        animate.leave="sidebar-leave"
+      >
         <div class="sidebar-header">
           <div class="sidebar-title">
             <mat-icon>account_tree</mat-icon>
@@ -363,39 +370,48 @@
                 </button>
                 <button
                   mat-stroked-button
+                  class="banner-secondary-btn"
                   (click)="openRapidIntakeDialog(active.id)"
                   matTooltip="Rapid intake into this location"
                 >
                   <mat-icon>bolt</mat-icon>
-                  <span>Rapid Intake</span>
+                  <span class="btn-label">Rapid Intake</span>
                 </button>
                 <button
                   mat-button
+                  class="banner-secondary-btn"
                   (click)="openLocationAttachmentsDialog(active)"
                   matTooltip="Manage cover photo and files"
                 >
                   <mat-icon>add_a_photo</mat-icon>
-                  <span>Photos</span>
+                  <span class="btn-label">Photos</span>
                 </button>
                 <button
                   mat-button
+                  class="banner-secondary-btn"
                   (click)="openMoveDialog(active)"
                   matTooltip="Move container/location"
                 >
                   <mat-icon>drive_file_move</mat-icon>
-                  <span>Move</span>
-                </button>
-                <button mat-button (click)="openEditDialog(active)" matTooltip="Edit details">
-                  <mat-icon>edit</mat-icon>
-                  <span>Edit</span>
+                  <span class="btn-label">Move</span>
                 </button>
                 <button
                   mat-button
+                  class="banner-secondary-btn"
+                  (click)="openEditDialog(active)"
+                  matTooltip="Edit details"
+                >
+                  <mat-icon>edit</mat-icon>
+                  <span class="btn-label">Edit</span>
+                </button>
+                <button
+                  mat-button
+                  class="banner-secondary-btn"
                   (click)="printLocationLabel(active)"
                   matTooltip="Print QR Label for this location"
                 >
                   <mat-icon>print</mat-icon>
-                  <span>Label</span>
+                  <span class="btn-label">Label</span>
                 </button>
                 <button
                   mat-icon-button
@@ -607,6 +623,7 @@
               [class.active]="itemViewMode() === 'grid'"
               (click)="setItemViewMode('grid')"
               matTooltip="Card Grid View"
+              [attr.aria-pressed]="itemViewMode() === 'grid'"
               aria-label="Card Grid View"
             >
               <mat-icon>grid_view</mat-icon>
@@ -616,7 +633,8 @@
               class="view-toggle-btn"
               [class.active]="itemViewMode() === 'table'"
               (click)="setItemViewMode('table')"
-              matTooltip="Data Table View"
+              matTooltip="List / Table View"
+              [attr.aria-pressed]="itemViewMode() === 'table'"
               aria-label="Data Table View"
             >
               <mat-icon>table_rows</mat-icon>
@@ -715,7 +733,7 @@
                 <mat-icon>apartment</mat-icon>
                 <span>Locations &amp; Containers ({{ displayedNodes().length }})</span>
               </h4>
-              <div class="nodes-grid">
+              <div class="nodes-grid" [class.list-view]="itemViewMode() === 'table'">
                 @for (node of displayedNodes(); track node.id) {
                   <mat-card
                     class="node-card"
@@ -764,7 +782,7 @@
                             </button>
                             <button mat-menu-item (click)="openEditDialog(node)">
                               <mat-icon>edit</mat-icon>
-                              <span>Edit</span>
+                              <span class="btn-label">Edit</span>
                             </button>
                             <button mat-menu-item (click)="openLocationAttachmentsDialog(node)">
                               <mat-icon>add_a_photo</mat-icon>
@@ -772,7 +790,7 @@
                             </button>
                             <button mat-menu-item (click)="openMoveDialog(node)">
                               <mat-icon>drive_file_move</mat-icon>
-                              <span>Move</span>
+                              <span class="btn-label">Move</span>
                             </button>
                             <mat-divider></mat-divider>
                             <button mat-menu-item (click)="deleteNode(node)">
@@ -1085,7 +1103,7 @@
                               <mat-divider></mat-divider>
                               <button mat-menu-item (click)="openEditItemDialog(item)">
                                 <mat-icon>edit</mat-icon>
-                                <span>Edit</span>
+                                <span class="btn-label">Edit</span>
                               </button>
                               <button mat-menu-item (click)="openItemAttachmentsDialog(item)">
                                 <mat-icon>attach_file</mat-icon>

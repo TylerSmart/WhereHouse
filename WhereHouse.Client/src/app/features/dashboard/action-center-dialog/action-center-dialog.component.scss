@@ -88,9 +88,9 @@
     }
 
     &.highlight {
-      border-color: #d32f2f;
-      color: #d32f2f;
-      background: #ffebee;
+      border-color: var(--mat-sys-error);
+      color: var(--mat-sys-error);
+      background: var(--mat-sys-error-container);
     }
   }
 }
@@ -185,7 +185,7 @@
 
       &.active {
         background: var(--mat-sys-primary, #1976d2);
-        color: #fff;
+        color: var(--mat-sys-on-primary);
         border-color: var(--mat-sys-primary, #1976d2);
       }
     }
@@ -209,7 +209,7 @@
   gap: 6px;
 
   &.overdue-border {
-    border-color: #d32f2f;
+    border-color: var(--mat-sys-error);
     border-left-width: 4px;
   }
 
@@ -228,8 +228,8 @@
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 4px;
-      background: #fff3e0;
-      color: #e65100;
+      background: var(--app-warning-container);
+      color: var(--app-on-warning-container);
       font-weight: 600;
     }
 
@@ -240,24 +240,24 @@
       border-radius: 4px;
 
       &.overdue {
-        background: #ffebee;
-        color: #c62828;
+        background: var(--mat-sys-error-container);
+        color: var(--mat-sys-on-error-container);
       }
       &.due-soon {
-        background: #fff8e1;
-        color: #f57f17;
+        background: var(--app-warning-container);
+        color: var(--app-on-warning-container);
       }
       &.return-window {
-        background: #e3f2fd;
-        color: #1565c0;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
       }
       &.warranty {
-        background: #e8f5e9;
-        color: #2e7d32;
+        background: var(--app-success-container);
+        color: var(--app-on-success-container);
       }
       &.low-stock {
-        background: #fce4ec;
-        color: #c2185b;
+        background: var(--mat-sys-tertiary-container);
+        color: var(--mat-sys-on-tertiary-container);
       }
     }
   }
@@ -282,7 +282,7 @@
     }
 
     &.stock-highlight {
-      color: #c2185b;
+      color: var(--mat-sys-on-tertiary-container);
     }
   }
 
@@ -426,15 +426,15 @@
           font-size: 0.7rem;
           padding: 2px 6px;
           border-radius: 4px;
-          background: #eee;
+          background: var(--mat-sys-surface-container-high);
         }
 
         .shared-badge {
           font-size: 0.7rem;
           padding: 2px 6px;
           border-radius: 4px;
-          background: #e8f5e9;
-          color: #2e7d32;
+          background: var(--app-success-container);
+          color: var(--app-on-success-container);
         }
       }
 
@@ -446,14 +446,14 @@
 
       .last-status {
         font-size: 0.75rem;
-        color: #555;
+        color: var(--mat-sys-on-surface-variant);
         margin-top: 2px;
 
         .status-text {
           font-weight: 500;
         }
         .status-time {
-          color: #888;
+          color: var(--mat-sys-outline);
           margin-left: 4px;
         }
       }
@@ -482,7 +482,7 @@
     border: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
 
     &.failed {
-      border-left: 4px solid #d32f2f;
+      border-left: 4px solid var(--mat-sys-error);
     }
 
     .badge {
@@ -492,12 +492,12 @@
       border-radius: 4px;
 
       &.success {
-        background: #e8f5e9;
-        color: #2e7d32;
+        background: var(--app-success-container);
+        color: var(--app-on-success-container);
       }
       &.failure {
-        background: #ffebee;
-        color: #c62828;
+        background: var(--mat-sys-error-container);
+        color: var(--mat-sys-on-error-container);
       }
     }
 
@@ -518,11 +518,11 @@
         }
         .chan-tag {
           font-size: 0.75rem;
-          color: #666;
+          color: var(--mat-sys-on-surface-variant);
         }
         .date {
           font-size: 0.75rem;
-          color: #888;
+          color: var(--mat-sys-outline);
           margin-left: auto;
         }
       }

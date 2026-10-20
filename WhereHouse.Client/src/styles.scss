@@ -44,6 +44,14 @@
   --canvas-color-purple-fill: light-dark(#faf5ff, #2e1065);
   --canvas-color-purple-stroke: light-dark(#9333ea, #c084fc);
 
+  /* Semantic status colors (Material 3 has no success/warning roles) */
+  --app-success: light-dark(#2e7d32, #81c784);
+  --app-success-container: light-dark(#e8f5e9, #1b3a1f);
+  --app-on-success-container: light-dark(#1b5e20, #c8e6c9);
+  --app-warning: light-dark(#f59e0b, #ffb74d);
+  --app-warning-container: light-dark(#fff3e0, #4a2c0a);
+  --app-on-warning-container: light-dark(#8a3b00, #ffd9b0);
+
   --app-font-family: 'Roboto', sans-serif;
   --mat-sys-body-large-font: var(--app-font-family);
   --mat-sys-body-medium-font: var(--app-font-family);
@@ -218,5 +226,17 @@ textarea,
     color: #ffffff;
     filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.75));
     pointer-events: none;
+  }
+}
+
+/* Dialogs: never overflow narrow viewports, keep header icons from being crushed */
+.mat-mdc-dialog-container .header-icon,
+.mat-mdc-dialog-container .mat-mdc-dialog-title mat-icon:first-child {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .cdk-overlay-pane.mat-mdc-dialog-panel {
+    max-width: 96vw !important;
   }
 }
