@@ -1,6 +1,11 @@
 # Frontend (Angular 22) Conventions
 
 ## 1. Angular v22 Core Rules
+- **Component File Structure (Strict External Files Rule):**
+  - **NEVER** use inline `template: \`...\`` or inline `styles: \`...\`` inside `@Component({...})`.
+  - Always separate HTML templates and SCSS styles into dedicated sibling files: `<name>.component.html` and `<name>.component.scss`.
+  - Always specify `templateUrl: './<name>.component.html'` and `styleUrl: './<name>.component.scss'` in the `@Component({...})` decorator metadata.
+  - This ensures proper IDE syntax highlighting, clean Git diffs, linting, and maintains lean, readable TypeScript component files.
 - **Standalone & OnPush are Default:**
   - Do **NOT** set `standalone: true` in `@Component` or `@Directive` decorators (default in Angular v20+).
   - Do **NOT** set `changeDetection: ChangeDetectionStrategy.OnPush` explicitly (default in Angular v22+).
