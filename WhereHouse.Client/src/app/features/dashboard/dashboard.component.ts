@@ -189,7 +189,7 @@ export class DashboardComponent implements OnInit {
     if (!id) {
       return null;
     }
-    return this.allNodes().find((n) => n.id === id) ?? null;
+    return this.allNodes().find((n) => n.id.toLowerCase() === id.toLowerCase()) ?? null;
   });
 
   protected readonly currentBreadcrumbs = computed(() => {
@@ -285,6 +285,12 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshAll();
+    this.route.queryParamMap?.subscribe((params) => {
+      const nodeId = params.get('nodeId');
+      if (nodeId) {
+        this.selectNode(nodeId);
+      }
+    });
     const codeParam = this.route.snapshot.paramMap.get('code');
     if (codeParam && codeParam.trim()) {
       this.openScannerDialog(codeParam.trim());

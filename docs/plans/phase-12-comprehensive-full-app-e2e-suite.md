@@ -1,7 +1,7 @@
 # Phase 12: Comprehensive Full-App Playwright E2E Suite
 
 > **Branch:** `feature/phase-12-comprehensive-full-app-e2e-suite`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** [x] Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** `docs/prd.md` — Complete Milestones 1–4 & All Functional Specifications
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -330,7 +330,7 @@ Inherits from `Microsoft.Playwright.MSTest.PageTest`. Provides:
 
 ## 4. Execution Plan & Sequential Checklist
 
-- [ ] **Task 1: Shared E2E Infrastructure & Base Fixture**
+- [x] **Task 1: Shared E2E Infrastructure & Base Fixture**
   - Create `Tests/WhereHouse.Client.E2ETests/WhereHouseE2ETestBase.cs` with authentication, API seeding, and dialog helpers.
   - Verify base fixture runs cleanly and boots Kestrel in under 2 seconds.
   - Test command:
@@ -338,7 +338,7 @@ Inherits from `Microsoft.Playwright.MSTest.PageTest`. Provides:
     dotnet test Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
     ```
 
-- [ ] **Task 2: Core Workflows (Auth, Locations, Items & Attachments)**
+- [x] **Task 2: Core Workflows (Auth, Locations, Items & Attachments)**
   - Implement `Suites/01_AuthAndUserDirectoryE2ETests.cs` (5 tests).
   - Implement `Suites/02_LocationsAndContainersE2ETests.cs` (5 tests).
   - Implement `Suites/03_ItemsAndArchetypesE2ETests.cs` (5 tests).
@@ -348,7 +348,7 @@ Inherits from `Microsoft.Playwright.MSTest.PageTest`. Provides:
     dotnet test Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
     ```
 
-- [ ] **Task 3: Search, Barcodes, Scanner & Rapid Intake**
+- [x] **Task 3: Search, Barcodes, Scanner & Rapid Intake**
   - Implement `Suites/05_SmartSearchAndCommandPaletteE2ETests.cs` (4 tests).
   - Implement `Suites/06_BarcodeAndQrGenerationE2ETests.cs` (4 tests).
   - Implement `Suites/07_ScannerAndAuditScanE2ETests.cs` (3 tests).
@@ -358,7 +358,7 @@ Inherits from `Microsoft.Playwright.MSTest.PageTest`. Provides:
     dotnet test Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
     ```
 
-- [ ] **Task 4: Operations, Lifecycle, Vault & Responsive Polish**
+- [x] **Task 4: Operations, Lifecycle, Vault & Responsive Polish**
   - Implement `Suites/09_CheckoutsAndLoadoutsE2ETests.cs` (4 tests).
   - Implement `Suites/10_MaintenanceAndUpkeepE2ETests.cs` (3 tests).
   - Implement `Suites/11_DeclutterAndGraveyardE2ETests.cs` (4 tests).
@@ -372,7 +372,7 @@ Inherits from `Microsoft.Playwright.MSTest.PageTest`. Provides:
     dotnet test Tests/WhereHouse.Client.E2ETests/WhereHouse.Client.E2ETests.csproj
     ```
 
-- [ ] **Task 5: Full Repository Verification & Formatting**
+- [x] **Task 5: Full Repository Verification & Formatting**
   - Run all .NET test suites (`Core`, `Infrastructure`, `API.IntegrationTests`, `Client.E2ETests`):
     ```powershell
     dotnet test

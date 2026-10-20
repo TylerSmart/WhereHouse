@@ -385,6 +385,7 @@ describe('DashboardComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            queryParamMap: of(new Map()),
             snapshot: {
               paramMap: {
                 get: vi.fn().mockReturnValue(null),

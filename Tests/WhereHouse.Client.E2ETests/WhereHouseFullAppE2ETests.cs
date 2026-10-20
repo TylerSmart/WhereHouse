@@ -8,8 +8,6 @@ namespace WhereHouse.Client.E2ETests;
 
 #pragma warning disable MSTEST0037
 
-public record AuthResponseDto(string Token, string Email, string Username);
-
 [TestClass]
 public class WhereHouseFullAppE2ETests : PageTest
 {
