@@ -1,0 +1,42 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>drive_file_move</mat-icon>
+  <span>Move "{{ data.node.name }}"</span>
+</h2>
+
+<mat-dialog-content>
+  <div class="move-info">
+    <p class="current-path">
+      Current Location: <strong>{{ data.node.fullPath }}</strong>
+    </p>
+    <p class="explanation">
+      Moving a movable container or location automatically updates the path for all its contents and
+      nested containers.
+    </p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Select Destination Location</mat-label>
+      <mat-select [(value)]="selectedParentId">
+        <mat-option [value]="null">
+          <em>🏠 Top-Level (Root Location)</em>
+        </mat-option>
+        @for (target of data.availableTargets; track target.id) {
+          <mat-option [value]="target.id">
+            <span class="target-option-path"> [{{ target.shortCode }}] {{ target.fullPath }} </span>
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    [disabled]="selectedParentId === data.node.parentId"
+    (click)="onConfirm()"
+  >
+    Move Here
+  </button>
+</mat-dialog-actions>

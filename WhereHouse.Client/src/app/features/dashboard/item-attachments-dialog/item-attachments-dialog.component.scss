@@ -1,0 +1,217 @@
+:host {
+  display: block;
+  width: 100%;
+}
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem 0.5rem;
+}
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.short-code {
+  font-size: 0.85rem;
+  font-family: monospace;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(127, 127, 127, 0.15);
+}
+.upload-panel {
+  padding: 0.5rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.panel-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+.file-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.hidden-file-input {
+  display: none;
+}
+.selected-file-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selected-file-label.empty {
+  font-style: italic;
+  color: var(--mat-sys-outline);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.75rem;
+}
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.option-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+.upload-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mat-sys-error);
+  font-size: 0.85rem;
+  background: var(--mat-sys-error-container);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+.attachments-section {
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+.empty-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+}
+.empty-hint {
+  font-size: 0.85rem;
+  color: var(--mat-sys-outline);
+  margin: 0;
+}
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.attachment-card:hover {
+  background: var(--mat-sys-surface-container);
+}
+.attachment-card.primary-card {
+  border-color: var(--mat-sys-primary);
+  background: var(--mat-sys-primary-container);
+}
+.card-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.1);
+  flex-shrink: 0;
+}
+.type-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  color: var(--mat-sys-primary);
+}
+.card-main {
+  flex: 1;
+  min-width: 0;
+}
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.file-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.primary-chip {
+  transform: scale(0.85);
+  transform-origin: left center;
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 0.15rem;
+}
+.type-badge {
+  font-weight: 500;
+}
+.bullet {
+  opacity: 0.6;
+}
+.attachment-notes {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--mat-sys-on-surface);
+  font-style: italic;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}

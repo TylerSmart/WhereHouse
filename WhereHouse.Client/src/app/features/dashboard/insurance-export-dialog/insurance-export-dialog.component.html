@@ -1,0 +1,224 @@
+<div class="insurance-dialog-container">
+  <div class="dialog-header">
+    <div class="title-row">
+      <mat-icon class="header-icon">verified_user</mat-icon>
+      <div class="header-titles">
+        <h2 mat-dialog-title>Home Insurance & Loss Claim Export</h2>
+        <span class="subtitle">
+          Export comprehensive itemized claim schedules, replacement valuations, photos &
+          proof-of-purchase receipts
+        </span>
+      </div>
+    </div>
+
+    <button mat-icon-button (click)="close()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Filter Controls Bar -->
+  <div class="filters-bar">
+    <div class="filter-row">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="loc-field">
+        <mat-label>Location Scope</mat-label>
+        <mat-select [(ngModel)]="selectedLocationId" (ngModelChange)="loadPreview()">
+          <mat-option [value]="null">All Household Locations</mat-option>
+          @for (loc of data.availableLocations; track loc.id) {
+            <mat-option [value]="loc.id"> {{ loc.shortCode }} — {{ loc.name }} </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="cat-field">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="selectedCategoryId" (ngModelChange)="loadPreview()">
+          <mat-option [value]="null">All Categories</mat-option>
+          @for (cat of data.availableCategories; track cat.id) {
+            <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="min-field">
+        <mat-label>Min Value ($)</mat-label>
+        <input
+          matInput
+          type="number"
+          min="0"
+          [(ngModel)]="minValue"
+          placeholder="0.00"
+          (ngModelChange)="loadPreview()"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="options-row">
+      <mat-checkbox
+        [(ngModel)]="includeSubtree"
+        (ngModelChange)="loadPreview()"
+        [disabled]="!selectedLocationId"
+      >
+        Include sub-locations & containers
+      </mat-checkbox>
+
+      <mat-checkbox [(ngModel)]="includeArchived" (ngModelChange)="loadPreview()">
+        Include archived / graveyard items
+      </mat-checkbox>
+
+      <mat-checkbox [(ngModel)]="includeAttachments">
+        Include photos & receipts in ZIP package
+      </mat-checkbox>
+    </div>
+  </div>
+
+  <!-- Valuation Summary Banner -->
+  @if (preview(); as p) {
+    <div class="summary-banner">
+      <div class="metric-box total-val">
+        <span class="metric-title">Effective Claim Valuation</span>
+        <span class="metric-number highlight">{{ p.totalEffectiveClaimValue | currency }}</span>
+        <span class="metric-caption"> Based on replacement cost or purchase price </span>
+      </div>
+
+      <div class="metric-box">
+        <span class="metric-title">Eligible Items</span>
+        <span class="metric-number">{{ p.totalItemsCount }}</span>
+        <span class="metric-caption">Total Qty: {{ p.totalQuantitySum }}</span>
+      </div>
+
+      <div class="metric-box">
+        <span class="metric-title">Original Purchase</span>
+        <span class="metric-number">{{ p.totalPurchaseValue | currency }}</span>
+        <span class="metric-caption">Historical cost</span>
+      </div>
+
+      <div class="metric-box">
+        <span class="metric-title">Replacement Cost</span>
+        <span class="metric-number">{{ p.totalReplacementValue | currency }}</span>
+        <span class="metric-caption">Estimated new</span>
+      </div>
+
+      <div class="metric-box">
+        <span class="metric-title">Documentation</span>
+        <span class="metric-number">
+          {{ p.totalPhotoCount + p.totalReceiptAndDocCount }}
+        </span>
+        <span class="metric-caption">
+          {{ p.totalPhotoCount }} photos, {{ p.totalReceiptAndDocCount }} receipts/docs
+        </span>
+      </div>
+    </div>
+  }
+
+  <mat-dialog-content class="dialog-content">
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-progress-spinner diameter="32" mode="indeterminate" />
+        <span>Calculating insurance claim valuations...</span>
+      </div>
+    } @else if (!preview() || preview()!.items.length === 0) {
+      <div class="empty-state">
+        <mat-icon>inventory_2</mat-icon>
+        <p>No inventory items match the selected claim export filter.</p>
+        <span class="empty-sub">
+          Broaden your location or category selection, or lower the minimum claim value threshold.
+        </span>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Item Name</th>
+              <th>Location</th>
+              <th>Brand / Model</th>
+              <th>Serial #</th>
+              <th class="text-right">Qty</th>
+              <th class="text-right">Claim Value</th>
+              <th class="text-center">Attachments</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of preview()!.items; track item.id) {
+              <tr>
+                <td class="code-cell">
+                  <strong>{{ item.shortCode }}</strong>
+                </td>
+                <td class="name-cell">
+                  <span class="item-name">{{ item.name }}</span>
+                  @if (item.categoryName) {
+                    <span class="cat-pill">{{ item.categoryName }}</span>
+                  }
+                </td>
+                <td class="loc-cell" [matTooltip]="item.locationFullPath">
+                  {{ item.locationFullPath }}
+                </td>
+                <td class="brand-cell">
+                  @if (item.brand || item.modelNumber) {
+                    <span>{{ item.brand }} {{ item.modelNumber }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td class="serial-cell">
+                  @if (item.serialNumber) {
+                    <code class="serial-code">{{ item.serialNumber }}</code>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td class="text-right qty-cell">{{ item.quantity }} {{ item.unit ?? '' }}</td>
+                <td class="text-right val-cell">
+                  <strong>{{ item.effectiveClaimValue | currency }}</strong>
+                </td>
+                <td class="text-center att-cell">
+                  <div class="badges-row">
+                    @if (item.photoCount > 0) {
+                      <span class="att-badge photo" matTooltip="{{ item.photoCount }} photo(s)">
+                        <mat-icon>photo_camera</mat-icon>
+                        {{ item.photoCount }}
+                      </span>
+                    }
+                    @if (item.receiptAndDocCount > 0) {
+                      <span
+                        class="att-badge doc"
+                        matTooltip="{{ item.receiptAndDocCount }} receipt/manual doc(s)"
+                      >
+                        <mat-icon>receipt_long</mat-icon>
+                        {{ item.receiptAndDocCount }}
+                      </span>
+                    }
+                    @if (item.photoCount === 0 && item.receiptAndDocCount === 0) {
+                      <span class="muted">—</span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button (click)="close()">Cancel</button>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="downloadZip()"
+      [disabled]="exporting() || !preview() || preview()!.items.length === 0"
+    >
+      @if (exporting()) {
+        <mat-progress-spinner diameter="18" mode="indeterminate" />
+        <span>Building Claim ZIP Package...</span>
+      } @else {
+        <ng-container>
+          <mat-icon>folder_zip</mat-icon>
+          <span>Download Claim Package (.ZIP)</span>
+        </ng-container>
+      }
+    </button>
+  </mat-dialog-actions>
+</div>

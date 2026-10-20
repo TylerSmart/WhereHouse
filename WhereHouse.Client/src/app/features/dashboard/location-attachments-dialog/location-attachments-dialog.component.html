@@ -1,0 +1,93 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>{{ location().nodeType === 1 ? 'inventory_2' : 'location_on' }}</mat-icon>
+    <span>Cover Photo &amp; Files — {{ location().name }}</span>
+    <span class="short-code">{{ location().shortCode }}</span>
+  </h2>
+  <button mat-icon-button (click)="dialogRef.close(location())" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-body">
+  @if (location().coverAttachmentId) {
+    <div class="current-photo-card">
+      <div class="photo-preview-wrap">
+        <img
+          [src]="coverPhotoUrl()"
+          alt="Cover photo for {{ location().name }}"
+          class="cover-photo-img"
+        />
+      </div>
+      <div class="photo-actions">
+        <div class="photo-info">
+          <span class="photo-label">Current Cover Photo</span>
+          <span class="photo-hint">Displayed on location header and container cards</span>
+        </div>
+        <button
+          mat-stroked-button
+          color="warn"
+          (click)="deletePhoto()"
+          [disabled]="processing()"
+          aria-label="Delete cover photo"
+        >
+          @if (processing()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate" />
+          } @else {
+            <mat-icon>delete</mat-icon>
+          }
+          <span>Delete Photo</span>
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="no-photo-card">
+      <mat-icon class="no-photo-icon">add_a_photo</mat-icon>
+      <h3>No Cover Photo Set</h3>
+      <p>
+        Upload a reference photo of this shelf, tote, or container to help family members identify
+        it at a glance.
+      </p>
+    </div>
+  }
+
+  <div class="upload-section">
+    <h3 class="upload-title">
+      {{ location().coverAttachmentId ? 'Replace Cover Photo' : 'Upload Cover Photo' }}
+    </h3>
+    <div class="upload-dropzone">
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        class="hidden-input"
+        (change)="onFileSelected($event)"
+      />
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        (click)="fileInput.click()"
+        [disabled]="processing()"
+      >
+        @if (processing()) {
+          <mat-progress-spinner diameter="18" mode="indeterminate" />
+        } @else {
+          <mat-icon>upload</mat-icon>
+        }
+        <span>{{
+          processing()
+            ? 'Uploading...'
+            : location().coverAttachmentId
+              ? 'Choose Replacement Photo'
+              : 'Choose Photo'
+        }}</span>
+      </button>
+      <span class="upload-hint">Supports JPEG, PNG, WebP up to 15 MB</span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close(location())">Done</button>
+</mat-dialog-actions>

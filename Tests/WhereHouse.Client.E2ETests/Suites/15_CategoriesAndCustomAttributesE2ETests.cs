@@ -24,9 +24,13 @@ public class CategoriesAndCustomAttributesE2ETests : WhereHouseE2ETestBase
         // Click Add Category (+) button in left pane
         var addCatBtn = dialog.Locator("button[aria-label='Add Category']");
         await addCatBtn.ClickAsync();
+        await Page.WaitForTimeoutAsync(250);
 
         // Fill category name & icon
-        var catNameInput = dialog.Locator("input[formControlName='name']");
+        var catNameInput = dialog
+            .Locator(".category-form-pane input[formControlName='name']")
+            .First;
+        await catNameInput.ClickAsync();
         await catNameInput.FillAsync($"Lawn Equipment_{suffix}");
 
         var iconInput = dialog.Locator("input[formControlName='icon']");

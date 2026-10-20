@@ -1,0 +1,289 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="title-icon">import_export</mat-icon>
+  <div class="title-text">
+    <span>Inventory Data Portability</span>
+    <span class="subtitle">Bulk import &amp; round-trip export (CSV &amp; JSON)</span>
+  </div>
+</h2>
+
+<mat-dialog-content class="portability-content">
+  @if (isLoading()) {
+    <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+  }
+
+  <mat-tab-group animationDuration="150ms">
+    <!-- Tab 1: Export Inventory -->
+    <mat-tab label="Export Inventory">
+      <div class="tab-pane">
+        <p class="tab-intro">
+          Export your inventory, locations, or categories for backup, offline spreadsheets, or
+          migration.
+        </p>
+
+        <div class="export-cards-grid">
+          <div class="export-card primary-card">
+            <div class="card-header">
+              <mat-icon>folder_zip</mat-icon>
+              <div>
+                <h3 class="card-title">Full WhereHouse JSON Backup</h3>
+                <p class="card-desc">
+                  Complete database snapshot (Categories, Locations, Items &amp; Attributes).
+                </p>
+              </div>
+            </div>
+            <button
+              mat-flat-button
+              color="primary"
+              [disabled]="isLoading()"
+              (click)="onExportJson()"
+            >
+              <mat-icon>download</mat-icon>
+              Download JSON Bundle (.json)
+            </button>
+          </div>
+
+          <div class="export-card">
+            <div class="card-header">
+              <mat-icon>inventory_2</mat-icon>
+              <div>
+                <h3 class="card-title">Items CSV</h3>
+                <p class="card-desc">
+                  All accessible inventory items with codes, locations, quantities and prices.
+                </p>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              [disabled]="isLoading()"
+              (click)="onExportCsv(PortabilityEntityTypes.Items)"
+            >
+              <mat-icon>table_view</mat-icon>
+              Download Items CSV (.csv)
+            </button>
+          </div>
+
+          <div class="export-card">
+            <div class="card-header">
+              <mat-icon>account_tree</mat-icon>
+              <div>
+                <h3 class="card-title">Locations &amp; Containers CSV</h3>
+                <p class="card-desc">
+                  Topologically ordered location hierarchy, bins, and color codes.
+                </p>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              [disabled]="isLoading()"
+              (click)="onExportCsv(PortabilityEntityTypes.Locations)"
+            >
+              <mat-icon>table_view</mat-icon>
+              Download Locations CSV (.csv)
+            </button>
+          </div>
+
+          <div class="export-card">
+            <div class="card-header">
+              <mat-icon>category</mat-icon>
+              <div>
+                <h3 class="card-title">Categories &amp; Templates CSV</h3>
+                <p class="card-desc">Category taxonomy and custom attribute field schemas.</p>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              [disabled]="isLoading()"
+              (click)="onExportCsv(PortabilityEntityTypes.Categories)"
+            >
+              <mat-icon>table_view</mat-icon>
+              Download Categories CSV (.csv)
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Bulk Import -->
+    <mat-tab label="Bulk Import">
+      <div class="tab-pane">
+        <div class="import-config-row">
+          <mat-form-field appearance="outline" class="config-field">
+            <mat-label>Import Format</mat-label>
+            <mat-select [value]="importFormat()" (selectionChange)="onFormatChange($event.value)">
+              <mat-option value="csv">CSV Spreadsheet</mat-option>
+              <mat-option value="json">Full JSON Bundle (.json)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          @if (importFormat() === 'csv') {
+            <mat-form-field appearance="outline" class="config-field">
+              <mat-label>Target Entity Type</mat-label>
+              <mat-select
+                [value]="selectedEntityType()"
+                (selectionChange)="onEntityTypeChange($event.value)"
+              >
+                <mat-option [value]="PortabilityEntityTypes.Items">Items</mat-option>
+                <mat-option [value]="PortabilityEntityTypes.Locations"
+                  >Locations &amp; Bins</mat-option
+                >
+                <mat-option [value]="PortabilityEntityTypes.Categories">Categories</mat-option>
+              </mat-select>
+            </mat-form-field>
+          }
+
+          <div class="checkbox-container">
+            <mat-checkbox
+              [checked]="updateExisting()"
+              (change)="updateExisting.set($event.checked)"
+            >
+              Update existing records if found
+            </mat-checkbox>
+          </div>
+        </div>
+
+        <!-- File Upload / Text Area -->
+        <div class="upload-zone">
+          <div class="file-pick-bar">
+            <input
+              #fileInput
+              type="file"
+              class="hidden-file-input"
+              [accept]="importFormat() === 'csv' ? '.csv,text/csv' : '.json,application/json'"
+              (change)="onFileSelected($event)"
+            />
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              <span>Select {{ importFormat() === 'csv' ? 'CSV' : 'JSON' }} File</span>
+            </button>
+            @if (selectedFileName()) {
+              <span class="file-name-pill">{{ selectedFileName() }}</span>
+            }
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Or Paste Raw Content Here</mat-label>
+            <textarea
+              matInput
+              [rows]="importFormat() === 'csv' ? 5 : 4"
+              [value]="rawContent()"
+              (input)="onRawContentChange($event)"
+              placeholder="Paste CSV rows or JSON content here..."
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- CSV Column Mapper (When CSV format and headers detected) -->
+        @if (importFormat() === 'csv' && detectedHeaders().length > 0) {
+          <div class="mapper-section">
+            <div class="mapper-header">
+              <mat-icon>tune</mat-icon>
+              <span>Map CSV Columns to WhereHouse Fields</span>
+            </div>
+
+            <div class="mapper-grid">
+              @for (field of activeTargetFields(); track field.key) {
+                <div class="mapper-row">
+                  <span class="field-label" [class.required]="field.required">
+                    {{ field.label }} {{ field.required ? '*' : '' }}
+                  </span>
+                  <mat-form-field appearance="outline" density="compact" class="mapper-select">
+                    <mat-select
+                      [value]="columnMapping()[field.key] ?? ''"
+                      (selectionChange)="onMapColumn(field.key, $event.value)"
+                    >
+                      <mat-option value=""><em>(None / Skip)</em></mat-option>
+                      @for (h of detectedHeaders(); track h) {
+                        <mat-option [value]="h">{{ h }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Action Controls: Dry Run vs Commit -->
+        <div class="import-actions-row">
+          <button
+            mat-stroked-button
+            color="primary"
+            [disabled]="!hasContent() || isLoading()"
+            (click)="onRunDryRun()"
+          >
+            <mat-icon>fact_check</mat-icon>
+            <span>Run Dry-Run Preview</span>
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            [disabled]="!hasContent() || isLoading() || !canCommit()"
+            (click)="onCommitImport()"
+          >
+            <mat-icon>cloud_upload</mat-icon>
+            <span>Commit Import</span>
+          </button>
+        </div>
+
+        <!-- Dry Run / Import Preview Results -->
+        @if (previewResult(); as result) {
+          <div class="preview-results-box" [class.has-errors]="result.errorCount > 0">
+            <div class="results-header">
+              <div class="badges-row">
+                <span class="badge badge-info">{{ result.totalRowsProcessed }} Processed</span>
+                <span class="badge badge-success">{{ result.createdCount }} To Create</span>
+                <span class="badge badge-primary">{{ result.updatedCount }} To Update</span>
+                <span class="badge badge-warn">{{ result.skippedCount }} Skipped</span>
+                <span class="badge badge-danger">{{ result.errorCount }} Errors</span>
+              </div>
+
+              <span class="dry-run-status">
+                {{
+                  result.dryRun
+                    ? 'DRY-RUN VALIDATION (No DB Changes Persisted)'
+                    : 'IMPORT COMMITTED'
+                }}
+              </span>
+            </div>
+
+            @if (result.rows.length > 0) {
+              <div class="preview-table-container">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>Row #</th>
+                      <th>Action</th>
+                      <th>Code / Identifier</th>
+                      <th>Name</th>
+                      <th>Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of result.rows; track row.rowNumber) {
+                      <tr [class.error-row]="row.action === ImportRowActions.Error">
+                        <td>{{ row.rowNumber }}</td>
+                        <td>
+                          <span class="action-tag" [class]="getActionClass(row.action)">
+                            {{ getActionLabel(row.action) }}
+                          </span>
+                        </td>
+                        <td class="font-mono">{{ row.identifier || '—' }}</td>
+                        <td class="font-semibold">{{ row.name || '—' }}</td>
+                        <td class="msg-col">{{ row.message }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Close</button>
+</mat-dialog-actions>

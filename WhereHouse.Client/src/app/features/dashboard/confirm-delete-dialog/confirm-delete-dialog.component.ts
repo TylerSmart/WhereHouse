@@ -20,39 +20,8 @@ export interface ConfirmDialogData {
 @Component({
   imports: [MatDialogTitle, MatDialogContent, MatDialogActions, MatButtonModule, MatIconModule],
   selector: 'app-confirm-dialog',
-  template: `
-    <h2 mat-dialog-title class="dialog-title">
-      @if (data.isDestructive) {
-        <mat-icon color="warn" aria-hidden="true">warning</mat-icon>
-      }
-      <span>{{ data.title }}</span>
-    </h2>
-    <mat-dialog-content>
-      <p>{{ data.message }}</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close(false)">
-        {{ data.cancelText || 'Cancel' }}
-      </button>
-      <button
-        mat-flat-button
-        [color]="data.isDestructive ? 'warn' : 'primary'"
-        (click)="dialogRef.close(true)"
-      >
-        {{ data.confirmText || 'Confirm' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: `
-    :host {
-      display: block;
-    }
-    .dialog-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-  `,
+  templateUrl: './confirm-delete-dialog.component.html',
+  styleUrl: './confirm-delete-dialog.component.scss',
 })
 export class ConfirmDialogComponent {
   protected readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);

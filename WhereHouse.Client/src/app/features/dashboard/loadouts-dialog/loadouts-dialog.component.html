@@ -1,0 +1,469 @@
+<h2 mat-dialog-title class="dialog-header">
+  <div class="header-content">
+    <mat-icon class="header-icon">backpack</mat-icon>
+    <span class="dialog-title-text">Loadouts, Project Cart & Active Loans</span>
+  </div>
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="tab-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'loadouts'"
+      (click)="activeTab.set('loadouts')"
+    >
+      <mat-icon>backpack</mat-icon>
+      <span>Reusable Loadouts ({{ loadouts().length }})</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'cart'"
+      (click)="activeTab.set('cart')"
+    >
+      <mat-icon>shopping_cart</mat-icon>
+      <span>Project Cart ({{ cartItems().length }})</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'loans'"
+      (click)="switchTabToLoans()"
+    >
+      <mat-icon>assignment</mat-icon>
+      <span>Active Loans ({{ activeLoans().length }})</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: REUSABLE LOADOUTS -->
+  @if (activeTab() === 'loadouts') {
+    <div class="loadouts-tab">
+      <div class="section-actions">
+        <span class="section-hint"
+          >Pre-planned packing lists with room-by-room pick lists and consumable tracking.</span
+        >
+        <button mat-stroked-button type="button" (click)="toggleCreatingNew()">
+          <mat-icon>{{ creatingNew() ? 'close' : 'add_circle' }}</mat-icon>
+          {{ creatingNew() ? 'Cancel' : 'New Loadout Template' }}
+        </button>
+      </div>
+
+      @if (creatingNew()) {
+        <!-- NEW LOADOUT TEMPLATE FORM -->
+        <div class="new-loadout-panel">
+          <h3>Create Reusable Loadout</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Loadout Name</mat-label>
+            <input
+              matInput
+              [(ngModel)]="newLoadoutName"
+              placeholder="e.g. Weekend Camping, Drywall Repair Kit"
+              required
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description (Optional)</mat-label>
+            <input matInput [(ngModel)]="newLoadoutDesc" placeholder="Purpose or context" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Add Items</mat-label>
+            <mat-select
+              [(ngModel)]="selectedItemIds"
+              multiple
+              placeholder="Select items to include"
+            >
+              @for (itm of data.availableItems; track itm.id) {
+                <mat-option [value]="itm.id">
+                  [{{ itm.shortCode }}] {{ itm.name }} ({{
+                    itm.homeLocationFullPath || 'Unassigned'
+                  }})
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="!newLoadoutName.trim() || submitting()"
+              (click)="saveNewLoadout()"
+            >
+              <mat-icon>save</mat-icon> Save Template
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (loadingLoadouts()) {
+        <p class="empty-state">Loading loadouts...</p>
+      } @else if (loadouts().length === 0 && !creatingNew()) {
+        <div class="empty-state-box">
+          <mat-icon class="empty-icon">backpack</mat-icon>
+          <p>No reusable loadout templates yet.</p>
+          <span class="sub"
+            >Create a loadout for camping, sports, emergency prep, or specific tasks!</span
+          >
+        </div>
+      } @else {
+        <div class="loadout-list">
+          @for (loadout of loadouts(); track loadout.id) {
+            <div class="loadout-card">
+              <div class="card-summary">
+                <div class="summary-left">
+                  <mat-icon class="loadout-icon">{{ loadout.icon || 'backpack' }}</mat-icon>
+                  <div class="loadout-titles">
+                    <span class="loadout-name">{{ loadout.name }}</span>
+                    @if (loadout.description) {
+                      <span class="loadout-desc">{{ loadout.description }}</span>
+                    }
+                    <div class="meta-row">
+                      <span
+                        class="status-tag"
+                        [class.active]="loadout.status === loadoutStatuses.ActiveCheckout"
+                      >
+                        {{
+                          loadout.status === loadoutStatuses.ActiveCheckout
+                            ? 'Active Checkout'
+                            : 'Ready to Pack'
+                        }}
+                      </span>
+                      <span class="item-count">{{ loadout.totalItemCount }} items</span>
+                      @if (loadout.preFlightWarningCount > 0) {
+                        <span class="warning-tag">
+                          <mat-icon inline>warning</mat-icon>
+                          {{ loadout.preFlightWarningCount }} Pre-Flight Alerts
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="summary-actions">
+                  @if (loadout.status === loadoutStatuses.Ready) {
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      [disabled]="submitting()"
+                      (click)="checkoutLoadout(loadout)"
+                    >
+                      <mat-icon>outbox</mat-icon> Check Out Loadout
+                    </button>
+                  } @else {
+                    <button
+                      mat-flat-button
+                      color="accent"
+                      type="button"
+                      [disabled]="submitting()"
+                      (click)="openPackBack(loadout)"
+                    >
+                      <mat-icon>move_to_inbox</mat-icon> Pack-Back & Reconcile
+                    </button>
+                  }
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="deleteLoadout(loadout.id)"
+                    title="Delete Loadout"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PRE-FLIGHT WARNINGS BANNER -->
+              @if (loadout.preFlightWarnings.length > 0) {
+                <div class="warnings-box">
+                  <strong>⚠️ Pre-Flight Check:</strong>
+                  <ul>
+                    @for (warn of loadout.preFlightWarnings; track warn) {
+                      <li>{{ warn }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- ROOM-BY-ROOM PICK LIST EXPANSION -->
+              <mat-expansion-panel class="pick-list-panel">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon inline>route</mat-icon> Room-by-Room Pick List ({{
+                      loadout.pickListStops.length
+                    }}
+                    stops)
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <div class="pick-list-stops">
+                  @for (stop of loadout.pickListStops; track stop.locationId) {
+                    <div class="stop-box">
+                      <div class="stop-header">
+                        <mat-icon inline>meeting_room</mat-icon>
+                        <strong>{{ stop.locationFullPath }}</strong>
+                      </div>
+                      <ul class="stop-items">
+                        @for (li of stop.items; track li.id) {
+                          <li class="stop-item">
+                            <span class="item-id">[{{ li.itemShortCode }}]</span>
+                            <span class="item-label">{{ li.itemName }}</span>
+                            <span class="qty"
+                              >Req: {{ li.requiredQuantity }} {{ li.unit || '' }}</span
+                            >
+                            @if (li.isConsumable) {
+                              <span class="consumable-pill">Consumable</span>
+                            }
+                            @if (li.hasPreFlightWarning) {
+                              <span class="item-warn">⚠️ {{ li.preFlightWarningMessage }}</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              </mat-expansion-panel>
+
+              <!-- PACK-BACK PANEL -->
+              @if (activePackBackLoadoutId() === loadout.id) {
+                <div class="pack-back-drawer">
+                  <div class="pb-header">
+                    <h4>Pack-Back Checklist & Consumable Reconciliation</h4>
+                    <button mat-button type="button" (click)="activePackBackLoadoutId.set(null)">
+                      Close
+                    </button>
+                  </div>
+                  <p class="pb-hint">
+                    Unreturned items stay marked In Use. Consumed quantities will be automatically
+                    deducted from inventory.
+                  </p>
+
+                  <div class="pb-items">
+                    @for (entry of packBackEntries(); track entry.itemId) {
+                      <div class="pb-row">
+                        <label class="pb-checkbox-label">
+                          <input type="checkbox" [(ngModel)]="entry.isReturned" />
+                          <span class="pb-item-name">{{ entry.itemName }}</span>
+                        </label>
+
+                        @if (entry.isConsumable || entry.isQuantity) {
+                          <div class="pb-qty-box">
+                            <span class="pb-qty-label">Qty Used:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              [max]="entry.quantityCheckedOut"
+                              [(ngModel)]="entry.quantityUsed"
+                            />
+                            <button type="button" class="chip-btn" (click)="entry.quantityUsed = 0">
+                              None
+                            </button>
+                            <button
+                              type="button"
+                              class="chip-btn"
+                              (click)="entry.quantityUsed = entry.quantityCheckedOut"
+                            >
+                              All
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="pb-actions">
+                    <button
+                      mat-flat-button
+                      color="primary"
+                      type="button"
+                      [disabled]="submitting()"
+                      (click)="submitPackBack(loadout.id)"
+                    >
+                      <mat-icon>check_circle</mat-icon> Complete Pack-Back
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB 2: PROJECT CART -->
+  @if (activeTab() === 'cart') {
+    <div class="cart-tab">
+      <div class="cart-header-row">
+        <span class="section-hint"
+          >Ad-hoc cart for gathering items across multiple rooms for a household task.</span
+        >
+        @if (cartItems().length > 0) {
+          <button mat-button color="warn" type="button" (click)="clearCart()">
+            <mat-icon>delete_sweep</mat-icon> Clear Cart
+          </button>
+        }
+      </div>
+
+      @if (cartItems().length === 0) {
+        <div class="empty-state-box">
+          <mat-icon class="empty-icon">shopping_cart</mat-icon>
+          <p>Your Project Cart is empty.</p>
+          <span class="sub">Click "Add to Cart" on any item card in the dashboard or scanner.</span>
+        </div>
+      } @else {
+        <div class="cart-controls">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Project or Note for Cart Checkout</mat-label>
+            <input
+              matInput
+              [(ngModel)]="cartProjectNote"
+              placeholder="e.g. Garage cleanup, Deck sanding"
+            />
+          </mat-form-field>
+        </div>
+
+        <!-- CART ROOM-BY-ROOM PICK LIST -->
+        <div class="cart-items-grouped">
+          @for (group of groupedCartItems(); track group.locationFullPath) {
+            <div class="cart-room-group">
+              <div class="group-header">
+                <mat-icon inline>meeting_room</mat-icon>
+                <strong>{{ group.locationFullPath }}</strong>
+              </div>
+              <div class="group-items">
+                @for (item of group.items; track item.id) {
+                  <div class="cart-item-row">
+                    <span class="code">[{{ item.shortCode }}]</span>
+                    <span class="name">{{ item.name }}</span>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      (click)="removeFromCart(item.id)"
+                      title="Remove from Cart"
+                    >
+                      <mat-icon>remove_shopping_cart</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="cart-actions-bar">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="submitting()"
+            (click)="checkoutCart()"
+          >
+            <mat-icon>outbox</mat-icon> Check Out All Cart Items ({{ cartItems().length }})
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="submitting()"
+            (click)="saveCartAsLoadout()"
+          >
+            <mat-icon>save</mat-icon> Save Cart as Reusable Loadout
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB 3: ACTIVE LOANS & CHECKOUTS -->
+  @if (activeTab() === 'loans') {
+    <div class="loans-tab">
+      <div class="filter-row">
+        <span class="section-hint"
+          >Real-time view of all items currently out of place or loaned out.</span
+        >
+        <div class="filter-toggles">
+          <mat-slide-toggle [(ngModel)]="loansOnlyFilter" (change)="loadActiveLoans()">
+            External Loans Only
+          </mat-slide-toggle>
+          <mat-slide-toggle [(ngModel)]="overdueOnlyFilter" (change)="loadActiveLoans()">
+            Overdue Only
+          </mat-slide-toggle>
+        </div>
+      </div>
+
+      @if (loadingLoans()) {
+        <p class="empty-state">Loading active loans...</p>
+      } @else if (activeLoans().length === 0) {
+        <div class="empty-state-box">
+          <mat-icon class="empty-icon">check_circle</mat-icon>
+          <p>Everything is currently in its home bin!</p>
+          <span class="sub">No items are currently checked out or loaned out.</span>
+        </div>
+      } @else {
+        <div class="loans-list">
+          @for (itm of activeLoans(); track itm.id) {
+            <div class="loan-card" [class.overdue]="itm.isOverdueLoan">
+              <div class="loan-details">
+                <div class="loan-title-row">
+                  <span class="code">[{{ itm.shortCode }}]</span>
+                  <strong class="name">{{ itm.name }}</strong>
+                  @if (itm.isOverdueLoan) {
+                    <span class="overdue-tag">OVERDUE</span>
+                  }
+                </div>
+
+                <div class="loan-meta">
+                  <span class="borrower">
+                    <mat-icon inline>{{
+                      itm.status === itemStatuses.LoanedOut ? 'person_search' : 'construction'
+                    }}</mat-icon>
+                    {{
+                      itm.status === itemStatuses.LoanedOut
+                        ? 'Loaned to ' + (itm.checkedOutToBorrower || 'N/A')
+                        : 'In Use by ' + (itm.checkedOutByUsername || 'User')
+                    }}
+                  </span>
+                  @if (itm.checkoutNote || itm.activeLoadoutName) {
+                    <span class="note"
+                      >"{{
+                        itm.activeLoadoutName
+                          ? 'Loadout: ' + itm.activeLoadoutName
+                          : itm.checkoutNote
+                      }}"</span
+                    >
+                  }
+                  @if (itm.checkoutDueAt) {
+                    <span class="due">Due: {{ itm.checkoutDueAt | date: 'shortDate' }}</span>
+                  }
+                  @if (itm.homeLocationFullPath) {
+                    <span class="home">Home: {{ itm.homeLocationFullPath }}</span>
+                  }
+                </div>
+              </div>
+
+              <div class="loan-actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="submitting()"
+                  (click)="returnLoanItem(itm)"
+                >
+                  <mat-icon>move_to_inbox</mat-icon> Return to Home
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="close()">Close</button>
+</mat-dialog-actions>

@@ -1,0 +1,208 @@
+<h2 mat-dialog-title class="dialog-header">
+  <div class="title-with-icon">
+    <mat-icon class="header-icon">{{ mode() === 'stage' ? 'sell' : 'inventory_2' }}</mat-icon>
+    <div class="header-text">
+      <span class="action-label">{{
+        mode() === 'stage' ? 'Declutter Staging' : 'Send to Graveyard (Archive)'
+      }}</span>
+      <span class="item-name-subtitle">{{ item.name }} ({{ item.shortCode }})</span>
+    </div>
+  </div>
+  <div class="mode-toggle-group">
+    <button
+      mat-stroked-button
+      type="button"
+      class="mode-btn"
+      [class.active]="mode() === 'stage'"
+      (click)="mode.set('stage')"
+    >
+      <mat-icon>sell</mat-icon>
+      <span>Stage</span>
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      class="mode-btn"
+      [class.active]="mode() === 'archive'"
+      (click)="mode.set('archive')"
+    >
+      <mat-icon>inventory_2</mat-icon>
+      <span>Archive</span>
+    </button>
+  </div>
+</h2>
+
+<mat-dialog-content class="dialog-body">
+  @if (item.homeLocationFullPath) {
+    <div class="home-location-info-banner">
+      <mat-icon>place</mat-icon>
+      <span
+        >Home Location: <strong>{{ item.homeLocationFullPath }}</strong></span
+      >
+    </div>
+  }
+
+  @if (mode() === 'stage') {
+    <!-- STAGING FORM -->
+    <div class="form-section">
+      <span class="section-label">Staging Intent</span>
+      <mat-radio-group
+        class="radio-vertical"
+        [ngModel]="isToSell()"
+        (ngModelChange)="isToSell.set($event)"
+      >
+        <mat-radio-button [value]="true">
+          <div class="radio-content">
+            <strong>Stage to Sell</strong>
+            <span class="radio-desc"
+              >Prepare to list on Facebook Marketplace, eBay, garage sale, etc.</span
+            >
+          </div>
+        </mat-radio-button>
+        <mat-radio-button [value]="false">
+          <div class="radio-content">
+            <strong>Stage to Donate</strong>
+            <span class="radio-desc"
+              >Place in physical donate bin or stage for thrift store drop-off.</span
+            >
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <div class="fields-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{
+          isToSell() ? 'Target Asking Price ($)' : 'Estimated Donation Tax Value ($)'
+        }}</mat-label>
+        <input
+          matInput
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          [ngModel]="targetPrice()"
+          (ngModelChange)="targetPrice.set($event)"
+        />
+        <span matTextPrefix>$&nbsp;</span>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Listing Notes / Staging Platform</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          placeholder="e.g. List on FB Marketplace for $40 OBO, clean before photographing, in Donate Box by garage door"
+          [ngModel]="listingNotes()"
+          (ngModelChange)="listingNotes.set($event)"
+        ></textarea>
+      </mat-form-field>
+    </div>
+  } @else {
+    <!-- ARCHIVE / GRAVEYARD FORM -->
+    <div class="form-section">
+      <p class="archive-explainer">
+        Archiving moves this item to the <strong>Graveyard</strong>. It will be hidden from active
+        bins and container counts, but will appear in search results with its previous home location
+        and disposition record preserved.
+      </p>
+
+      <div class="fields-grid">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Disposition Reason</mat-label>
+          <mat-select
+            [ngModel]="dispositionReason()"
+            (ngModelChange)="dispositionReason.set($event)"
+          >
+            @for (entry of dispositionReasonOptions; track entry.value) {
+              <mat-option [value]="entry.value">{{ entry.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (dispositionReason() === DispositionReasons.Sold) {
+          <mat-form-field appearance="outline">
+            <mat-label>Actual Sale Price ($)</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              [ngModel]="salePrice()"
+              (ngModelChange)="salePrice.set($event)"
+            />
+            <span matTextPrefix>$&nbsp;</span>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Disposition Notes</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            placeholder="e.g. Sold on eBay to user @buyer, Dropped off at Goodwill on Main St, Battery depleted and discarded at county depot"
+            [ngModel]="dispositionNote()"
+            (ngModelChange)="dispositionNote.set($event)"
+          ></textarea>
+        </mat-form-field>
+      </div>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button type="button" [disabled]="isSubmitting()" (click)="dialogRef.close(false)">
+    Cancel
+  </button>
+
+  @if (item.status === ItemStatuses.StagedToSell || item.status === ItemStatuses.StagedToDonate) {
+    <button
+      mat-stroked-button
+      color="warn"
+      type="button"
+      [disabled]="isSubmitting()"
+      (click)="submitUnstage()"
+    >
+      <mat-icon>undo</mat-icon>
+      <span>Unstage (Keep in Place)</span>
+    </button>
+  }
+
+  @if (item.status === ItemStatuses.Archived) {
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      [disabled]="isSubmitting()"
+      (click)="submitRestore()"
+    >
+      <mat-icon>restore_from_trash</mat-icon>
+      <span>Restore to Home Bin</span>
+    </button>
+  }
+
+  @if (mode() === 'stage') {
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="isSubmitting()"
+      (click)="submitStage()"
+    >
+      <mat-icon>sell</mat-icon>
+      <span>{{ isToSell() ? 'Stage to Sell' : 'Stage to Donate' }}</span>
+    </button>
+  } @else {
+    <button
+      mat-flat-button
+      color="warn"
+      type="button"
+      [disabled]="isSubmitting()"
+      (click)="submitArchive()"
+    >
+      <mat-icon>archive</mat-icon>
+      <span>Confirm Archive</span>
+    </button>
+  }
+</mat-dialog-actions>

@@ -1,0 +1,212 @@
+.dialog-header {
+  margin: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+}
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-icon {
+  color: var(--mat-sys-primary, #1976d2);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+.action-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.item-name {
+  font-size: 0.9rem;
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+.code {
+  font-weight: bold;
+  color: var(--mat-sys-primary, #1976d2);
+}
+.dialog-content {
+  padding: 20px 24px;
+  min-width: 440px;
+  max-width: 540px;
+}
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+  padding-bottom: 8px;
+}
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface-variant, #666);
+  transition: all 0.15s ease;
+}
+.tab-btn:hover {
+  background: var(--mat-sys-surface-container, #f5f5f5);
+}
+.tab-btn.active {
+  background: var(--mat-sys-primary-container, #e3f2fd);
+  color: var(--mat-sys-on-primary-container, #0d47a1);
+  font-weight: 600;
+}
+.section-desc {
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+.checkout-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.radio-option {
+  border: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: background 0.15s ease;
+}
+.radio-option:hover {
+  background: var(--mat-sys-surface-container, #fafafa);
+}
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.radio-content .sub {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant, #777);
+}
+.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.info-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #e8f4fd;
+  color: #0c5460;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.status-summary {
+  margin-bottom: 16px;
+}
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--mat-sys-primary-container, #e3f2fd);
+  color: var(--mat-sys-on-primary-container, #0d47a1);
+}
+.banner-details {
+  display: flex;
+  flex-direction: column;
+}
+.status-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.status-note,
+.home-path {
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+.quantity-consumption {
+  margin-bottom: 8px;
+}
+.help-text {
+  font-size: 0.78rem;
+  color: var(--mat-sys-on-surface-variant, #666);
+  display: block;
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+.history-card {
+  padding: 10px 12px;
+  border: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+  border-radius: 8px;
+  background: var(--mat-sys-surface, #fff);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.action-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+.action-pill.in-use {
+  background: #fff3e0;
+  color: #e65100;
+}
+.action-pill.loan {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+.action-pill.return {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.date {
+  font-size: 0.78rem;
+  color: #888;
+}
+.actor {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.note {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: #555;
+}
+.consumed {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #c62828;
+}
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+  font-size: 0.9rem;
+}

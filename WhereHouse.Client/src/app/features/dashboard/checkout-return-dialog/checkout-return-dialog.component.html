@@ -1,0 +1,283 @@
+<h2 mat-dialog-title class="dialog-header">
+  <div class="title-with-icon">
+    <mat-icon class="header-icon">{{
+      isCurrentlyCheckedOut ? 'move_to_inbox' : 'outbox'
+    }}</mat-icon>
+    <div class="header-text">
+      <span class="action-label">{{
+        isCurrentlyCheckedOut ? 'Return to Home Bin' : 'Check Out / Loan'
+      }}</span>
+      <span class="item-name"
+        >{{ data.item.name }} <span class="code">[{{ data.item.shortCode }}]</span></span
+      >
+    </div>
+  </div>
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="tab-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'action'"
+      (click)="activeTab.set('action')"
+    >
+      <mat-icon>{{ isCurrentlyCheckedOut ? 'assignment_return' : 'exit_to_app' }}</mat-icon>
+      <span>{{ isCurrentlyCheckedOut ? 'Return Action' : 'Checkout Action' }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'history'"
+      (click)="activeTab.set('history')"
+    >
+      <mat-icon>history</mat-icon>
+      <span>Audit History</span>
+    </button>
+  </div>
+
+  @if (activeTab() === 'action') {
+    @if (!isCurrentlyCheckedOut) {
+      <!-- CHECK OUT FLOW -->
+      <div class="checkout-form">
+        <p class="section-desc">
+          Record real-time usage for a household project or lend to a friend. The item's permanent
+          home location will be preserved.
+        </p>
+
+        <div class="radio-selection">
+          <mat-radio-group [(ngModel)]="checkoutMode" class="checkout-radio-group">
+            <mat-radio-button value="inUse" class="radio-option">
+              <div class="radio-content">
+                <strong><mat-icon inline>construction</mat-icon> In Use (Household Project)</strong>
+                <span class="sub">Using around the house, workshop, or yard</span>
+              </div>
+            </mat-radio-button>
+            <mat-radio-button value="loan" class="radio-option">
+              <div class="radio-content">
+                <strong
+                  ><mat-icon inline>person_search</mat-icon> External Loan (Friend /
+                  Neighbor)</strong
+                >
+                <span class="sub">Lending out with borrower details and optional due date</span>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        @if (checkoutMode === 'inUse') {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Project or Note (Optional)</mat-label>
+            <input
+              matInput
+              [(ngModel)]="projectOrNote"
+              placeholder="e.g. Kitchen Cabinet Remodel, Deck Staining"
+            />
+          </mat-form-field>
+        } @else {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Borrower Name</mat-label>
+            <input matInput [(ngModel)]="borrowerName" placeholder="e.g. Dave Miller" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Borrower Contact (Optional)</mat-label>
+            <input
+              matInput
+              [(ngModel)]="borrowerContact"
+              placeholder="Phone number, email, or neighbor note"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Expected Return Date (Optional)</mat-label>
+            <input
+              matInput
+              [matDatepicker]="returnDatePicker"
+              [(ngModel)]="expectedReturnDate"
+              placeholder="Choose return date"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="returnDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #returnDatePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Project or Loan Note (Optional)</mat-label>
+            <input
+              matInput
+              [(ngModel)]="projectOrNote"
+              placeholder="Reason for borrowing or details"
+            />
+          </mat-form-field>
+        }
+
+        @if (data.item.itemType === itemTypes.Kit) {
+          <div class="info-alert">
+            <mat-icon>info</mat-icon>
+            <span
+              ><strong>Kit Cascade:</strong> Checking out this kit will automatically mark all
+              member items currently In Place as checked out.</span
+            >
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- RETURN FLOW -->
+      <div class="return-form">
+        <div class="status-summary">
+          <div class="status-banner">
+            <mat-icon>{{
+              data.item.status === itemStatuses.LoanedOut ? 'handshake' : 'construction'
+            }}</mat-icon>
+            <div class="banner-details">
+              <span class="status-title">
+                {{
+                  data.item.status === itemStatuses.LoanedOut
+                    ? 'Loaned to ' + (data.item.checkedOutToBorrower || 'Borrower')
+                    : 'In Use by ' + (data.item.checkedOutByUsername || 'User')
+                }}
+              </span>
+              @if (data.item.checkoutNote || data.item.activeLoadoutName) {
+                <span class="status-note">{{
+                  data.item.activeLoadoutName
+                    ? 'Loadout: ' + data.item.activeLoadoutName
+                    : data.item.checkoutNote
+                }}</span>
+              }
+              @if (data.item.homeLocationFullPath) {
+                <span class="home-path">Home: {{ data.item.homeLocationFullPath }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (data.item.itemType === itemTypes.Quantity) {
+          <div class="quantity-consumption">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label
+                >Quantity Consumed / Used (Available:
+                {{ data.item.currentQuantity }}
+                {{ data.item.unit || 'units' }})</mat-label
+              >
+              <input
+                matInput
+                type="number"
+                min="0"
+                [max]="data.item.currentQuantity"
+                [(ngModel)]="quantityUsed"
+              />
+            </mat-form-field>
+            <span class="help-text"
+              >Consumed quantity will be deducted from inventory automatically.</span
+            >
+          </div>
+        }
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Updated Item Condition</mat-label>
+          <mat-select [(ngModel)]="updatedCondition">
+            <mat-option [value]="itemConditions.New">New</mat-option>
+            <mat-option [value]="itemConditions.Excellent">Excellent</mat-option>
+            <mat-option [value]="itemConditions.Good">Good</mat-option>
+            <mat-option [value]="itemConditions.Fair">Fair</mat-option>
+            <mat-option [value]="itemConditions.Broken">Broken</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Return Note (Optional)</mat-label>
+          <input
+            matInput
+            [(ngModel)]="returnNote"
+            placeholder="e.g. Returned clean, blade replaced, restocked"
+          />
+        </mat-form-field>
+
+        @if (data.item.itemType === itemTypes.Kit) {
+          <div class="info-alert">
+            <mat-icon>info</mat-icon>
+            <span
+              ><strong>Kit Cascade:</strong> Returning this kit will automatically return all
+              checked-out child items back to In Place.</span
+            >
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <!-- AUDIT HISTORY -->
+    <div class="history-view">
+      @if (loadingHistory()) {
+        <p class="empty-state">Loading checkout history...</p>
+      } @else if (history().length === 0) {
+        <p class="empty-state">No check-in / check-out history recorded.</p>
+      } @else {
+        <div class="history-timeline">
+          @for (log of history(); track log.id) {
+            <div class="history-card">
+              <div class="card-header">
+                <span
+                  class="action-pill"
+                  [class.in-use]="log.actionType === 0"
+                  [class.loan]="log.actionType === 1"
+                  [class.return]="log.actionType === 2"
+                >
+                  {{
+                    log.actionType === 0
+                      ? 'Checked Out (In Use)'
+                      : log.actionType === 1
+                        ? 'Loaned Out'
+                        : 'Returned'
+                  }}
+                </span>
+                <span class="date">{{ log.occurredAt | date: 'medium' }}</span>
+              </div>
+              <div class="card-body">
+                <p class="actor">
+                  <mat-icon inline>person</mat-icon>
+                  {{ log.performedByUsername }}
+                  @if (log.borrowerName) {
+                    <span> $ ightarrow$ {{ log.borrowerName }}</span>
+                  }
+                </p>
+                @if (log.projectOrNote) {
+                  <p class="note">"{{ log.projectOrNote }}"</p>
+                }
+                @if (log.quantityConsumed) {
+                  <p class="consumed">Consumed: {{ log.quantityConsumed }} units</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  @if (activeTab() === 'action') {
+    @if (!isCurrentlyCheckedOut) {
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="submitting() || (checkoutMode === 'loan' && !borrowerName?.trim())"
+        (click)="submitCheckout()"
+      >
+        <mat-icon>outbox</mat-icon> Check Out
+      </button>
+    } @else {
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="submitting()"
+        (click)="submitReturn()"
+      >
+        <mat-icon>move_to_inbox</mat-icon> Return to Home Bin
+      </button>
+    }
+  }
+</mat-dialog-actions>

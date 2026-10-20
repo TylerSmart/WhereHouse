@@ -1,0 +1,287 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>{{ isContainer() ? 'inventory_2' : 'location_on' }}</mat-icon>
+  <span>{{ isEditMode ? 'Edit Location / Container' : 'Add New Location or Container' }}</span>
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="location-form">
+    @if (data.parentName) {
+      <div class="parent-hint">
+        <mat-icon>subdirectory_arrow_right</mat-icon>
+        <span
+          >Inside: <strong>{{ data.parentName }}</strong></span
+        >
+      </div>
+    }
+
+    <!-- Node Type Selector -->
+    <div class="form-section">
+      <span class="section-label">Type</span>
+      <mat-radio-group formControlName="nodeType" class="type-radio-group">
+        <mat-radio-button [value]="LocationNodeTypes.FixedLocation">
+          <div class="radio-label-content">
+            <mat-icon>location_on</mat-icon>
+            <div>
+              <strong>Fixed Location</strong>
+              <span class="sub-desc">Room, Closet, Rack, Shelf, Drawer</span>
+            </div>
+          </div>
+        </mat-radio-button>
+
+        <mat-radio-button [value]="LocationNodeTypes.MovableContainer">
+          <div class="radio-label-content">
+            <mat-icon>inventory_2</mat-icon>
+            <div>
+              <strong>Movable Container</strong>
+              <span class="sub-desc">Tote, Bin, Toolbox, Case, Organizer</span>
+            </div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Name & Short Code -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Name</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        placeholder="e.g. Garage, Shelf 3, or Winter Camping Bin #4"
+        required
+        maxlength="150"
+      />
+      @if (form.controls['name'].hasError('required')) {
+        <mat-error>Name is required</mat-error>
+      }
+    </mat-form-field>
+
+    @if (!isEditMode) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Short Code (Optional)</mat-label>
+        <input
+          matInput
+          formControlName="shortCode"
+          [placeholder]="
+            isContainer() ? 'Auto-generated (e.g. BIN-001)' : 'Auto-generated (e.g. LOC-001)'
+          "
+          maxlength="32"
+        />
+        <mat-hint>Leave blank to auto-generate sequentially</mat-hint>
+      </mat-form-field>
+    } @else {
+      <div class="shortcode-badge-row">
+        <span class="shortcode-pill">{{ data.node?.shortCode }}</span>
+        <span class="shortcode-path">{{ data.node?.fullPath }}</span>
+      </div>
+    }
+
+    <!-- Icon Preset Selector -->
+    <div class="form-section">
+      <span class="section-label">Icon</span>
+      <div class="icon-presets-row">
+        @for (iconName of iconPresets; track iconName) {
+          <button
+            type="button"
+            mat-icon-button
+            [class.selected-icon]="form.controls['icon'].value === iconName"
+            (click)="form.controls['icon'].setValue(iconName)"
+            [matTooltip]="iconName"
+            [attr.aria-label]="iconName"
+          >
+            <mat-icon>{{ iconName }}</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Description -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description / Notes</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="2"
+        placeholder="Optional context (e.g. West wall shelving unit)"
+        maxlength="1000"
+      ></textarea>
+    </mat-form-field>
+
+    <!-- Container Visual Appearance Section -->
+    @if (isContainer()) {
+      <div class="container-appearance-section">
+        <div class="section-header">
+          <mat-icon>palette</mat-icon>
+          <h3>Container Visual Appearance Tags</h3>
+        </div>
+        <p class="section-subtext">
+          Helps identify physical containers at a glance without having to read small labels.
+        </p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Container Style / Form Factor</mat-label>
+          <input
+            matInput
+            formControlName="containerStyle"
+            placeholder="e.g. 27-Gal Heavy Duty Tote, Clear Shoebox"
+            maxlength="100"
+          />
+        </mat-form-field>
+
+        <div class="chip-suggestions">
+          @for (style of stylePresets; track style) {
+            <button
+              type="button"
+              class="style-preset-chip"
+              (click)="form.controls['containerStyle'].setValue(style)"
+            >
+              {{ style }}
+            </button>
+          }
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Color Profile Description</mat-label>
+          <input
+            matInput
+            formControlName="colorLabel"
+            placeholder="e.g. Black Base / Yellow Lid, Translucent / Blue Latches"
+            maxlength="100"
+          />
+        </mat-form-field>
+
+        <div class="color-pickers-row">
+          <div class="color-picker-item">
+            <span class="picker-label">Primary Body Color</span>
+            <div class="swatches-row">
+              @for (c of colorSwatches; track c.hex) {
+                <button
+                  type="button"
+                  class="color-swatch-btn"
+                  [style.background-color]="c.hex"
+                  [class.active-swatch]="form.controls['primaryColor'].value === c.hex"
+                  (click)="form.controls['primaryColor'].setValue(c.hex)"
+                  [matTooltip]="c.name"
+                  [attr.aria-label]="'Set primary color to ' + c.name"
+                >
+                  @if (form.controls['primaryColor'].value === c.hex) {
+                    <mat-icon
+                      class="swatch-check"
+                      [class.dark-check]="c.hex === '#ffffff' || c.hex === '#eab308'"
+                      >check</mat-icon
+                    >
+                  }
+                </button>
+              }
+            </div>
+            <div class="custom-color-control">
+              <input
+                type="color"
+                class="color-picker-native"
+                [value]="form.controls['primaryColor'].value || '#1f2937'"
+                (input)="form.controls['primaryColor'].setValue($any($event.target).value)"
+                matTooltip="Pick custom body color"
+                aria-label="Pick custom body color"
+              />
+              <input
+                type="text"
+                formControlName="primaryColor"
+                class="color-hex-input"
+                placeholder="#1f2937 or Black"
+                aria-label="Primary body color hex or name"
+              />
+              @if (form.controls['primaryColor'].value) {
+                <button
+                  type="button"
+                  class="clear-color-btn"
+                  (click)="form.controls['primaryColor'].setValue('')"
+                  matTooltip="Clear body color"
+                  aria-label="Clear body color"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="color-picker-item">
+            <span class="picker-label">Lid / Accent Color</span>
+            <div class="swatches-row">
+              @for (c of colorSwatches; track c.hex) {
+                <button
+                  type="button"
+                  class="color-swatch-btn"
+                  [style.background-color]="c.hex"
+                  [class.active-swatch]="form.controls['accentColor'].value === c.hex"
+                  (click)="form.controls['accentColor'].setValue(c.hex)"
+                  [matTooltip]="c.name"
+                  [attr.aria-label]="'Set accent color to ' + c.name"
+                >
+                  @if (form.controls['accentColor'].value === c.hex) {
+                    <mat-icon
+                      class="swatch-check"
+                      [class.dark-check]="c.hex === '#ffffff' || c.hex === '#eab308'"
+                      >check</mat-icon
+                    >
+                  }
+                </button>
+              }
+            </div>
+            <div class="custom-color-control">
+              <input
+                type="color"
+                class="color-picker-native"
+                [value]="form.controls['accentColor'].value || '#eab308'"
+                (input)="form.controls['accentColor'].setValue($any($event.target).value)"
+                matTooltip="Pick custom accent color"
+                aria-label="Pick custom accent color"
+              />
+              <input
+                type="text"
+                formControlName="accentColor"
+                class="color-hex-input"
+                placeholder="#eab308 or Yellow"
+                aria-label="Lid or accent color hex or name"
+              />
+              @if (form.controls['accentColor'].value) {
+                <button
+                  type="button"
+                  class="clear-color-btn"
+                  (click)="form.controls['accentColor'].setValue('')"
+                  matTooltip="Clear accent color"
+                  aria-label="Clear accent color"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <mat-divider></mat-divider>
+
+    <!-- Secret / Gift Mode Toggle -->
+    <div class="privacy-section">
+      <mat-slide-toggle formControlName="isPrivate" color="primary">
+        <div class="toggle-label-content">
+          <mat-icon>lock</mat-icon>
+          <div>
+            <strong>Secret / Gift Mode</strong>
+            <span class="sub-desc">
+              Omit this location and all its contents from other household members' views and
+              searches
+            </span>
+          </div>
+        </div>
+      </mat-slide-toggle>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Cancel</button>
+  <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="onSubmit()">
+    {{ isEditMode ? 'Save Changes' : 'Create' }}
+  </button>
+</mat-dialog-actions>

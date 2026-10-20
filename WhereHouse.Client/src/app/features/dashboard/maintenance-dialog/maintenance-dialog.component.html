@@ -1,0 +1,388 @@
+<div class="maintenance-dialog-container">
+  <div class="dialog-header">
+    <div class="title-row">
+      <mat-icon class="header-icon">build_circle</mat-icon>
+      <div class="header-titles">
+        <h2 mat-dialog-title>
+          @if (data.item) {
+            Maintenance: {{ data.item.name }} ({{ data.item.shortCode }})
+          } @else {
+            Household Maintenance & Recurring Tasks
+          }
+        </h2>
+        <span class="subtitle">
+          Track periodic maintenance, battery maintenance, filter changes, and service history
+        </span>
+      </div>
+    </div>
+
+    <button mat-icon-button (click)="close()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Summary Metrics Bar -->
+  <div class="summary-bar">
+    <div class="metric-chip total">
+      <span class="metric-val">{{ summary()?.totalActiveSchedules ?? 0 }}</span>
+      <span class="metric-lbl">Active Schedules</span>
+    </div>
+    <div class="metric-chip overdue" [class.highlight]="(summary()?.overdueCount ?? 0) > 0">
+      <mat-icon>warning</mat-icon>
+      <span class="metric-val">{{ summary()?.overdueCount ?? 0 }}</span>
+      <span class="metric-lbl">Overdue</span>
+    </div>
+    <div class="metric-chip due-soon" [class.highlight]="(summary()?.dueSoonCount ?? 0) > 0">
+      <mat-icon>schedule</mat-icon>
+      <span class="metric-val">{{ summary()?.dueSoonCount ?? 0 }}</span>
+      <span class="metric-lbl">Due Soon</span>
+    </div>
+    <div class="metric-chip up-to-date">
+      <mat-icon>check_circle</mat-icon>
+      <span class="metric-val">{{ summary()?.upToDateCount ?? 0 }}</span>
+      <span class="metric-lbl">Up to Date</span>
+    </div>
+  </div>
+
+  <!-- Tab Buttons -->
+  <div class="tabs-nav">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'schedules'"
+      (click)="activeTab.set('schedules')"
+    >
+      <mat-icon>checklist</mat-icon>
+      <span>Schedules ({{ summary()?.schedules?.length ?? 0 }})</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'history'"
+      (click)="activeTab.set('history')"
+    >
+      <mat-icon>history</mat-icon>
+      <span>Completion History ({{ summary()?.recentLogs?.length ?? 0 }})</span>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-progress-spinner diameter="32" mode="indeterminate" />
+        <span>Loading maintenance tasks...</span>
+      </div>
+    } @else {
+      @if (activeTab() === 'schedules') {
+        <!-- Add New Schedule Form (Collapsible) -->
+        <div class="add-schedule-card">
+          <button type="button" class="add-header-btn" (click)="toggleAddForm()">
+            <div class="add-header-left">
+              <mat-icon>{{ showAddForm() ? 'expand_less' : 'add_circle' }}</mat-icon>
+              <strong>Add New Maintenance Schedule</strong>
+            </div>
+            <span class="hint-text">
+              {{ showAddForm() ? 'Hide form' : 'Click to schedule a recurring task' }}
+            </span>
+          </button>
+
+          @if (showAddForm()) {
+            <div class="add-body">
+              <!-- Preset Chips -->
+              <div class="preset-row">
+                <span class="preset-label">Quick Presets:</span>
+                <div class="chips-wrap">
+                  @for (p of presets; track p.label) {
+                    <button type="button" class="preset-chip" (click)="applyPreset(p)">
+                      {{ p.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="form-grid">
+                @if (!data.item) {
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Target Inventory Item</mat-label>
+                    <mat-select [(ngModel)]="newScheduleItemId">
+                      @for (itm of availableItemsList; track itm.id) {
+                        <mat-option [value]="itm.id">
+                          {{ itm.shortCode }} — {{ itm.name }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                }
+
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="title-field">
+                  <mat-label>Task Title</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="newScheduleTitle"
+                    placeholder="e.g. Inspect Air Filter, Charge 18V Battery to 80%"
+                    maxlength="200"
+                  />
+                </mat-form-field>
+
+                <div class="interval-fields">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="num-field">
+                    <mat-label>Interval</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="1"
+                      max="3650"
+                      [(ngModel)]="newScheduleIntervalValue"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="unit-field">
+                    <mat-label>Unit</mat-label>
+                    <mat-select [(ngModel)]="newScheduleIntervalUnit">
+                      <mat-option [value]="0">Days</mat-option>
+                      <mat-option [value]="1">Weeks</mat-option>
+                      <mat-option [value]="2">Months</mat-option>
+                      <mat-option [value]="3">Years</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="desc-field">
+                  <mat-label>Procedure Notes / Description (optional)</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="newScheduleDescription"
+                    placeholder="Instructions, torque specs, OEM part numbers..."
+                    maxlength="1000"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div class="add-actions">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  (click)="saveNewSchedule()"
+                  [disabled]="!newScheduleTitle.trim() || creatingSchedule()"
+                >
+                  @if (creatingSchedule()) {
+                    <mat-progress-spinner diameter="18" mode="indeterminate" />
+                    <span>Saving...</span>
+                  } @else {
+                    <ng-container>
+                      <mat-icon>add</mat-icon>
+                      <span>Save Schedule</span>
+                    </ng-container>
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Schedules Filter Toolbar -->
+        <div class="filter-toolbar">
+          <mat-chip-set>
+            <mat-chip-option [selected]="dueOnlyFilter()" (click)="toggleDueOnlyFilter()">
+              <mat-icon matChipAvatar>filter_alt</mat-icon>
+              Due & Overdue Only
+            </mat-chip-option>
+          </mat-chip-set>
+        </div>
+
+        <!-- Schedules List -->
+        @if (!summary()?.schedules || summary()!.schedules.length === 0) {
+          <div class="empty-list">
+            <mat-icon>event_available</mat-icon>
+            <p>No maintenance schedules found.</p>
+            <span class="empty-sub">
+              Create a schedule above to stay ahead of equipment upkeep, lubrication, and battery
+              charging.
+            </span>
+          </div>
+        } @else {
+          <div class="schedules-list">
+            @for (s of summary()!.schedules; track s.id) {
+              <div class="schedule-card" [class]="getDueClass(s.dueStatus)">
+                <div class="card-status-strip"></div>
+                <div class="card-content">
+                  <div class="card-header-row">
+                    <div class="task-title-group">
+                      <span class="task-title">{{ s.title }}</span>
+                      <span class="due-pill" [class]="getDueClass(s.dueStatus)">
+                        {{ getDueStatusLabel(s.dueStatus) }}
+                      </span>
+                    </div>
+
+                    <div class="card-actions">
+                      <button
+                        mat-stroked-button
+                        color="primary"
+                        (click)="toggleCompleteBox(s.id)"
+                        matTooltip="Log task completion"
+                      >
+                        <mat-icon>task_alt</mat-icon>
+                        <span>Complete</span>
+                      </button>
+
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        (click)="deleteSchedule(s)"
+                        matTooltip="Delete schedule"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="item-meta-row">
+                    <span class="item-tag">
+                      <mat-icon>inventory_2</mat-icon>
+                      <strong>{{ s.itemShortCode }}</strong> — {{ s.itemName }}
+                    </span>
+                    @if (s.itemLocationFullPath) {
+                      <span class="loc-tag">
+                        <mat-icon>location_on</mat-icon>
+                        {{ s.itemLocationFullPath }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="schedule-timing-row">
+                    <span class="timing-badge">
+                      <mat-icon>repeat</mat-icon>
+                      Every {{ s.intervalValue }} {{ getIntervalUnitLabel(s.intervalUnit) }}
+                    </span>
+
+                    <span class="timing-badge next-due">
+                      <mat-icon>event</mat-icon>
+                      Next: <strong>{{ s.nextDueAt | date: 'mediumDate' }}</strong>
+                      <span class="days-remaining"
+                        >({{ formatDaysRemaining(s.daysUntilDue) }})</span
+                      >
+                    </span>
+
+                    <span class="timing-badge">
+                      <mat-icon>history</mat-icon>
+                      Last Done:
+                      {{ s.lastCompletedAt ? (s.lastCompletedAt | date: 'mediumDate') : 'Never' }}
+                    </span>
+                  </div>
+
+                  @if (s.description) {
+                    <p class="task-desc">{{ s.description }}</p>
+                  }
+
+                  <!-- Inline Complete Task Box -->
+                  @if (completingScheduleId() === s.id) {
+                    <div class="complete-box">
+                      <h4>Record Task Completion</h4>
+                      <div class="complete-form">
+                        <mat-form-field
+                          appearance="outline"
+                          subscriptSizing="dynamic"
+                          class="complete-notes"
+                        >
+                          <mat-label>Notes (optional)</mat-label>
+                          <input
+                            matInput
+                            [(ngModel)]="completeNotes"
+                            placeholder="What was done, parts used, condition..."
+                            maxlength="1000"
+                          />
+                        </mat-form-field>
+
+                        <mat-form-field
+                          appearance="outline"
+                          subscriptSizing="dynamic"
+                          class="complete-cost"
+                        >
+                          <mat-label>Cost ($)</mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            [(ngModel)]="completeCost"
+                            placeholder="0.00"
+                          />
+                        </mat-form-field>
+
+                        <div class="complete-actions">
+                          <button
+                            mat-flat-button
+                            color="primary"
+                            (click)="submitCompleteTask(s.id)"
+                            [disabled]="completingInProgress()"
+                          >
+                            <mat-icon>check</mat-icon>
+                            <span>Confirm Done</span>
+                          </button>
+                          <button mat-button (click)="completingScheduleId.set(null)">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <!-- Completion History Tab -->
+        @if (!summary()?.recentLogs || summary()!.recentLogs.length === 0) {
+          <div class="empty-list">
+            <mat-icon>history</mat-icon>
+            <p>No completion logs recorded yet.</p>
+            <span class="empty-sub">
+              Completed maintenance tasks will appear here with timestamps, technician names, and
+              parts cost.
+            </span>
+          </div>
+        } @else {
+          <div class="logs-list">
+            @for (log of summary()!.recentLogs; track log.id) {
+              <div class="log-card">
+                <div class="log-header">
+                  <div class="log-title-group">
+                    <span class="log-task-title">{{ log.scheduleTitle }}</span>
+                    <span class="log-item">
+                      <mat-icon>inventory_2</mat-icon>
+                      {{ log.itemShortCode }} — {{ log.itemName }}
+                    </span>
+                  </div>
+                  <span class="log-date">{{ log.completedAt | date: 'medium' }}</span>
+                </div>
+
+                <div class="log-meta">
+                  <span class="user-badge">
+                    <mat-icon>person</mat-icon>
+                    {{ log.completedByUsername || 'User' }}
+                  </span>
+
+                  @if (log.cost !== null && log.cost !== undefined && log.cost > 0) {
+                    <span class="cost-badge">
+                      <mat-icon>attach_money</mat-icon>
+                      {{ log.cost | currency }}
+                    </span>
+                  }
+                </div>
+
+                @if (log.notes) {
+                  <p class="log-notes">{{ log.notes }}</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button (click)="close()">Close</button>
+  </mat-dialog-actions>
+</div>

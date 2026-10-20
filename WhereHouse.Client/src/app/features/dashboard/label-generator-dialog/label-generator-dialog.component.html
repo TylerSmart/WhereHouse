@@ -1,0 +1,240 @@
+<div class="label-generator-container no-print">
+  <!-- Modal Header -->
+  <div class="modal-header">
+    <div class="header-title">
+      <mat-icon class="header-icon">print</mat-icon>
+      <h2>Barcode & QR Label Generator</h2>
+    </div>
+    <button mat-icon-button (click)="close()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="generator-body">
+    <!-- LEFT PANEL: Controls & Queue -->
+    <div class="controls-panel">
+      <mat-tab-group animationDuration="150ms">
+        <!-- Source 1: Pick Entities -->
+        <mat-tab label="Add Items & Containers">
+          <div class="tab-pane">
+            <mat-form-field appearance="outline">
+              <mat-label>Add Container / Location</mat-label>
+              <mat-select
+                [ngModel]="selectedLocationId()"
+                (ngModelChange)="addLocationToQueue($event)"
+              >
+                @for (loc of data.availableLocations; track loc.id) {
+                  <mat-option [value]="loc.id"> {{ loc.shortCode }} — {{ loc.name }} </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Add Cataloged Item</mat-label>
+              <mat-select [ngModel]="selectedItemId()" (ngModelChange)="addItemToQueue($event)">
+                @for (itm of data.availableItems; track itm.id) {
+                  <mat-option [value]="itm.id"> {{ itm.shortCode }} — {{ itm.name }} </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+
+        <!-- Source 2: Mint Blank QR Batch -->
+        <mat-tab label="Mint Blank QR Batch">
+          <div class="tab-pane">
+            <p class="tab-info">
+              Pre-print numbered unassigned QR stickers (e.g. <code>QR-0001</code>) on Avery sheets
+              or thermal rolls. Stick them on bins ahead of time and scan to bind later!
+            </p>
+
+            <div class="inline-fields">
+              <mat-form-field appearance="outline">
+                <mat-label>Sticker Count</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  max="60"
+                  [ngModel]="batchCount()"
+                  (ngModelChange)="batchCount.set($event)"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Label Note</mat-label>
+                <input
+                  matInput
+                  placeholder="e.g. 2026 Tote Stickers"
+                  [ngModel]="batchNote()"
+                  (ngModelChange)="batchNote.set($event)"
+                />
+              </mat-form-field>
+            </div>
+
+            <button
+              mat-flat-button
+              color="primary"
+              [disabled]="isMinting() || batchCount() < 1"
+              (click)="mintBlankBatch()"
+            >
+              @if (isMinting()) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>add_circle</mat-icon>
+              }
+              Generate & Queue Stickers
+            </button>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+
+      <mat-divider></mat-divider>
+
+      <!-- Preset & Layout Settings -->
+      <div class="settings-group">
+        <h4>Format & Layout</h4>
+        <mat-form-field appearance="outline">
+          <mat-label>Label Format Preset</mat-label>
+          <mat-select [ngModel]="selectedPresetId()" (ngModelChange)="selectedPresetId.set($event)">
+            @for (preset of presets; track preset.id) {
+              <mat-option [value]="preset.id">
+                {{ preset.name }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <span class="preset-desc">{{ currentPreset().description }}</span>
+
+        <!-- Offset Controls for Partial Sheet Reuse -->
+        @if (currentPreset().category === 'sheet') {
+          <div class="offset-controls">
+            <span class="offset-label"> Reuse Partial Sheet (Start Offset): </span>
+            <div class="inline-fields">
+              <mat-form-field appearance="outline">
+                <mat-label>Start Row</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  [max]="currentPreset().rows"
+                  [ngModel]="startRow()"
+                  (ngModelChange)="startRow.set($event)"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Start Column</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  [max]="currentPreset().columns"
+                  [ngModel]="startColumn()"
+                  (ngModelChange)="startColumn.set($event)"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+        }
+
+        <!-- Content Toggles -->
+        <div class="toggles-group">
+          <mat-checkbox [ngModel]="encodeFullUrl()" (ngModelChange)="encodeFullUrl.set($event)">
+            Encode Deep Link URL (<code>/scan/{{ '{' }}code{{ '}' }}</code
+            >)
+          </mat-checkbox>
+          <mat-checkbox [ngModel]="showSubtitle()" (ngModelChange)="showSubtitle.set($event)">
+            Show Subtitle / Full Path
+          </mat-checkbox>
+          <mat-checkbox [ngModel]="showColorBadge()" (ngModelChange)="showColorBadge.set($event)">
+            Show Color Indicator Dot
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Queue Management -->
+      <div class="queue-header">
+        <h4>Print Queue ({{ printQueue().length }} labels)</h4>
+        @if (printQueue().length > 0) {
+          <button mat-button color="warn" (click)="clearQueue()">Clear All</button>
+        }
+      </div>
+
+      <div class="queue-list">
+        @for (item of printQueue(); track $index) {
+          <div class="queue-item-row">
+            <span class="q-code">{{ item.code }}</span>
+            <span class="q-title">{{ item.title }}</span>
+            <button mat-icon-button (click)="removeFromQueue($index)" aria-label="Remove label">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Print Trigger Button -->
+      <div class="modal-footer">
+        <button
+          mat-flat-button
+          color="primary"
+          class="print-action-btn"
+          [disabled]="printQueue().length === 0"
+          (click)="triggerPrint()"
+        >
+          <mat-icon>print</mat-icon>
+          Print {{ printQueue().length }} Label{{ printQueue().length === 1 ? '' : 's' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Live Print Preview -->
+    <div class="preview-panel">
+      <div class="preview-toolbar">
+        <span class="preview-title"> Live Layout Preview ({{ currentPreset().name }}) </span>
+      </div>
+
+      <div class="preview-canvas-wrapper">
+        <div
+          class="printable-sheet-grid"
+          [style.--cols]="currentPreset().columns"
+          [style.--rows]="currentPreset().rows"
+          [style.--label-width]="currentPreset().widthInches + 'in'"
+          [style.--label-height]="currentPreset().heightInches + 'in'"
+        >
+          <!-- Blank Spacer Cells (Offset) -->
+          @for (spacer of spacerArray(); track $index) {
+            <div class="label-cell spacer-cell">
+              <span class="spacer-text">Skipped (Used)</span>
+            </div>
+          }
+
+          <!-- Queued Labels -->
+          @for (item of printQueue(); track $index) {
+            <div class="label-cell active-label">
+              <div class="qr-col">
+                <img [src]="getQrDataUrl(item.code)" alt="QR" class="qr-img" />
+              </div>
+              <div class="info-col">
+                <div class="code-badge-row">
+                  <span class="label-code">{{ item.code }}</span>
+                  @if (showColorBadge() && item.primaryColor) {
+                    <span class="color-dot" [style.background-color]="item.primaryColor"></span>
+                  }
+                  @if (item.badgeText) {
+                    <span class="badge-text">{{ item.badgeText }}</span>
+                  }
+                </div>
+                <div class="label-title">{{ item.title }}</div>
+                @if (showSubtitle() && item.subtitle) {
+                  <div class="label-subtitle">{{ item.subtitle }}</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

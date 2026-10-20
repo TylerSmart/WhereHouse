@@ -1,0 +1,195 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>attach_file</mat-icon>
+    <span>Attachments Vault — {{ data.item.name }}</span>
+    <span class="short-code">{{ data.item.shortCode }}</span>
+  </h2>
+  <button mat-icon-button (click)="dialogRef.close()" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Upload Panel -->
+  <div class="upload-panel">
+    <h3 class="panel-subtitle">Upload New Attachment</h3>
+    <div class="file-picker-row">
+      <input #fileInput type="file" class="hidden-file-input" (change)="onFileSelected($event)" />
+      <button type="button" mat-stroked-button (click)="fileInput.click()" [disabled]="uploading()">
+        <mat-icon>upload_file</mat-icon>
+        {{ selectedFile() ? 'Change File' : 'Choose File' }}
+      </button>
+      <span class="selected-file-label" [class.empty]="!selectedFile()">
+        {{
+          selectedFile()
+            ? selectedFile()!.name + ' (' + formatFileSize(selectedFile()!.size) + ')'
+            : 'No file chosen (up to 50 MB)'
+        }}
+      </span>
+    </div>
+
+    <div class="form-grid">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Attachment Type</mat-label>
+        <mat-select [(ngModel)]="uploadType" [disabled]="uploading()">
+          @for (opt of attachmentTypeOptions; track opt.value) {
+            <mat-option [value]="opt.value">
+              <div class="option-row">
+                <mat-icon class="option-icon">{{ opt.icon }}</mat-icon>
+                <span>{{ opt.label }}</span>
+              </div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Notes (optional)</mat-label>
+        <input
+          matInput
+          [(ngModel)]="uploadNotes"
+          placeholder="e.g. 2026 receipt, user manual PDF"
+          maxlength="500"
+          [disabled]="uploading()"
+        />
+      </mat-form-field>
+    </div>
+
+    <div class="upload-actions">
+      <mat-checkbox [(ngModel)]="isPrimaryPhoto" [disabled]="uploading()">
+        Set as Primary Photo
+      </mat-checkbox>
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        (click)="upload(fileInput)"
+        [disabled]="!selectedFile() || uploading()"
+      >
+        @if (uploading()) {
+          <mat-progress-spinner diameter="18" mode="indeterminate" />
+          <span>Uploading...</span>
+        } @else {
+          <ng-container>
+            <mat-icon>cloud_upload</mat-icon>
+            <span>Upload Attachment</span>
+          </ng-container>
+        }
+      </button>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </div>
+
+  <mat-divider />
+
+  <!-- Attachments Vault List -->
+  <div class="attachments-section">
+    <div class="section-header">
+      <h3>Attached Files ({{ attachments().length }})</h3>
+      @if (loading()) {
+        <mat-progress-spinner diameter="20" mode="indeterminate" />
+      }
+    </div>
+
+    @if (!loading() && attachments().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">folder_open</mat-icon>
+        <p>No attachments yet for this item.</p>
+        <p class="empty-hint">
+          Upload photos, user manuals, warranty cards, spec sheets, or receipts above.
+        </p>
+      </div>
+    }
+
+    <div class="attachments-list">
+      @for (att of attachments(); track att.id) {
+        <div class="attachment-card" [class.primary-card]="att.isPrimaryPhoto">
+          <div class="card-icon-container">
+            <mat-icon class="type-icon">{{ getIcon(att.attachmentType) }}</mat-icon>
+          </div>
+
+          <div class="card-main">
+            <div class="card-title-row">
+              <span class="file-name" [matTooltip]="att.fileName">{{ att.fileName }}</span>
+              @if (att.isPrimaryPhoto) {
+                <mat-chip-set class="primary-chip">
+                  <mat-chip highlighted color="accent">
+                    <mat-icon matChipAvatar>star</mat-icon>
+                    Primary Photo
+                  </mat-chip>
+                </mat-chip-set>
+              }
+              @if (att.hasExtractedText) {
+                <mat-chip-set class="indexed-chip">
+                  <mat-chip
+                    [matTooltip]="
+                      att.extractedText
+                        ? (att.extractedText | slice: 0 : 200) + '...'
+                        : 'PDF indexed for search'
+                    "
+                  >
+                    <mat-icon matChipAvatar>find_in_page</mat-icon>
+                    Indexed Text
+                  </mat-chip>
+                </mat-chip-set>
+              }
+            </div>
+
+            <div class="card-meta">
+              <span class="type-badge">{{ getTypeLabel(att.attachmentType) }}</span>
+              <span class="bullet">•</span>
+              <span>{{ formatFileSize(att.fileSizeBytes) }}</span>
+              <span class="bullet">•</span>
+              <span>{{ att.createdAt | date: 'mediumDate' }}</span>
+            </div>
+
+            @if (att.notes) {
+              <p class="attachment-notes">{{ att.notes }}</p>
+            }
+          </div>
+
+          <div class="card-actions">
+            @if (!att.isPrimaryPhoto && att.attachmentType === AttachmentTypes.Photo) {
+              <button
+                mat-icon-button
+                (click)="setPrimaryPhoto(att)"
+                matTooltip="Set as Primary Photo"
+                aria-label="Set as Primary Photo"
+              >
+                <mat-icon>star_border</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              color="primary"
+              (click)="download(att)"
+              matTooltip="Download / View"
+              aria-label="Download Attachment"
+            >
+              <mat-icon>download</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="deleteAttachment(att)"
+              matTooltip="Delete Attachment"
+              aria-label="Delete Attachment"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Close</button>
+</mat-dialog-actions>

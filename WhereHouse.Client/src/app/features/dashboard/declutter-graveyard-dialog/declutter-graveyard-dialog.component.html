@@ -1,0 +1,559 @@
+<h2 mat-dialog-title class="dialog-header">
+  <div class="header-content">
+    <mat-icon class="header-icon">recycling</mat-icon>
+    <div class="header-text">
+      <span class="dialog-title-text">Declutter Staging, Dust Collectors & Graveyard</span>
+      <span class="dialog-subtitle-text"
+        >Manage sell/donate staging, identify idle assets, and review archived items.</span
+      >
+    </div>
+  </div>
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <!-- NAVIGATION TABS -->
+  <div class="tab-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'staged'"
+      (click)="switchTab('staged')"
+    >
+      <mat-icon>sell</mat-icon>
+      <span>Declutter Staging ({{ stagedSummary()?.totalStagedCount ?? 0 }})</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'dust'"
+      (click)="switchTab('dust')"
+    >
+      <mat-icon>hourglass_bottom</mat-icon>
+      <span>Dust Collectors ({{ dustInsights()?.totalItemsCount ?? 0 }})</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'graveyard'"
+      (click)="switchTab('graveyard')"
+    >
+      <mat-icon>inventory_2</mat-icon>
+      <span>Graveyard Archive ({{ graveyardSummary()?.totalArchivedCount ?? 0 }})</span>
+    </button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 1: DECLUTTER STAGING                   -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'staged') {
+    <div class="tab-panel staged-panel">
+      @if (isLoading()) {
+        <div class="loading-spinner">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+          <span>Loading staged items...</span>
+        </div>
+      } @else if (stagedSummary(); as summary) {
+        <!-- Metrics Summary Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Staged</span>
+            <span class="metric-value">{{ summary.totalStagedCount }}</span>
+            <span class="metric-hint">Items awaiting disposition</span>
+          </div>
+          <div class="metric-card highlight-green">
+            <span class="metric-label">Target Resale Value</span>
+            <span class="metric-value">{{
+              summary.totalTargetResaleValue | currency: 'USD' : 'symbol' : '1.0-2'
+            }}</span>
+            <span class="metric-hint">{{ summary.stagedToSellCount }} item(s) staged to sell</span>
+          </div>
+          <div class="metric-card highlight-blue">
+            <span class="metric-label">Est. Donation Value</span>
+            <span class="metric-value">{{
+              summary.totalEstimatedDonationValue | currency: 'USD' : 'symbol' : '1.0-2'
+            }}</span>
+            <span class="metric-hint"
+              >{{ summary.stagedToDonateCount }} item(s) staged to donate</span
+            >
+          </div>
+        </div>
+
+        <!-- Filter Chips & Selection Actions -->
+        <div class="action-toolbar">
+          <div class="filter-chips">
+            <mat-chip-set>
+              <mat-chip-option
+                [selected]="stagedStatusFilter() === null"
+                (click)="setStagedStatusFilter(null)"
+              >
+                All Staged
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="stagedStatusFilter() === ItemStatuses.StagedToSell"
+                (click)="setStagedStatusFilter(ItemStatuses.StagedToSell)"
+              >
+                Staged to Sell
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="stagedStatusFilter() === ItemStatuses.StagedToDonate"
+                (click)="setStagedStatusFilter(ItemStatuses.StagedToDonate)"
+              >
+                Staged to Donate
+              </mat-chip-option>
+            </mat-chip-set>
+          </div>
+
+          @if (summary.items.length > 0) {
+            <div class="selection-actions">
+              <mat-checkbox
+                [checked]="
+                  selectedStagedIds().size > 0 && selectedStagedIds().size === summary.items.length
+                "
+                [indeterminate]="
+                  selectedStagedIds().size > 0 && selectedStagedIds().size < summary.items.length
+                "
+                (change)="toggleSelectAllStaged(summary.items)"
+              >
+                Select All
+              </mat-checkbox>
+            </div>
+          }
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        @if (selectedStagedIds().size > 0) {
+          <div class="bulk-actions-bar">
+            <span class="bulk-count"
+              >Selected <strong>{{ selectedStagedIds().size }}</strong> item(s):</span
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact-field">
+              <mat-label>Disposition</mat-label>
+              <mat-select
+                [ngModel]="bulkDispositionReason()"
+                (ngModelChange)="bulkDispositionReason.set($event)"
+              >
+                @for (entry of dispositionReasonOptions; track entry.value) {
+                  <mat-option [value]="entry.value">{{ entry.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact-field">
+              <mat-label>Bulk Notes</mat-label>
+              <input
+                matInput
+                placeholder="e.g. Goodwill drop-off"
+                [ngModel]="bulkDispositionNote()"
+                (ngModelChange)="bulkDispositionNote.set($event)"
+              />
+            </mat-form-field>
+
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="isActionInProgress()"
+              (click)="executeBulkArchive()"
+            >
+              <mat-icon>archive</mat-icon>
+              <span>Archive Selected</span>
+            </button>
+
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              [disabled]="isActionInProgress()"
+              (click)="executeBulkUnstage()"
+            >
+              <mat-icon>undo</mat-icon>
+              <span>Unstage (Keep)</span>
+            </button>
+          </div>
+        }
+
+        <!-- Staged Items List -->
+        @if (summary.items.length === 0) {
+          <div class="empty-state">
+            <mat-icon class="empty-icon">sell</mat-icon>
+            <p>No items currently staged to sell or donate.</p>
+            <span class="empty-hint"
+              >Use "Stage to Sell / Donate" on any item card or from the Dust Collectors tab to
+              begin decluttering.</span
+            >
+          </div>
+        } @else {
+          <div class="items-list">
+            @for (item of summary.items; track item.id) {
+              <div class="item-card-row" [class.selected]="selectedStagedIds().has(item.id)">
+                <mat-checkbox
+                  [checked]="selectedStagedIds().has(item.id)"
+                  (change)="toggleStagedSelection(item.id)"
+                />
+                <div class="item-info-col">
+                  <div class="item-header-line">
+                    <span class="item-code">{{ item.shortCode }}</span>
+                    <span class="item-name">{{ item.name }}</span>
+                    @if (item.status === ItemStatuses.StagedToSell) {
+                      <span class="status-badge sell-badge">Staged to Sell</span>
+                    } @else {
+                      <span class="status-badge donate-badge">Staged to Donate</span>
+                    }
+                    @if (item.stagingTargetPrice) {
+                      <span class="price-chip">{{
+                        item.stagingTargetPrice | currency: 'USD' : 'symbol' : '1.0-2'
+                      }}</span>
+                    }
+                  </div>
+                  @if (item.stagingListingNotes) {
+                    <div class="notes-line">
+                      <mat-icon class="tiny-icon">notes</mat-icon>
+                      <span>{{ item.stagingListingNotes }}</span>
+                    </div>
+                  }
+                  <div class="sub-line">
+                    @if (item.homeLocationFullPath) {
+                      <span class="loc-path">
+                        <mat-icon class="tiny-icon">place</mat-icon>
+                        {{ item.homeLocationFullPath }}
+                      </span>
+                    }
+                    @if (item.stagedAt) {
+                      <span class="timestamp">
+                        Staged {{ item.stagedAt | date: 'mediumDate' }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="item-actions-col">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    matTooltip="Archive or mark sold"
+                    (click)="openStageArchiveDialog(item, 'archive')"
+                  >
+                    <mat-icon>archive</mat-icon>
+                    <span>Archive</span>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    matTooltip="Keep item In Place"
+                    (click)="quickUnstage(item)"
+                  >
+                    <mat-icon>undo</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 2: DUST COLLECTOR INSIGHTS             -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'dust') {
+    <div class="tab-panel dust-panel">
+      @if (isLoading()) {
+        <div class="loading-spinner">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+          <span>Analyzing untouched inventory...</span>
+        </div>
+      } @else if (dustInsights(); as insights) {
+        <!-- Threshold Filter Chips -->
+        <div class="threshold-toolbar">
+          <div class="threshold-chips">
+            <span class="toolbar-label">Untouched for:</span>
+            <mat-chip-set>
+              <mat-chip-option
+                [selected]="dustThresholdDays() === 180"
+                (click)="setDustThreshold(180)"
+              >
+                &gt; 6 Months (180d)
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="dustThresholdDays() === 365"
+                (click)="setDustThreshold(365)"
+              >
+                &gt; 1 Year (365d)
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="dustThresholdDays() === 730"
+                (click)="setDustThreshold(730)"
+              >
+                &gt; 2 Years (730d)
+              </mat-chip-option>
+            </mat-chip-set>
+          </div>
+
+          <div class="dust-summary-badge">
+            <span
+              >Found <strong>{{ insights.totalItemsCount }}</strong> idle items totaling
+              <strong>{{
+                insights.totalEstimatedValue | currency: 'USD' : 'symbol' : '1.0-2'
+              }}</strong></span
+            >
+          </div>
+        </div>
+
+        <!-- Grouped by Location / Container Accordions -->
+        @if (insights.locationGroups.length === 0) {
+          <div class="empty-state">
+            <mat-icon class="empty-icon">check_circle</mat-icon>
+            <p>No dust collectors found for this threshold!</p>
+            <span class="empty-hint"
+              >All active items in your home have been touched or audited recently.</span
+            >
+          </div>
+        } @else {
+          <mat-accordion multi class="location-accordions">
+            @for (group of insights.locationGroups; track group.locationFullPath) {
+              <mat-expansion-panel [expanded]="true">
+                <mat-expansion-panel-header>
+                  <mat-panel-title class="group-title">
+                    <mat-icon>inventory_2</mat-icon>
+                    <span class="group-loc-name">{{ group.locationName }}</span>
+                    @if (group.locationShortCode) {
+                      <span class="group-code">({{ group.locationShortCode }})</span>
+                    }
+                  </mat-panel-title>
+                  <mat-panel-description class="group-desc">
+                    <span>{{ group.itemCount }} item(s)</span>
+                    <span class="group-val">{{
+                      group.groupEstimatedValue | currency: 'USD' : 'symbol' : '1.0-2'
+                    }}</span>
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <div class="group-items-list">
+                  @for (entry of group.items; track entry.item.id) {
+                    <div class="dust-item-row">
+                      <div class="dust-item-info">
+                        <div class="dust-title-line">
+                          <span class="item-code">{{ entry.item.shortCode }}</span>
+                          <span class="item-name">{{ entry.item.name }}</span>
+                          <span class="untouched-badge"
+                            >{{ entry.daysUntouched }} days untouched</span
+                          >
+                          @if (entry.estimatedValue > 0) {
+                            <span class="val-badge">{{
+                              entry.estimatedValue | currency: 'USD' : 'symbol' : '1.0-2'
+                            }}</span>
+                          }
+                        </div>
+                        @if (entry.item.brand || entry.item.modelNumber) {
+                          <div class="sub-line">
+                            <span>{{ entry.item.brand }} {{ entry.item.modelNumber }}</span>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="dust-actions">
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          matTooltip="Stage to Sell"
+                          (click)="quickStageToSell(entry.item)"
+                        >
+                          <mat-icon>sell</mat-icon>
+                          <span>Sell</span>
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          matTooltip="Stage to Donate"
+                          (click)="quickStageToDonate(entry.item)"
+                        >
+                          <mat-icon>volunteer_activism</mat-icon>
+                          <span>Donate</span>
+                        </button>
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          matTooltip="Archive item"
+                          (click)="openStageArchiveDialog(entry.item, 'archive')"
+                        >
+                          <mat-icon>archive</mat-icon>
+                          <span>Archive</span>
+                        </button>
+                        <button
+                          mat-icon-button
+                          type="button"
+                          matTooltip="Still using (reset untouched timer)"
+                          (click)="quickTouch(entry.item)"
+                        >
+                          <mat-icon>touch_app</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
+        }
+      }
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 3: GRAVEYARD ARCHIVE                   -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'graveyard') {
+    <div class="tab-panel graveyard-panel">
+      @if (isLoading()) {
+        <div class="loading-spinner">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+          <span>Loading Graveyard archive...</span>
+        </div>
+      } @else if (graveyardSummary(); as gy) {
+        <!-- Overall Graveyard Metrics -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Archived</span>
+            <span class="metric-value">{{ gy.totalArchivedCount }}</span>
+            <span class="metric-hint">Historical assets recorded</span>
+          </div>
+          <div class="metric-card highlight-green">
+            <span class="metric-label">Total Sale Proceeds</span>
+            <span class="metric-value">{{
+              gy.totalSaleProceeds | currency: 'USD' : 'symbol' : '1.0-2'
+            }}</span>
+            <span class="metric-hint">{{ gy.soldCount }} item(s) sold</span>
+          </div>
+          <div class="metric-card highlight-blue">
+            <span class="metric-label">Donated Est. Value</span>
+            <span class="metric-value">{{
+              gy.totalDonatedEstimatedValue | currency: 'USD' : 'symbol' : '1.0-2'
+            }}</span>
+            <span class="metric-hint">{{ gy.donatedCount }} item(s) donated</span>
+          </div>
+        </div>
+
+        <!-- Graveyard Search & Reason Filter -->
+        <div class="gy-filter-bar">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              placeholder="Search graveyard by name, code, brand, notes..."
+              [ngModel]="gySearchQuery()"
+              (ngModelChange)="gySearchQuery.set($event)"
+              (keydown.enter)="applyGraveyardFilter()"
+            />
+          </mat-form-field>
+
+          <div class="disposition-chips">
+            <mat-chip-set>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === null"
+                (click)="setGraveyardReasonFilter(null)"
+              >
+                All ({{ gy.totalArchivedCount }})
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === DispositionReasons.Sold"
+                (click)="setGraveyardReasonFilter(DispositionReasons.Sold)"
+              >
+                Sold ({{ gy.soldCount }})
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === DispositionReasons.Donated"
+                (click)="setGraveyardReasonFilter(DispositionReasons.Donated)"
+              >
+                Donated ({{ gy.donatedCount }})
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === DispositionReasons.Recycled"
+                (click)="setGraveyardReasonFilter(DispositionReasons.Recycled)"
+              >
+                Recycled ({{ gy.recycledCount }})
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === DispositionReasons.BrokenTrashed"
+                (click)="setGraveyardReasonFilter(DispositionReasons.BrokenTrashed)"
+              >
+                Broken/Trashed ({{ gy.brokenTrashedCount }})
+              </mat-chip-option>
+              <mat-chip-option
+                [selected]="gyReasonFilter() === DispositionReasons.Consumed"
+                (click)="setGraveyardReasonFilter(DispositionReasons.Consumed)"
+              >
+                Consumed ({{ gy.consumedCount }})
+              </mat-chip-option>
+            </mat-chip-set>
+          </div>
+        </div>
+
+        <!-- Graveyard Items List -->
+        @if (gy.items.length === 0) {
+          <div class="empty-state">
+            <mat-icon class="empty-icon">inventory_2</mat-icon>
+            <p>No archived items match this filter.</p>
+          </div>
+        } @else {
+          <div class="items-list">
+            @for (item of gy.items; track item.id) {
+              <div class="item-card-row archived-row">
+                <div class="item-info-col">
+                  <div class="item-header-line">
+                    <span class="item-code">{{ item.shortCode }}</span>
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="status-badge gy-badge">
+                      {{ getDispositionLabel(item.dispositionReason) }}
+                      @if (item.dispositionReason === DispositionReasons.Sold && item.salePrice) {
+                        ({{ item.salePrice | currency: 'USD' : 'symbol' : '1.0-2' }})
+                      }
+                    </span>
+                  </div>
+                  @if (item.dispositionNote) {
+                    <div class="notes-line">
+                      <mat-icon class="tiny-icon">notes</mat-icon>
+                      <span>{{ item.dispositionNote }}</span>
+                    </div>
+                  }
+                  <div class="sub-line">
+                    <span class="loc-path">
+                      <mat-icon class="tiny-icon">place</mat-icon>
+                      Previously in: {{ item.homeLocationFullPath || 'Unassigned' }}
+                    </span>
+                    @if (item.archivedAt) {
+                      <span class="timestamp">
+                        Archived {{ item.archivedAt | date: 'mediumDate' }}
+                        @if (item.archivedByUsername) {
+                          by {{ item.archivedByUsername }}
+                        }
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="item-actions-col">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    type="button"
+                    matTooltip="Restore back to Home Bin"
+                    [disabled]="isActionInProgress()"
+                    (click)="quickRestore(item)"
+                  >
+                    <mat-icon>restore_from_trash</mat-icon>
+                    <span>Restore</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button type="button" (click)="dialogRef.close()">Close</button>
+</mat-dialog-actions>

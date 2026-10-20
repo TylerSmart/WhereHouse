@@ -1,7 +1,7 @@
 # Phase 13: Angular Component Template & Style Separation
 
 > **Branch:** `feature/phase-13-component-template-and-style-separation`
-> **Status:** Planned (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
+> **Status:** [x] Completed (`[ ]` Not Started | `[~]` In Progress | `[x]` Completed)
 > **PRD Reference:** Architectural Cleanliness & Frontend Conventions (`.agents/rules/frontend-angular.md`)
 > **Target Execution:** Run `/execute-phase` with your implementation model to execute this plan step-by-step.
 
@@ -346,7 +346,7 @@ In `@Component({...})`:
 
 ## 3. Step-by-Step Execution Checklist
 
-- [ ] **Task 1: Spatial Hierarchy & Location Dialogs (5 components)**
+- [x] **Task 1: Spatial Hierarchy & Location Dialogs (5 components)**
   - Separate `location-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `location-attachments-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `move-location-dialog` into `.html`, `.scss`, and update `.ts`
@@ -357,7 +357,7 @@ In `@Component({...})`:
     npm test --prefix WhereHouse.Client -- --watch=false
     ```
 
-- [ ] **Task 2: Item Management & Inspection Dialogs (5 components)**
+- [x] **Task 2: Item Management & Inspection Dialogs (5 components)**
   - Separate `item-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `item-attachments-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `smart-search-dialog` into `.html`, `.scss`, and update `.ts`
@@ -368,7 +368,7 @@ In `@Component({...})`:
     npm test --prefix WhereHouse.Client -- --watch=false
     ```
 
-- [ ] **Task 3: Operations, Labels & Lifecycle Dialogs (5 components)**
+- [x] **Task 3: Operations, Labels & Lifecycle Dialogs (5 components)**
   - Separate `checkout-return-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `loadouts-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `label-generator-dialog` into `.html`, `.scss`, and update `.ts`
@@ -379,7 +379,7 @@ In `@Component({...})`:
     npm test --prefix WhereHouse.Client -- --watch=false
     ```
 
-- [ ] **Task 4: Maintenance, Vault & Admin Dialogs (4 components)**
+- [x] **Task 4: Maintenance, Vault & Admin Dialogs (4 components)**
   - Separate `maintenance-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `action-center-dialog` into `.html`, `.scss`, and update `.ts`
   - Separate `insurance-export-dialog` into `.html`, `.scss`, and update `.ts`
@@ -389,7 +389,7 @@ In `@Component({...})`:
     npm test --prefix WhereHouse.Client -- --watch=false
     ```
 
-- [ ] **Task 5: Comprehensive Full-Suite Verification & Formatting**
+- [x] **Task 5: Comprehensive Full-Suite Verification & Formatting**
   - Run Angular linter and fix any whitespace issues:
     ```powershell
     npm run lint --prefix WhereHouse.Client

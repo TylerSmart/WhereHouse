@@ -1,0 +1,357 @@
+<div class="search-modal-container">
+  <!-- Search Input Header -->
+  <div class="search-input-bar">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input
+      #searchInput
+      type="text"
+      class="command-input"
+      placeholder="Smart search items, locations, barcodes, tags, notes... (Press Enter)"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      (keydown.enter)="executeSearch()"
+    />
+    @if (query()) {
+      <button mat-icon-button (click)="clearQuery()" aria-label="Clear query">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+    <button
+      mat-stroked-button
+      class="filter-toggle-btn"
+      [class.active]="filtersOpen()"
+      (click)="toggleFilters()"
+    >
+      <mat-icon>tune</mat-icon>
+      <span>Filters</span>
+      @if (activeFilterCount() > 0) {
+        <span class="filter-count-badge">{{ activeFilterCount() }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- Collapsible Faceted Filter Panel -->
+  @if (filtersOpen()) {
+    <div class="faceted-filter-panel">
+      <div class="filter-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Location Subtree</mat-label>
+          <mat-select
+            [ngModel]="locationId()"
+            (ngModelChange)="locationId.set($event); executeSearch()"
+          >
+            <mat-option [value]="null">All Locations</mat-option>
+            @for (loc of data.availableLocations; track loc.id) {
+              <mat-option [value]="loc.id">{{ loc.fullPath }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Category</mat-label>
+          <mat-select [ngModel]="categoryId()" (ngModelChange)="onCategorySelected($event)">
+            <mat-option [value]="null">All Categories</mat-option>
+            @for (cat of data.availableCategories; track cat.id) {
+              <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Owner / Shared Member</mat-label>
+          <mat-select
+            [ngModel]="ownerUserId()"
+            (ngModelChange)="ownerUserId.set($event); executeSearch()"
+          >
+            <mat-option [value]="null">All Members</mat-option>
+            @for (usr of householdUsers(); track usr.id) {
+              <mat-option [value]="usr.id">{{ usr.displayName }} ({{ usr.username }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (availableAttributeTemplates().length > 0) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Attribute</mat-label>
+            <mat-select
+              [ngModel]="selectedAttributeName()"
+              (ngModelChange)="selectedAttributeName.set($event); executeSearch()"
+            >
+              <mat-option [value]="null">Any Attribute</mat-option>
+              @for (tmpl of availableAttributeTemplates(); track tmpl.id) {
+                <mat-option [value]="tmpl.name">{{ tmpl.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (isNumericAttributeSelected()) {
+            <div class="numeric-range-row">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Min Number</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  [ngModel]="attributeMinNumber()"
+                  (ngModelChange)="attributeMinNumber.set($event); executeSearch()"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Max Number</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  [ngModel]="attributeMaxNumber()"
+                  (ngModelChange)="attributeMaxNumber.set($event); executeSearch()"
+                />
+              </mat-form-field>
+            </div>
+          } @else if (selectedAttributeName()) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Attribute Value</mat-label>
+              <input
+                matInput
+                placeholder="Search value..."
+                [ngModel]="attributeValue()"
+                (ngModelChange)="attributeValue.set($event); executeSearch()"
+              />
+            </mat-form-field>
+          }
+        }
+      </div>
+
+      <div class="chips-row">
+        <mat-chip-set>
+          <mat-chip-option [selected]="outOfPlaceOnly()" (click)="toggleOutOfPlace()">
+            Out of Place
+          </mat-chip-option>
+          <mat-chip-option [selected]="lowStockOnly()" (click)="toggleLowStock()">
+            Low Stock
+          </mat-chip-option>
+          <mat-chip-option [selected]="includeArchived()" (click)="toggleIncludeArchived()">
+            Include Graveyard (Archived)
+          </mat-chip-option>
+          <mat-chip-option
+            [selected]="includeAttachmentText()"
+            (click)="toggleIncludeAttachmentText()"
+          >
+            Search PDF Manuals
+          </mat-chip-option>
+        </mat-chip-set>
+
+        @if (activeFilterCount() > 0) {
+          <button mat-button color="warn" (click)="clearAllFilters()">Reset Filters</button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Results Body -->
+  <mat-dialog-content class="results-content">
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-progress-spinner diameter="32" mode="indeterminate" />
+        <span>Searching WhereHouse inventory...</span>
+      </div>
+    } @else if (results(); as res) {
+      @if (res.totalCount === 0 && res.locations.length === 0) {
+        <div class="empty-results">
+          <mat-icon class="empty-icon">search_off</mat-icon>
+          <h3>No matching items or locations found</h3>
+          <p>Try broadening your query or clearing filter facets.</p>
+        </div>
+      }
+
+      <!-- Matching Locations Section -->
+      @if (res.locations.length > 0) {
+        <div class="result-section">
+          <h4 class="section-title">
+            <mat-icon>place</mat-icon>
+            <span>Locations &amp; Containers ({{ res.locations.length }})</span>
+          </h4>
+          <div class="locations-grid">
+            @for (loc of res.locations; track loc.id) {
+              <button type="button" class="location-hit-card" (click)="chooseLocation(loc.id)">
+                <mat-icon class="loc-icon">
+                  {{ loc.nodeType === 1 ? 'inventory_2' : 'location_on' }}
+                </mat-icon>
+                <div class="loc-hit-info">
+                  <div class="loc-name-row">
+                    <span class="loc-name">{{ loc.name }}</span>
+                    <span class="loc-code">{{ loc.shortCode }}</span>
+                  </div>
+                  <span class="loc-path">{{ loc.fullPath }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Matching Active Items Section -->
+      @if (res.activeItems.length > 0) {
+        <div class="result-section">
+          <h4 class="section-title">
+            <mat-icon>inventory</mat-icon>
+            <span>Active Items ({{ res.activeItems.length }})</span>
+          </h4>
+          <div class="items-list">
+            @for (itm of res.activeItems; track itm.id) {
+              <div class="item-result-row">
+                <div class="item-main-col">
+                  <div class="item-title-line">
+                    <span class="item-code">{{ itm.shortCode }}</span>
+                    <span class="item-name">{{ itm.name }}</span>
+                    @if (itm.brand) {
+                      <span class="item-brand">{{ itm.brand }}</span>
+                    }
+                    @if (itm.categoryName) {
+                      <span class="cat-chip">{{ itm.categoryName }}</span>
+                    }
+                    @if ((itm.attachmentCount ?? 0) > 0) {
+                      <span class="attachment-badge" matTooltip="Attachments count">
+                        <mat-icon>attach_file</mat-icon>
+                        {{ itm.attachmentCount }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="item-sub-line">
+                    @if (itm.homeLocationFullPath) {
+                      <span class="item-location">
+                        <mat-icon class="inline-icon">place</mat-icon>
+                        {{ itm.homeLocationFullPath }}
+                      </span>
+                    }
+                    @if (itm.currentQuantity !== undefined) {
+                      <span class="item-qty">
+                        Qty: {{ itm.currentQuantity }} {{ itm.unit || '' }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="item-actions-col">
+                  @if (itm.homeLocationId) {
+                    <button
+                      mat-icon-button
+                      (click)="chooseLocation(itm.homeLocationId)"
+                      matTooltip="Jump to Location"
+                      aria-label="Jump to Location"
+                    >
+                      <mat-icon>my_location</mat-icon>
+                    </button>
+                  }
+                  <button
+                    mat-icon-button
+                    (click)="openAttachments(itm)"
+                    matTooltip="Attachments Vault"
+                    aria-label="Attachments Vault"
+                  >
+                    <mat-icon>attach_file</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    (click)="editItem(itm)"
+                    matTooltip="Edit Item"
+                    aria-label="Edit Item"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Graveyard / Archived Items Section -->
+      @if (res.archivedItems.length > 0) {
+        <div class="graveyard-section">
+          <button
+            type="button"
+            class="graveyard-header-toggle"
+            (click)="graveyardExpanded.set(!graveyardExpanded())"
+          >
+            <div class="graveyard-header-left">
+              <mat-icon class="graveyard-icon">inventory_2</mat-icon>
+              <span class="graveyard-title">
+                Found in Graveyard / Archived ({{ res.archivedItems.length }})
+              </span>
+            </div>
+            <mat-icon>{{ graveyardExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+
+          @if (graveyardExpanded()) {
+            <div class="graveyard-list">
+              @for (arch of res.archivedItems; track arch.id) {
+                <div class="item-result-row archived-row">
+                  <div class="item-main-col">
+                    <div class="item-title-line">
+                      <span class="item-code">{{ arch.shortCode }}</span>
+                      <span class="item-name">{{ arch.name }}</span>
+                      <span class="archived-badge">
+                        {{
+                          arch.dispositionReason !== null && arch.dispositionReason !== undefined
+                            ? dispositionReasonLabels[arch.dispositionReason]
+                            : 'Archived'
+                        }}
+                      </span>
+                      @if (arch.archivedAt) {
+                        <span class="archived-date">{{
+                          arch.archivedAt | date: 'mediumDate'
+                        }}</span>
+                      }
+                      @if (arch.salePrice !== null && arch.salePrice !== undefined) {
+                        <span class="archived-price">{{ arch.salePrice | currency }}</span>
+                      }
+                    </div>
+                    <div class="item-sub-line">
+                      <span>Previously in {{ arch.homeLocationFullPath || 'Unassigned' }}</span>
+                      @if (arch.dispositionNote) {
+                        <span class="archived-note">&bull; {{ arch.dispositionNote }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="item-actions-col">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      (click)="restoreItem(arch)"
+                      matTooltip="Restore to Home Bin"
+                      aria-label="Restore to Home Bin"
+                    >
+                      <mat-icon>restore_from_trash</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      (click)="openAttachments(arch)"
+                      matTooltip="Attachments Vault"
+                      aria-label="Attachments Vault"
+                    >
+                      <mat-icon>attach_file</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      (click)="editItem(arch)"
+                      matTooltip="View / Edit Item"
+                      aria-label="View / Edit Item"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </mat-dialog-content>
+
+  <div class="dialog-footer">
+    <span class="keyboard-tip">
+      <kbd>Ctrl+K</kbd> to open &bull; <kbd>Enter</kbd> to search &bull; <kbd>Esc</kbd> to close
+    </span>
+    <button mat-button (click)="dialogRef.close()">Close</button>
+  </div>
+</div>

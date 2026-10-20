@@ -124,9 +124,14 @@ public class InsuranceVaultAndExportE2ETests : WhereHouseE2ETestBase
         await Expect(macRow).ToBeHiddenAsync();
 
         // Reset location scope to All Household Locations
+        await Page.WaitForTimeoutAsync(150);
         await locSelect.ClickAsync();
-        await Page.Locator("mat-option", new() { HasText = "All Household Locations" })
-            .ClickAsync();
+        var allLocOption = Page.Locator(
+            "mat-option",
+            new() { HasText = "All Household Locations" }
+        );
+        await allLocOption.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await allLocOption.ClickAsync();
 
         // Filter by Min Value: 1000
         var minValInput = dialog.Locator(".min-field input");

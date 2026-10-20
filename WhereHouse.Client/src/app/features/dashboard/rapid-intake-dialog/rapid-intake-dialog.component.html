@@ -1,0 +1,252 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="title-icon">bolt</mat-icon>
+  <div class="title-text">
+    <span>Rapid-Fire Intake Mode</span>
+    <span class="subtitle">Streamlined intake with locked context and barcode lookup</span>
+  </div>
+  <span class="session-badge" [class.has-items]="sessionItems().length > 0">
+    {{ sessionItems().length }} Added
+  </span>
+</h2>
+
+<mat-dialog-content class="rapid-content">
+  <!-- Locked Context Bar -->
+  <section class="context-bar" aria-label="Locked Context Configuration">
+    <div class="context-header">
+      <mat-icon class="context-icon">lock</mat-icon>
+      <span class="context-title">Locked Context (Sticky for Batch)</span>
+    </div>
+
+    <div class="context-controls">
+      <mat-form-field appearance="outline" class="context-field">
+        <mat-label>Locked Location / Bin</mat-label>
+        <mat-select
+          [value]="lockedLocationId()"
+          (selectionChange)="lockedLocationId.set($event.value)"
+        >
+          <mat-option [value]="null"><em>Unassigned</em></mat-option>
+          @for (loc of data.availableLocations; track loc.id) {
+            <mat-option [value]="loc.id"> [{{ loc.shortCode }}] {{ loc.fullPath }} </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="context-field">
+        <mat-label>Locked Category</mat-label>
+        <mat-select
+          [value]="lockedCategoryId()"
+          (selectionChange)="lockedCategoryId.set($event.value)"
+        >
+          <mat-option [value]="null"><em>Auto / None</em></mat-option>
+          @for (cat of data.availableCategories; track cat.id) {
+            <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="context-field-sm">
+        <mat-label>Default Type</mat-label>
+        <mat-select
+          [value]="defaultItemType()"
+          (selectionChange)="defaultItemType.set($event.value)"
+        >
+          <mat-option [value]="ItemTypes.Unique">Unique (1-of-1)</mat-option>
+          <mat-option [value]="ItemTypes.Quantity">Quantity / Bulk</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-slide-toggle
+        class="context-toggle"
+        [checked]="defaultIsPrivate()"
+        (change)="defaultIsPrivate.set($event.checked)"
+      >
+        Secret / Private
+      </mat-slide-toggle>
+    </div>
+  </section>
+
+  <!-- Fast Entry Intake Form -->
+  <form [formGroup]="form" class="entry-form" (ngSubmit)="onSaveAndAddNext()">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="barcode-field">
+        <mat-label>Scan Barcode / UPC (Press Enter)</mat-label>
+        <input
+          #barcodeInput
+          matInput
+          formControlName="barcodeNumber"
+          placeholder="e.g. 0885911362757"
+          maxlength="64"
+          (keydown.enter)="$event.preventDefault(); onBarcodeLookup()"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          [disabled]="isLookingUp() || !form.get('barcodeNumber')?.value"
+          (click)="onBarcodeLookup()"
+          matTooltip="Lookup product info by UPC/EAN"
+        >
+          <mat-icon>manage_search</mat-icon>
+        </button>
+        <mat-hint>Press Enter to auto-fill product details</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="name-field">
+        <mat-label>Item Name *</mat-label>
+        <input
+          #nameInput
+          matInput
+          formControlName="name"
+          placeholder="e.g. DeWalt 20V Hammer Drill"
+          required
+          maxlength="200"
+          (keydown.enter)="$event.preventDefault(); onSaveAndAddNext()"
+        />
+      </mat-form-field>
+    </div>
+
+    @if (defaultItemType() === ItemTypes.Quantity) {
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="qty-field">
+          <mat-label>Quantity</mat-label>
+          <input matInput type="number" formControlName="quantity" min="0.01" step="1" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="unit-field">
+          <mat-label>Unit of Measure</mat-label>
+          <input matInput formControlName="unit" placeholder="pcs, roll, box, ft" maxlength="32" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-field">
+          <mat-label>Pre-Printed QR Token (Optional)</mat-label>
+          <input matInput formControlName="bindQrToken" placeholder="QR-xxxx" maxlength="64" />
+          <mat-icon matSuffix matTooltip="Bind sticker immediately">qr_code_2</mat-icon>
+        </mat-form-field>
+      </div>
+    } @else {
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-field">
+          <mat-label>Brand / Manufacturer</mat-label>
+          <input matInput formControlName="brand" placeholder="e.g. Milwaukee" maxlength="100" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-field">
+          <mat-label>Model #</mat-label>
+          <input
+            matInput
+            formControlName="modelNumber"
+            placeholder="e.g. 2853-20"
+            maxlength="100"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-field">
+          <mat-label>Pre-Printed QR Token (Optional)</mat-label>
+          <input matInput formControlName="bindQrToken" placeholder="QR-xxxx" maxlength="64" />
+          <mat-icon matSuffix matTooltip="Bind sticker immediately">qr_code_2</mat-icon>
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="action-submit-bar">
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        class="submit-button"
+        [disabled]="form.invalid || isSaving()"
+      >
+        <mat-icon>add_circle</mat-icon>
+        <span>Save &amp; Add Next (Enter)</span>
+      </button>
+    </div>
+  </form>
+
+  <mat-divider></mat-divider>
+
+  <!-- Live Session Feed -->
+  <section class="session-feed" aria-label="Session Items Log">
+    <div class="feed-header">
+      <span class="feed-title">Session Feed ({{ sessionItems().length }} items added)</span>
+      @if (sessionItems().length > 0) {
+        <span class="feed-hint">Adjust quantity, clone back into form, or undo</span>
+      }
+    </div>
+
+    @if (sessionItems().length === 0) {
+      <div class="empty-feed">
+        <mat-icon class="empty-feed-icon">inventory_2</mat-icon>
+        <p>No items added yet. Scan a barcode or type an item name above.</p>
+      </div>
+    } @else {
+      <div class="feed-list">
+        @for (item of sessionItems(); track item.id) {
+          <div class="feed-item-card">
+            <div class="item-meta">
+              <span class="item-code">{{ item.shortCode }}</span>
+              <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-sub">
+                  @if (item.brand || item.modelNumber) {
+                    <span>{{ item.brand }} {{ item.modelNumber }} • </span>
+                  }
+                  <span>{{ item.homeLocationFullPath || 'Unassigned' }}</span>
+                  @if (item.categoryName) {
+                    <span> • {{ item.categoryName }}</span>
+                  }
+                </span>
+              </div>
+            </div>
+
+            <div class="item-actions">
+              @if (item.itemType === ItemTypes.Quantity) {
+                <div class="qty-stepper">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="onAdjustQuantity(item, -1)"
+                    matTooltip="Decrease quantity"
+                  >
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  <span class="qty-display">{{ item.currentQuantity }} {{ item.unit || '' }}</span>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="onAdjustQuantity(item, 1)"
+                    matTooltip="Increase quantity"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+              }
+
+              <button
+                mat-icon-button
+                type="button"
+                (click)="onCloneToForm(item)"
+                matTooltip="Copy details back to form"
+              >
+                <mat-icon>copy_all</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="onUndoItem(item)"
+                matTooltip="Undo / Delete item"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Done ({{ sessionItems().length }} Created)</button>
+</mat-dialog-actions>
